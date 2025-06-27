@@ -6,9 +6,18 @@ import (
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
-    "your-module-name/db"
+    "github.com/gin-contrib/cors"
+    db "espazeBackend/config"
 )
-
+func SecurityHeaders() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
+        c.Writer.Header().Set("X-Frame-Options", "DENY")
+        c.Writer.Header().Set("X-XSS-Protection", "1; mode=block")
+        c.Writer.Header().Set("Content-Security-Policy", "default-src 'self'")
+        c.Next()
+    }
+}
 func main() {
     // 📦 Load environment variables
     err := godotenv.Load()
@@ -25,13 +34,15 @@ func main() {
     db.ConnectMongoDB(mongoURI)
 
     // 🚀 Setup Gin
-    r := gin.Default()
+    router := gin.Default()
 
-    r.GET("/", func(c *gin.Context) {
+    router.Use(cors.Default())
+    router.Use(SecurityHeaders())
+    router.GET("/", func(c *gin.Context) {
         c.JSON(200, gin.H{
             "message": "MongoDB is connected!",
         })
     })
 
-    r.Run(":8080")
+    router.Run(":8080")
 }
