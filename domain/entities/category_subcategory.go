@@ -1,0 +1,53 @@
+package entities
+
+import "time"
+
+type Category struct {
+	CategoryID        string    `json:"id" bson:"_id"`
+	CategoryName      string    `json:"category_name" bson:"category_name"`
+	CategoryImage     string    `json:"category_image" bson:"category_image"`
+	CategoryCreatedAt time.Time `json:"category_created_at" bson:"category_created_at"`
+	CategoryUpdatedAt time.Time `json:"category_updated_at" bson:"category_updated_at"`
+}
+
+type Subcategory struct {
+	SubcategoryID        string    `json:"id" bson:"_id"`
+	SubcategoryName      string    `json:"subcategory_name" bson:"subcategory_name"`
+	SubcategoryImage     string    `json:"subcategory_image" bson:"subcategory_image"`
+	CategoryID           string    `json:"category_id" bson:"category_id"`
+	SubcategoryCreatedAt time.Time `json:"subcategory_created_at" bson:"subcategory_created_at"`
+	SubcategoryUpdatedAt time.Time `json:"subcategory_updated_at" bson:"subcategory_updated_at"`
+}
+
+// Request DTOs
+type CreateCategoryRequest struct {
+	CategoryName  string `json:"category_name" binding:"required"`
+	CategoryImage string `json:"category_image"`
+}
+
+type UpdateCategoryRequest struct {
+	CategoryName  string `json:"category_name" binding:"required"`
+	CategoryImage string `json:"category_image"`
+}
+
+type CreateSubcategoryRequest struct {
+	SubcategoryName  string `json:"subcategory_name" binding:"required"`
+	SubcategoryImage string `json:"subcategory_image"`
+	CategoryID       string `json:"category_id" binding:"required"`
+}
+
+type UpdateSubcategoryRequest struct {
+	SubcategoryName  string `json:"subcategory_name" binding:"required"`
+	SubcategoryImage string `json:"subcategory_image"`
+	CategoryID       string `json:"category_id" binding:"required"`
+}
+
+// Response DTOs
+type CategoryWithSubcategoriesResponse struct {
+	*Category
+	Subcategories []*Subcategory `json:"subcategories"`
+}
+
+type CategoriesWithSubcategoriesResponse struct {
+	Categories []*CategoryWithSubcategoriesResponse `json:"categories"`
+}

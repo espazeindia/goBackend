@@ -14,9 +14,39 @@ func SetupRoutes(router *gin.Engine) {
 		})
 	})
 
-	api := router.Group("/api")
+	metadata := router.Group("/metadata")
 	{
-		SetupProductRoutes(api)
+		SetupMetadataRoutes(metadata)
+	}
+
+	login := router.Group("/login")
+	{
+		SetupLoginRoutes(login)
+	}
+
+	inventory := router.Group("/inventory")
+	{
+		SetupInventoryRoutes(inventory)
+	}
+	products := router.Group("/products")
+	{
+		SetupProductRoutes(products)
+	}
+	store := router.Group("/store")
+	{
+		SetupStoreRoutes(store)
+	}
+	warehouse := router.Group("/warehouse")
+	{
+		SetupWarehouseRoutes(warehouse)
+	}
+	location := router.Group("/location")
+	{
+		SetupLocationRoutes(location)
+	}
+	category_subcategory := router.Group("/category")
+	{
+		SetupCategorySubcategoryRoutes(category_subcategory)
 	}
 
 }

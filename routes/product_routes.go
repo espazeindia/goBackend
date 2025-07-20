@@ -26,6 +26,6 @@ func SetupProductRoutes(router *gin.RouterGroup) {
 
 	// Product routes
 
-	// GET /api/products - Get all products with pagination
-	router.GET("/products", productHandler.GetProducts)
+	router.GET("/getProductsForSpecificStore", productHandler.GetProductsForSpecificStore)
+	router.GET("/getProductsForAllStores", productHandler.GetProductsForAllStores)
 }

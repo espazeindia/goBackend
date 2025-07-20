@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
+	"espazeBackend/domain/entities"
 	"espazeBackend/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -21,42 +21,46 @@ func NewProductHandler(productUseCase *usecase.ProductUseCase) *ProductHandler {
 	}
 }
 
-// GetProducts handles GET request to retrieve all products with pagination
-func (h *ProductHandler) GetProducts(c *gin.Context) {
-	// Get query parameters
-	limitStr := c.DefaultQuery("limit", "10")
-	offsetStr := c.DefaultQuery("offset", "0")
-
-	limit, err := strconv.ParseInt(limitStr, 10, 64)
-	if err != nil {
+func (h *ProductHandler) GetProductsForSpecificStore(c *gin.Context) {
+	var getProductsForSpecificStoreRequest entities.GetProductsForSpecificStoreRequest
+	if err := c.ShouldBindJSON(&getProductsForSpecificStoreRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid limit parameter",
+			"error":   "Validation error",
+			"message": err.Error(),
 		})
-		return
 	}
 
-	offset, err := strconv.ParseInt(offsetStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid offset parameter",
-		})
-		return
-	}
-
-	// Get products from use case
-	result, err := h.productUseCase.GetAllProducts(c.Request.Context(), limit, offset)
+	response, err := h.productUseCase.GetProductsForSpecificStore(c.Request.Context(), getProductsForSpecificStoreRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to retrieve products: " + err.Error(),
+			"error":   "Internal server error",
+			"message": "An unexpected error occurred",
 		})
-		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    result,
-	})
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *ProductHandler) GetProductsForAllStores(c *gin.Context) {
+	var getProductsForAllStoresRequest entities.GetProductsForAllStoresRequest
+	if err := c.ShouldBindJSON(&getProductsForAllStoresRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": err.Error(),
+		})
+	}
+
+	response, err := h.productUseCase.GetProductsForAllStores(c.Request.Context(), getProductsForAllStoresRequest)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "An unexpected error occurred",
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
 }

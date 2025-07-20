@@ -1,65 +1,34 @@
 package entities
 
-import (
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
-// Product represents the core product entity in the domain
-type Product struct {
-	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Name        string             `json:"name" bson:"name"`
-	Description string             `json:"description" bson:"description"`
-	Price       float64            `json:"price" bson:"price"`
-	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
+type GetProductsForSpecificStoreRequest struct {
+	StoreID string `json:"store_id"`
 }
 
-// NewProduct creates a new Product instance with validation
-func NewProduct(name, description string, price float64) (*Product, error) {
-	if name == "" {
-		return nil, ErrProductNameRequired
+type GetProductsForSpecificStoreResponse struct {
+	StoreProducts []struct {
+		InventoryId              string  `json:"inventory_id"`
+		InventoryProductId       string  `json:"inventory_product_id"`
+		MetadataProductId        string  `json:"metadata_product_id"`
+		ProductVisibility        string  `json:"product_visibility"`
+		MetadataName             string  `json:"metadata_name"`
+		MetadataDescription      string  `json:"metadata_description"`
+		MetadataImage            string  `json:"metadata_image"`
+		MetadataCategoryId       string  `json:"metadata_category_id"`
+		MetadataSubcategoryId    string  `json:"metadata_subcategory_id"`
+		MetadataMrp              float64 `json:"metadata_mrp"`
+		ProductQuantity          int     `json:"product_quantity"`
+		ProductExpiryDate        string  `json:"product_expiry_date"`
+		ProductManufacturingDate string  `json:"product_manufacturing_date"`
 	}
-	if price <= 0 {
-		return nil, ErrProductPriceInvalid
-	}
-
-	return &Product{
-		Name:        name,
-		Description: description,
-		Price:       price,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}, nil
 }
 
-// Update updates the product with new values
-func (p *Product) Update(name, description string, price float64) error {
-	if name != "" {
-		p.Name = name
-	}
-	if description != "" {
-		p.Description = description
-	}
-	if price > 0 {
-		p.Price = price
-	}
-	p.UpdatedAt = time.Now()
-	return nil
+type GetProductsForAllStoresRequest struct {
+	WarehouseID string `json:"warehouse_id"`
 }
 
-// GetID returns the product ID as string
-func (p *Product) GetID() string {
-	return p.ID.Hex()
-}
-
-// SetID sets the product ID from string
-func (p *Product) SetID(id string) error {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return ErrInvalidProductID
+type GetProductsForAllStoresResponse struct {
+	AllStoresProducts []struct {
+		StoreID       string                                `json:"store_id"`
+		StoreProducts []GetProductsForSpecificStoreResponse `json:"store_products"`
 	}
-	p.ID = objectID
-	return nil
 }

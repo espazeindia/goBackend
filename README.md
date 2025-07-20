@@ -67,7 +67,7 @@ GET /api/metadata/:id
 }
 ```
 
-#### Create Product
+#### Create Product Metadata
 ```
 POST /api/metadata
 ```
@@ -77,7 +77,10 @@ POST /api/metadata
 {
   "name": "Product Name",
   "description": "Product Description",
-  "price": 99.99
+  "image": "https://example.com/image.jpg",
+  "category_id": "electronics",
+  "subcategory_id": "smartphones",
+  "mrp": 99.99
 }
 ```
 
@@ -85,12 +88,15 @@ POST /api/metadata
 ```json
 {
   "success": true,
-  "message": "Product created successfully",
   "data": {
     "id": "507f1f77bcf86cd799439011",
+    "product_id": "507f1f77bcf86cd799439011",
     "name": "Product Name",
     "description": "Product Description",
-    "price": 99.99,
+    "image": "https://example.com/image.jpg",
+    "category_id": "electronics",
+    "subcategory_id": "smartphones",
+    "mrp": 99.99,
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-01T00:00:00Z"
   }
@@ -217,15 +223,19 @@ The server will start on `http://localhost:8080`
 
 ## Database Schema
 
-### Products Collection
+### Metadata Collection
 ```json
 {
   "_id": "ObjectId",
-  "name": "string (required)",
-  "description": "string",
-  "price": "number (required)",
-  "created_at": "timestamp",
-  "updated_at": "timestamp"
+  "metadata_product_id": "ObjectId (auto-generated)",
+  "metadata_name": "string (required)",
+  "metadata_description": "string",
+  "metadata_image": "string",
+  "metadata_category_id": "string",
+  "metadata_subcategory_id": "string",
+  "metadata_mrp": "number (required)",
+  "metadata_created_at": "timestamp",
+  "metadata_updated_at": "timestamp"
 }
 ```
 
