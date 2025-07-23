@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
 
@@ -17,6 +18,29 @@ func NewLocationRepositoryMongoDB(database *mongo.Database) repositories.Locatio
 	return &LocationRepositoryMongoDB{
 		collection: database.Collection("locations"),
 	}
+}
+
+func (r *LocationRepositoryMongoDB) GetLocationForUserID(userId string) ([]*entities.Location, error) {
+	var addresses []*entities.Location
+	filter := bson.M{"user_id": userId}
+	cursor, err := r.collection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var location entities.Location
+		if err := cursor.Decode(&location); err != nil {
+			return nil, err
+		}
+		addresses = append(addresses, &location)
+	}
+
+	if len(addresses) == 0 {
+		return nil, errors.New("no location found")
+	}
+
+	return addresses, nil
 }
 
 func (r *LocationRepositoryMongoDB) CreateLocation(location *entities.Location) error {

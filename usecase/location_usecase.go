@@ -15,6 +15,10 @@ func NewLocationUseCase(locationRepository repositories.LocationRepository) *Loc
 	}
 }
 
+func (uc *LocationUseCase) GetLocationForUserID(userId string) ([]*entities.Location, error) {
+	return uc.locationRepository.GetLocationForUserID(userId)
+}
+
 func (uc *LocationUseCase) CreateLocation(location *entities.Location) error {
 	return uc.locationRepository.CreateLocation(location)
 }

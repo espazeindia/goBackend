@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type LocationHandler struct {
@@ -19,6 +18,22 @@ func NewLocationHandler(locationUseCase *usecase.LocationUseCase) *LocationHandl
 	}
 }
 
+func (h *LocationHandler) GetLocationForUserID(c *gin.Context) {
+	userId := c.Param("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User Id parameter is required"})
+		return
+	}
+
+	location, err := h.locationUseCase.GetLocationForUserID(userId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Location not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, location)
+}
+
 func (h *LocationHandler) CreateLocation(c *gin.Context) {
 	var location entities.Location
 	err := c.ShouldBindJSON(&location)
@@ -26,9 +41,6 @@ func (h *LocationHandler) CreateLocation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// Generate new ID
-	location.ID = primitive.NewObjectID().Hex()
 
 	err = h.locationUseCase.CreateLocation(&location)
 	if err != nil {
