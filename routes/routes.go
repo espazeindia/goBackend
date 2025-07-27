@@ -48,5 +48,9 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		SetupCategorySubcategoryRoutes(category_subcategory)
 	}
+	order := router.Group("/order")
+	{
+		SetupOrderRoutes(order)
+	}
 
 }
