@@ -70,8 +70,7 @@ func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, o
 			return nil, 0, err
 		}
 		metadataResponseCreated := &entities.MetadataResponse{
-			ID:            m.MetadataProductID.Hex(),
-			ProductID:     m.MetadataProductID.Hex(),
+			ID:            m.MetadataProductID,
 			Name:          m.MetadataName,
 			Description:   m.MetadataDescription,
 			Image:         m.MetadataImage,
@@ -113,8 +112,7 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 	}
 
 	metadataResponse := &entities.MetadataResponse{
-		ID:            metadata.MetadataProductID.Hex(),
-		ProductID:     metadata.MetadataProductID.Hex(),
+		ID:            metadata.MetadataProductID,
 		Name:          metadata.MetadataName,
 		Description:   metadata.MetadataDescription,
 		Image:         metadata.MetadataImage,
@@ -130,9 +128,12 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 }
 
 // CreateMetadata creates a new metadata
-func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata *entities.Metadata) error {
-	_, err := r.db.Collection("metadata").InsertOne(ctx, metadata)
-	return err
+func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata *entities.Metadata) (string, error) {
+	result, err := r.db.Collection("metadata").InsertOne(ctx, metadata)
+	if err != nil {
+		return "", err
+	}
+	return result.InsertedID.(string), nil
 }
 
 // UpdateMetadata updates an existing metadata
@@ -232,15 +233,11 @@ func (r *MetadataRepositoryMongoDB) AddReview(ctx context.Context, req *entities
 
 func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string) error {
 	collection := r.db.Collection("reviews")
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
 	review := entities.Review{
-		MetadataProductID: objectID,
+		MetadataProductID: id,
 		TotalStars:        0,
 		TotalReviews:      0,
 	}
-	_, err = collection.InsertOne(ctx, review)
+	_, err := collection.InsertOne(ctx, review)
 	return err
 }

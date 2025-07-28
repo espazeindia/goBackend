@@ -6,8 +6,6 @@ import (
 
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // MetadataUseCase handles business logic for metadata operations
@@ -78,13 +76,11 @@ func (uc *MetadataUseCase) GetMetadataByID(ctx context.Context, id string) (*ent
 }
 
 // CreateMetadata creates a new metadata
-func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) error {
+func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.MetadataResponse, error) {
 	// Generate a new product ID automatically (like UUID)
-	productID := primitive.NewObjectID()
 
 	now := time.Now()
 	metadata := &entities.Metadata{
-		MetadataProductID:     productID,
 		MetadataName:          req.Name,
 		MetadataDescription:   req.Description,
 		MetadataImage:         req.Image,
@@ -95,17 +91,31 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 		MetadataUpdatedAt:     now,
 	}
 
-	err := uc.metadataRepo.CreateMetadata(ctx, metadata)
+	metadataId, err := uc.metadataRepo.CreateMetadata(ctx, metadata)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = uc.metadataRepo.CreateReview(ctx, productID.Hex())
+	err = uc.metadataRepo.CreateReview(ctx, metadataId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	createData := &entities.MetadataResponse{
+		ID:            metadataId,
+		Name:          req.Name,
+		Description:   req.Description,
+		Image:         req.Image,
+		CategoryID:    req.CategoryID,
+		SubcategoryID: req.SubcategoryID,
+		MRP:           req.MRP,
+		CreatedAt:     now.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:     now.Format("2006-01-02T15:04:05Z07:00"),
+		TotalStars:    0,
+		TotalReviews:  0,
+	}
+
+	return createData, nil
 }
 
 // UpdateMetadata updates an existing metadata

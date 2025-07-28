@@ -20,15 +20,15 @@ func SetupMetadataRoutes(router *gin.RouterGroup) {
 
 	var metadataHandler *handlers.MetadataHandler = handlers.NewMetadataHandler(metadataUseCase)
 
-	router.GET("/metadata", metadataHandler.GetMetadata)
-	router.GET("/metadata/:id", metadataHandler.GetMetadataByID)
+	router.GET("/getMetadata", metadataHandler.GetMetadata)
+	router.GET("/getMetadata/:id", metadataHandler.GetMetadataByID)
 
-	router.POST("/metadata", metadataHandler.CreateMetadata)
+	router.POST("/createMetadata", metadataHandler.CreateMetadata)
 
-	router.PUT("/metadata/:id", metadataHandler.UpdateMetadata)
+	router.PUT("/updateMetadata/:id", metadataHandler.UpdateMetadata)
 
-	router.DELETE("/metadata/:id", metadataHandler.DeleteMetadata)
+	router.DELETE("/deleteMetadata/:id", metadataHandler.DeleteMetadata)
 
-	router.POST("/metadata/add_review", metadataHandler.AddReview)
+	router.POST("/add_review", metadataHandler.AddReview)
 
 }

@@ -96,7 +96,7 @@ func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
 		return
 	}
 
-	err := h.metadataUseCase.CreateMetadata(c.Request.Context(), &req)
+	createdData, err := h.metadataUseCase.CreateMetadata(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -108,6 +108,7 @@ func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"message": "Metadata created successfully",
+		"data":    createdData,
 	})
 }
 
