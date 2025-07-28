@@ -28,6 +28,10 @@ func main() {
 	if err != nil {
 		log.Fatal("❌ Error loading .env file")
 	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = ":8080"
+	}
 
 	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
@@ -46,5 +50,5 @@ func main() {
 	// Setup routes
 	routes.SetupRoutes(router)
 
-	router.Run(":8080")
+	router.Run(port)
 }
