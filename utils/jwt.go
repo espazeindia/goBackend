@@ -41,7 +41,6 @@ func GenerateJWTToken(userID, email, name, role string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "espaze-backend",
 			Subject:   userID,
 		},
