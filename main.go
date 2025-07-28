@@ -30,7 +30,7 @@ func main() {
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = ":8080"
+		port = "8080"
 	}
 
 	mongoURI := os.Getenv("MONGO_URI")
@@ -50,5 +50,5 @@ func main() {
 	// Setup routes
 	routes.SetupRoutes(router)
 
-	router.Run(port)
+	router.Run(":" + port)
 }
