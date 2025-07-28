@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func SecurityHeaders() gin.HandlerFunc {
@@ -24,10 +23,7 @@ func SecurityHeaders() gin.HandlerFunc {
 
 func main() {
 	// 📦 Load environment variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("❌ Error loading .env file")
-	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
