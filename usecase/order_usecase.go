@@ -34,8 +34,8 @@ func (u *OrderUsecase) GetAllOrders(ctx context.Context, requestData *entities.G
 		return nil, err
 	}
 
-	hasNext := requestData.Offset*requestData.Limit < total
-	hasPrev := requestData.Offset > 0
+	hasNext := int64(requestData.Offset)*int64(requestData.Limit)+int64(requestData.Limit) < int64(total)
+	hasPrev := int64(requestData.Offset) > 0
 
 	return &entities.GetAllOrderPaginated{
 		Orders:      orders,

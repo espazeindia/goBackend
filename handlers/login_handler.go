@@ -4,6 +4,7 @@ import (
 	"espazeBackend/domain/entities"
 	"espazeBackend/usecase"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +29,7 @@ func (h *LoginHandler) LoginOperationalGuy(c *gin.Context) {
 	}
 
 	// Call the use case
-	response, err := h.loginUseCase.LoginOperationalGuy(c.Request.Context(), loginRequest)
+	response, err := h.loginUseCase.LoginOperationalGuy(c.Request.Context(), &loginRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -56,7 +57,10 @@ func (h *LoginHandler) LoginOperationalGuy(c *gin.Context) {
 
 func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 	var registrationRequest entities.OperationalGuyRegistrationRequest
+
 	if err := c.ShouldBindJSON(&registrationRequest); err != nil {
+		// Log the error for debugging
+		println("Validation error:", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Validation error",
@@ -66,7 +70,7 @@ func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 	}
 
 	// Call the use case
-	response, err := h.loginUseCase.RegisterOperationalGuy(c.Request.Context(), registrationRequest)
+	response, err := h.loginUseCase.RegisterOperationalGuy(c.Request.Context(), &registrationRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -81,7 +85,6 @@ func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
 			"success": response.Success,
 			"message": response.Message,
-			"user_id": response.UserID,
 		})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -92,41 +95,41 @@ func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 	}
 }
 
-func (h *LoginHandler) LoginSeller(c *gin.Context) {
-	var loginRequest entities.SellerLoginRequest
-	if err := c.ShouldBindJSON(&loginRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
-		})
-	}
+// func (h *LoginHandler) LoginSeller(c *gin.Context) {
+// 	var loginRequest entities.SellerLoginRequest
+// 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"success": false,
+// 			"error":   "Validation error",
+// 			"message": err.Error(),
+// 		})
+// 	}
 
-	// Call the use case
-	response, err := h.loginUseCase.LoginSeller(c.Request.Context(), loginRequest)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "An unexpected error occurred",
-		})
-	}
+// 	// Call the use case
+// 	response, err := h.loginUseCase.LoginSeller(c.Request.Context(), loginRequest)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"success": false,
+// 			"error":   "Internal server error",
+// 			"message": "An unexpected error occurred",
+// 		})
+// 	}
 
-	// Return response based on success status
-	if response.Success {
-		c.JSON(http.StatusOK, gin.H{
-			"success": response.Success,
-			"message": response.Message,
-			"token":   response.Token,
-		})
-	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
-		})
-	}
-}
+// 	// Return response based on success status
+// 	if response.Success {
+// 		c.JSON(http.StatusOK, gin.H{
+// 			"success": response.Success,
+// 			"message": response.Message,
+// 			"token":   response.Token,
+// 		})
+// 	} else {
+// 		c.JSON(http.StatusUnauthorized, gin.H{
+// 			"success": response.Success,
+// 			"error":   response.Error,
+// 			"message": response.Message,
+// 		})
+// 	}
+// }
 
 func (h *LoginHandler) RegisterSeller(c *gin.Context) {
 	var registrationRequest entities.SellerRegistrationRequest
@@ -140,7 +143,7 @@ func (h *LoginHandler) RegisterSeller(c *gin.Context) {
 	}
 
 	// Call the use case
-	response, err := h.loginUseCase.RegisterSeller(c.Request.Context(), registrationRequest)
+	response, err := h.loginUseCase.RegisterSeller(c.Request.Context(), &registrationRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -155,7 +158,6 @@ func (h *LoginHandler) RegisterSeller(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
 			"success": response.Success,
 			"message": response.Message,
-			"user_id": response.UserID,
 		})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -166,19 +168,26 @@ func (h *LoginHandler) RegisterSeller(c *gin.Context) {
 	}
 }
 
-func (h *LoginHandler) LoginCustomer(c *gin.Context) {
-	var loginRequest entities.CustomerLoginRequest
-	if err := c.ShouldBindJSON(&loginRequest); err != nil {
+func (h *LoginHandler) VerifyOTP(c *gin.Context) {
+	phoneNumber := c.GetHeader("phonenumber")
+	otpStr := c.GetHeader("otp")
+	otp, err := strconv.ParseInt(otpStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid OTP format"})
+		return
+	}
+
+	if len(phoneNumber) < 10 || otp < 100000 || otp > 999999 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
+			"error":   "Data Inconsistent",
+			"message": "Api Data Invalid",
 		})
 		return
 	}
 
 	// Call the use case
-	response, err := h.loginUseCase.LoginCustomer(c.Request.Context(), loginRequest)
+	response, err := h.loginUseCase.VerifyOTP(c.Request.Context(), &phoneNumber, &otp)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -190,50 +199,12 @@ func (h *LoginHandler) LoginCustomer(c *gin.Context) {
 
 	// Return response based on success status
 	if response.Success {
-		c.JSON(http.StatusOK, gin.H{
+		c.JSON(http.StatusCreated, gin.H{
 			"success": response.Success,
 			"message": response.Message,
 			"token":   response.Token,
 		})
 	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
-		})
-	}
-}
-
-func (h *LoginHandler) RegisterCustomer(c *gin.Context) {
-	var registrationRequest entities.CustomerRegistrationRequest
-	if err := c.ShouldBindJSON(&registrationRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
-		})
-		return
-	}
-
-	// Call the use case
-	response, err := h.loginUseCase.RegisterCustomer(c.Request.Context(), registrationRequest)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "An unexpected error occurred",
-		})
-		return
-	}
-
-	// Return response based on success status
-	if response.Success {
-		c.JSON(http.StatusCreated, gin.H{
-			"success": response.Success,
-			"message": response.Message,
-			"user_id": response.UserID,
-		})
-	} else {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": response.Success,
 			"error":   response.Error,
@@ -241,3 +212,79 @@ func (h *LoginHandler) RegisterCustomer(c *gin.Context) {
 		})
 	}
 }
+
+// func (h *LoginHandler) LoginCustomer(c *gin.Context) {
+// 	var loginRequest entities.CustomerLoginRequest
+// 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"success": false,
+// 			"error":   "Validation error",
+// 			"message": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	// Call the use case
+// 	response, err := h.loginUseCase.LoginCustomer(c.Request.Context(), loginRequest)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"success": false,
+// 			"error":   "Internal server error",
+// 			"message": "An unexpected error occurred",
+// 		})
+// 		return
+// 	}
+
+// 	// Return response based on success status
+// 	if response.Success {
+// 		c.JSON(http.StatusOK, gin.H{
+// 			"success": response.Success,
+// 			"message": response.Message,
+// 			"token":   response.Token,
+// 		})
+// 	} else {
+// 		c.JSON(http.StatusUnauthorized, gin.H{
+// 			"success": response.Success,
+// 			"error":   response.Error,
+// 			"message": response.Message,
+// 		})
+// 	}
+// }
+
+// func (h *LoginHandler) RegisterCustomer(c *gin.Context) {
+// 	var registrationRequest entities.CustomerRegistrationRequest
+// 	if err := c.ShouldBindJSON(&registrationRequest); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"success": false,
+// 			"error":   "Validation error",
+// 			"message": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	// Call the use case
+// 	response, err := h.loginUseCase.RegisterCustomer(c.Request.Context(), registrationRequest)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"success": false,
+// 			"error":   "Internal server error",
+// 			"message": "An unexpected error occurred",
+// 		})
+// 		return
+// 	}
+
+// 	// Return response based on success status
+// 	if response.Success {
+// 		c.JSON(http.StatusCreated, gin.H{
+// 			"success": response.Success,
+// 			"message": response.Message,
+// 			"user_id": response.UserID,
+// 		})
+// 	} else {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"success": response.Success,
+// 			"error":   response.Error,
+// 			"message": response.Message,
+// 		})
+// 	}
+// }

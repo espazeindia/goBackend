@@ -33,15 +33,15 @@ type CreateStoreRequest struct {
 	StoreName     string `json:"store_name" binding:"required"`
 	StoreAddress  string `json:"store_address" binding:"required"`
 	StoreContact  string `json:"store_contact" binding:"required"`
-	NumberOfRacks int    `json:"number_of_racks" binding:"required,min=1"`
+	NumberOfRacks int    `json:"number_of_racks" binding:"required,gte=0"`
 }
 
 type UpdateStoreRequest struct {
 	StoreName     string `json:"store_name"`
 	StoreAddress  string `json:"store_address"`
 	StoreContact  string `json:"store_contact"`
-	NumberOfRacks int    `json:"number_of_racks" binding:"min=1"`
-	OccupiedRacks int    `json:"occupied_racks" binding:"min=0"`
+	NumberOfRacks int    `json:"number_of_racks" binding:"gte=0"`
+	OccupiedRacks int    `json:"occupied_racks" binding:"gte=0"`
 }
 
 type DeleteStoreRequest struct {

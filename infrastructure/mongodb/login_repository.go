@@ -5,6 +5,7 @@ import (
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
 	"espazeBackend/utils"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,21 +22,22 @@ func NewLoginRepositoryMongoDB(db *mongo.Database) repositories.LoginRepository 
 	return &LoginRepositoryMongoDB{db: db}
 }
 
-func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginRequest entities.OperationalGuyLoginRequest) (entities.OperationalGuyLoginResponse, error) {
+func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginRequest *entities.OperationalGuyLoginRequest) (*entities.OperationalGuyLoginResponse, error) {
 	collection := r.db.Collection("operational_guys")
 
 	// Find user by email
+	filter := bson.M{"email": loginRequest.Email}
 	var operationalGuy entities.OperationalGuy
-	err := collection.FindOne(ctx, bson.M{"email": loginRequest.Email}).Decode(&operationalGuy)
+	err := collection.FindOne(ctx, filter).Decode(&operationalGuy)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return entities.OperationalGuyLoginResponse{
+			return &entities.OperationalGuyLoginResponse{
 				Success: false,
 				Error:   "Invalid credentials",
-				Message: "Email or password is incorrect",
+				Message: "Invalid Email Credentials",
 			}, nil
 		}
-		return entities.OperationalGuyLoginResponse{
+		return &entities.OperationalGuyLoginResponse{
 			Success: false,
 			Error:   "Database error",
 			Message: "Failed to authenticate user",
@@ -45,17 +47,17 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 	// Verify password
 	err = bcrypt.CompareHashAndPassword([]byte(operationalGuy.Password), []byte(loginRequest.Password))
 	if err != nil {
-		return entities.OperationalGuyLoginResponse{
+		return &entities.OperationalGuyLoginResponse{
 			Success: false,
 			Error:   "Invalid credentials",
-			Message: "Email or password is incorrect",
+			Message: "Invalid Password Credentials",
 		}, nil
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateJWTToken(operationalGuy.ID, operationalGuy.Email)
+	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Email)
 	if err != nil {
-		return entities.OperationalGuyLoginResponse{
+		return &entities.OperationalGuyLoginResponse{
 			Success: false,
 			Error:   "Token generation failed",
 			Message: "Failed to generate authentication token",
@@ -66,51 +68,45 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 	now := time.Now()
 	_, err = collection.UpdateOne(
 		ctx,
-		bson.M{"_id": operationalGuy.ID},
+		bson.M{"operationalGuyID": operationalGuy.OperationalGuyID},
 		bson.M{"$set": bson.M{
-			"lastLoginAt":  now,
-			"isFirstLogin": false,
-			"updatedAt":    now,
+			"lastLoginAt": now,
+			"updatedAt":   now,
 		}},
 	)
 	if err != nil {
-		// Log the error but don't fail the login
-		// You might want to add proper logging here
+		fmt.Println("Error updating last login time:", err)
 	}
 
-	return entities.OperationalGuyLoginResponse{
+	return &entities.OperationalGuyLoginResponse{
 		Success: true,
 		Message: "Login successful",
 		Token:   token,
 	}, nil
 }
 
-func (r *LoginRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context, registrationRequest entities.OperationalGuyRegistrationRequest) (entities.OperationalGuyRegistrationResponse, error) {
+func (r *LoginRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error) {
 	collection := r.db.Collection("operational_guys")
 
-	// Check if user already exists
 	var existingUser entities.OperationalGuy
 	err := collection.FindOne(ctx, bson.M{"email": registrationRequest.Email}).Decode(&existingUser)
 	if err == nil {
-		// User already exists
-		return entities.OperationalGuyRegistrationResponse{
+		return &entities.OperationalGuyRegistrationResponse{
 			Success: false,
 			Error:   "User already exists",
 			Message: "An account with this email already exists",
 		}, nil
 	} else if err != mongo.ErrNoDocuments {
-		// Database error
-		return entities.OperationalGuyRegistrationResponse{
+		return &entities.OperationalGuyRegistrationResponse{
 			Success: false,
 			Error:   "Database error",
 			Message: "Failed to check user existence",
 		}, err
 	}
 
-	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return entities.OperationalGuyRegistrationResponse{
+		return &entities.OperationalGuyRegistrationResponse{
 			Success: false,
 			Error:   "Password hashing failed",
 			Message: "Failed to process registration",
@@ -130,221 +126,145 @@ func (r *LoginRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context, reg
 		UpdatedAt:              now,
 	}
 
-	// Insert user into database
 	result, err := collection.InsertOne(ctx, newUser)
 	if err != nil {
-		return entities.OperationalGuyRegistrationResponse{
+		return &entities.OperationalGuyRegistrationResponse{
 			Success: false,
 			Error:   "Registration failed",
 			Message: "Failed to create user account",
 		}, err
 	}
 
-	// Get the inserted user ID
-	objectID, ok := result.InsertedID.(primitive.ObjectID)
+	_, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return entities.OperationalGuyRegistrationResponse{
+		return &entities.OperationalGuyRegistrationResponse{
 			Success: false,
 			Error:   "Registration failed",
 			Message: "Failed to get user ID",
 		}, nil
 	}
 
-	return entities.OperationalGuyRegistrationResponse{
+	return &entities.OperationalGuyRegistrationResponse{
 		Success: true,
 		Message: "User registered successfully",
-		UserID:  objectID.Hex(),
 	}, nil
 }
 
-func (r *LoginRepositoryMongoDB) LoginSeller(ctx context.Context, loginRequest entities.SellerLoginRequest) (entities.SellerLoginResponse, error) {
-	collection := r.db.Collection("sellers")
-
-	// Find user by email
-	var seller entities.Seller
-	err := collection.FindOne(ctx, bson.M{"email": loginRequest.Email}).Decode(&seller)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return entities.SellerLoginResponse{
-				Success: false,
-				Error:   "Invalid credentials",
-				Message: "Email or password is incorrect",
-			}, nil
-		}
-		return entities.SellerLoginResponse{
-			Success: false,
-			Error:   "Database error",
-			Message: "Failed to authenticate user",
-		}, err
-	}
-
-	// Verify password
-	err = bcrypt.CompareHashAndPassword([]byte(seller.Password), []byte(loginRequest.Password))
-	if err != nil {
-		return entities.SellerLoginResponse{
-			Success: false,
-			Error:   "Invalid credentials",
-			Message: "Email or password is incorrect",
-		}, nil
-	}
-
-	// Generate JWT token
-	token, err := utils.GenerateJWTToken(seller.ID, seller.Email)
-	if err != nil {
-		return entities.SellerLoginResponse{
-			Success: false,
-			Error:   "Token generation failed",
-			Message: "Failed to generate authentication token",
-		}, err
-	}
-
-	// Update last login time and set isFirstLogin to false
-	now := time.Now()
-	_, err = collection.UpdateOne(
-		ctx,
-		bson.M{"_id": seller.ID},
-		bson.M{"$set": bson.M{
-			"lastLoginAt":  now,
-			"isFirstLogin": false,
-			"updatedAt":    now,
-		}},
-	)
-	if err != nil {
-		// Log the error but don't fail the login
-		// You might want to add proper logging here
-	}
-
-	return entities.SellerLoginResponse{
-		Success: true,
-		Message: "Login successful",
-		Token:   token,
-	}, nil
-}
-
-func (r *LoginRepositoryMongoDB) RegisterSeller(ctx context.Context, registrationRequest entities.SellerRegistrationRequest) (entities.SellerRegistrationResponse, error) {
+func (r *LoginRepositoryMongoDB) RegisterSeller(ctx context.Context, registrationRequest *entities.SellerRegistrationRequest) (*entities.SellerRegistrationResponse, error) {
 	collection := r.db.Collection("sellers")
 
 	// Check if user already exists
 	var existingUser entities.Seller
-	err := collection.FindOne(ctx, bson.M{"email": registrationRequest.Email}).Decode(&existingUser)
+	err := collection.FindOne(ctx, bson.M{"phoneNumber": registrationRequest.PhoneNumber}).Decode(&existingUser)
 	if err == nil {
 		// User already exists
-		return entities.SellerRegistrationResponse{
+		return &entities.SellerRegistrationResponse{
 			Success: false,
-			Error:   "User already exists",
-			Message: "An account with this email already exists",
+			Error:   "Seller already exists",
+			Message: "An account with this phone number already exists",
 		}, nil
 	} else if err != mongo.ErrNoDocuments {
 		// Database error
-		return entities.SellerRegistrationResponse{
+		return &entities.SellerRegistrationResponse{
 			Success: false,
 			Error:   "Database error",
 			Message: "Failed to check user existence",
 		}, err
 	}
 
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
+	otp, err := utils.GenerateOTP()
 	if err != nil {
-		return entities.SellerRegistrationResponse{
+		return &entities.SellerRegistrationResponse{
 			Success: false,
-			Error:   "Password hashing failed",
-			Message: "Failed to process registration",
+			Error:   "OTP generation failed",
+			Message: "Failed to generate OTP",
 		}, err
 	}
 
 	now := time.Now()
 	newUser := entities.Seller{
-		Email:        registrationRequest.Email,
-		Password:     string(hashedPassword),
-		Name:         registrationRequest.Name,
-		IsFirstLogin: true,
-		PhoneNumber:  registrationRequest.PhoneNumber,
-		Address:      registrationRequest.Address,
-		BusinessName: registrationRequest.BusinessName,
-		BusinessType: registrationRequest.BusinessType,
-		IsVerified:   false,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		Name:               registrationRequest.Name,
+		PhoneNumber:        registrationRequest.PhoneNumber,
+		Address:            registrationRequest.Address,
+		OTP:                otp,
+		OTPGeneratedAt:     now,
+		NumberOfRetriesOTP: 0,
+		PIN:                -1,
+		NumberOfRetriesPIN: 0,
+		LastLoginAt:        now,
+		StoreID:            "",
 	}
-
+	fmt.Printf("OTP", otp)
 	// Insert user into database
-	result, err := collection.InsertOne(ctx, newUser)
+	_, err = collection.InsertOne(ctx, newUser)
 	if err != nil {
-		return entities.SellerRegistrationResponse{
+		return &entities.SellerRegistrationResponse{
 			Success: false,
 			Error:   "Registration failed",
-			Message: "Failed to create user account",
+			Message: "Failed to create seller account",
 		}, err
 	}
 
-	// Get the inserted user ID
-	objectID, ok := result.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return entities.SellerRegistrationResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to get user ID",
-		}, nil
-	}
-
-	return entities.SellerRegistrationResponse{
+	return &entities.SellerRegistrationResponse{
 		Success: true,
-		Message: "User registered successfully",
-		UserID:  objectID.Hex(),
+		Message: `OTP sent to the you phone number `,
 	}, nil
 }
 
-func (r *LoginRepositoryMongoDB) LoginCustomer(ctx context.Context, loginRequest entities.CustomerLoginRequest) (entities.CustomerLoginResponse, error) {
-	collection := r.db.Collection("customers")
+func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *string, otp *int64) (*entities.SellerVerifyOTPResponse, error) {
+	sellerCollection := r.db.Collection("sellers")
 
-	// Find user by email
-	var customer entities.Customer
-	err := collection.FindOne(ctx, bson.M{"email": loginRequest.Email}).Decode(&customer)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return entities.CustomerLoginResponse{
-				Success: false,
-				Error:   "Invalid credentials",
-				Message: "Email or password is incorrect",
-			}, nil
-		}
-		return entities.CustomerLoginResponse{
+	var existingUser entities.Seller
+	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	if err == mongo.ErrNoDocuments {
+		// User already exists
+		return &entities.SellerVerifyOTPResponse{
+			Success: false,
+			Error:   "No Seller Found",
+			Message: "No Seller is associated to this phone number ",
+		}, nil
+	} else if err != mongo.ErrNoDocuments && err != nil {
+		// Database error
+		return &entities.SellerVerifyOTPResponse{
 			Success: false,
 			Error:   "Database error",
-			Message: "Failed to authenticate user",
+			Message: "Failed to check user existence",
+		}, err
+	}
+	now := time.Now()
+	fiveMinutes := 5 * time.Minute
+
+	if int(*otp) != existingUser.OTP {
+		return &entities.SellerVerifyOTPResponse{
+			Success: false,
+			Error:   "WRONG OTP",
+			Message: "OTP is incorrect",
 		}, err
 	}
 
-	// Verify password
-	err = bcrypt.CompareHashAndPassword([]byte(customer.Password), []byte(loginRequest.Password))
-	if err != nil {
-		return entities.CustomerLoginResponse{
+	if now.After(existingUser.OTPGeneratedAt.Add(fiveMinutes)) {
+		return &entities.SellerVerifyOTPResponse{
 			Success: false,
-			Error:   "Invalid credentials",
-			Message: "Email or password is incorrect",
-		}, nil
+			Error:   "OTP Expired",
+			Message: "OTP has expired try using the RESEND OTP",
+		}, err
 	}
 
-	// Generate JWT token
-	token, err := utils.GenerateJWTToken(customer.ID, customer.Email)
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.PhoneNumber)
 	if err != nil {
-		return entities.CustomerLoginResponse{
+		return &entities.SellerVerifyOTPResponse{
 			Success: false,
 			Error:   "Token generation failed",
 			Message: "Failed to generate authentication token",
 		}, err
 	}
 
-	// Update last login time and set isFirstLogin to false
-	now := time.Now()
-	_, err = collection.UpdateOne(
+	_, err = sellerCollection.UpdateOne(
 		ctx,
-		bson.M{"_id": customer.ID},
+		bson.M{"_id": existingUser.SellerID},
 		bson.M{"$set": bson.M{
-			"lastLoginAt":  now,
-			"isFirstLogin": false,
-			"updatedAt":    now,
+			"lastLoginAt": now,
+			"updatedAt":   now,
 		}},
 	)
 	if err != nil {
@@ -352,82 +272,83 @@ func (r *LoginRepositoryMongoDB) LoginCustomer(ctx context.Context, loginRequest
 		// You might want to add proper logging here
 	}
 
-	return entities.CustomerLoginResponse{
+	return &entities.SellerVerifyOTPResponse{
 		Success: true,
 		Message: "Login successful",
 		Token:   token,
 	}, nil
+
 }
 
-func (r *LoginRepositoryMongoDB) RegisterCustomer(ctx context.Context, registrationRequest entities.CustomerRegistrationRequest) (entities.CustomerRegistrationResponse, error) {
-	collection := r.db.Collection("customers")
+// func (r *LoginRepositoryMongoDB) RegisterCustomer(ctx context.Context, registrationRequest entities.CustomerRegistrationRequest) (entities.CustomerRegistrationResponse, error) {
+// 	collection := r.db.Collection("customers")
 
-	// Check if user already exists
-	var existingUser entities.Customer
-	err := collection.FindOne(ctx, bson.M{"email": registrationRequest.Email}).Decode(&existingUser)
-	if err == nil {
-		// User already exists
-		return entities.CustomerRegistrationResponse{
-			Success: false,
-			Error:   "User already exists",
-			Message: "An account with this email already exists",
-		}, nil
-	} else if err != mongo.ErrNoDocuments {
-		// Database error
-		return entities.CustomerRegistrationResponse{
-			Success: false,
-			Error:   "Database error",
-			Message: "Failed to check user existence",
-		}, err
-	}
+// 	// Check if user already exists
+// 	var existingUser entities.Customer
+// 	err := collection.FindOne(ctx, bson.M{"email": registrationRequest.Email}).Decode(&existingUser)
+// 	if err == nil {
+// 		// User already exists
+// 		return entities.CustomerRegistrationResponse{
+// 			Success: false,
+// 			Error:   "User already exists",
+// 			Message: "An account with this email already exists",
+// 		}, nil
+// 	} else if err != mongo.ErrNoDocuments {
+// 		// Database error
+// 		return entities.CustomerRegistrationResponse{
+// 			Success: false,
+// 			Error:   "Database error",
+// 			Message: "Failed to check user existence",
+// 		}, err
+// 	}
 
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return entities.CustomerRegistrationResponse{
-			Success: false,
-			Error:   "Password hashing failed",
-			Message: "Failed to process registration",
-		}, err
-	}
+// 	// Hash password
+// 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		return entities.CustomerRegistrationResponse{
+// 			Success: false,
+// 			Error:   "Password hashing failed",
+// 			Message: "Failed to process registration",
+// 		}, err
+// 	}
 
-	now := time.Now()
-	newUser := entities.Customer{
-		Email:        registrationRequest.Email,
-		Password:     string(hashedPassword),
-		Name:         registrationRequest.Name,
-		IsFirstLogin: true,
-		PhoneNumber:  registrationRequest.PhoneNumber,
-		Address:      registrationRequest.Address,
-		DateOfBirth:  registrationRequest.DateOfBirth,
-		IsVerified:   false,
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
+// 	now := time.Now()
+// 	newUser := entities.Customer{
+// 		Email:        registrationRequest.Email,
+// 		Password:     string(hashedPassword),
+// 		Name:         registrationRequest.Name,
+// 		IsFirstLogin: true,
+// 		PhoneNumber:  registrationRequest.PhoneNumber,
+// 		Address:      registrationRequest.Address,
+// 		DateOfBirth:  registrationRequest.DateOfBirth,
+// 		IsVerified:   false,
+// 		CreatedAt:    now,
+// 		UpdatedAt:    now,
+// 	}
 
-	// Insert user into database
-	result, err := collection.InsertOne(ctx, newUser)
-	if err != nil {
-		return entities.CustomerRegistrationResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to create user account",
-		}, err
-	}
+// 	// Insert user into database
+// 	result, err := collection.InsertOne(ctx, newUser)
+// 	if err != nil {
+// 		return entities.CustomerRegistrationResponse{
+// 			Success: false,
+// 			Error:   "Registration failed",
+// 			Message: "Failed to create user account",
+// 		}, err
+// 	}
 
-	// Get the inserted user ID
-	objectID, ok := result.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return entities.CustomerRegistrationResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to get user ID",
-		}, nil
-	}
+// 	// Get the inserted user ID
+// 	objectID, ok := result.InsertedID.(primitive.ObjectID)
+// 	if !ok {
+// 		return entities.CustomerRegistrationResponse{
+// 			Success: false,
+// 			Error:   "Registration failed",
+// 			Message: "Failed to get user ID",
+// 		}, nil
+// 	}
 
-	return entities.CustomerRegistrationResponse{
-		Success: true,
-		Message: "User registered successfully",
-		UserID:  objectID.Hex(),
-	}, nil
-}
+// 	return entities.CustomerRegistrationResponse{
+// 		Success: true,
+// 		Message: "User registered successfully",
+// 		UserID:  objectID.Hex(),
+// 	}, nil
+// }

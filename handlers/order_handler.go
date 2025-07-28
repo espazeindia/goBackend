@@ -21,7 +21,6 @@ func NewOrderHandler(orderUsecase *usecase.OrderUsecase) *OrderHandler {
 func (h *OrderHandler) GetAllOrders(c *gin.Context) {
 	var requestData entities.GetAllOrdersRequest
 	err := c.ShouldBindJSON(&requestData)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
