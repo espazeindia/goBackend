@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"espazeBackend/domain/entities"
@@ -23,7 +24,7 @@ func NewMetadataUseCase(metadataRepo repositories.MetadataRepository) *MetadataU
 func (uc *MetadataUseCase) toMetadataResponse(metadata *entities.MetadataResponse) *entities.MetadataResponse {
 	return &entities.MetadataResponse{
 		ID:            metadata.ID,
-		ProductID:     metadata.ProductID,
+		HsnCode:       metadata.HsnCode,
 		Name:          metadata.Name,
 		Description:   metadata.Description,
 		Image:         metadata.Image,
@@ -82,6 +83,7 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 	now := time.Now()
 	metadata := &entities.Metadata{
 		MetadataName:          req.Name,
+		MetadataHSNCode:       req.HsnCode,
 		MetadataDescription:   req.Description,
 		MetadataImage:         req.Image,
 		MetadataCategoryID:    req.CategoryID,
@@ -93,6 +95,7 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 
 	metadataId, err := uc.metadataRepo.CreateMetadata(ctx, metadata)
 	if err != nil {
+		fmt.Print(err)
 		return nil, err
 	}
 
@@ -103,6 +106,7 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 
 	createData := &entities.MetadataResponse{
 		ID:            metadataId,
+		HsnCode:       req.HsnCode,
 		Name:          req.Name,
 		Description:   req.Description,
 		Image:         req.Image,

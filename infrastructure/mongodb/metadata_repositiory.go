@@ -133,7 +133,9 @@ func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata
 	if err != nil {
 		return "", err
 	}
-	return result.InsertedID.(string), nil
+	objectID := result.InsertedID.(primitive.ObjectID)
+	stringID := objectID.Hex()
+	return stringID, nil
 }
 
 // UpdateMetadata updates an existing metadata

@@ -6,6 +6,7 @@ import (
 
 type Metadata struct {
 	MetadataProductID     string    `json:"metadata_product_id" bson:"_id,omitempty"`
+	MetadataHSNCode       string    `json:"hsn_code" bson:"hsn_code"`
 	MetadataName          string    `json:"metadata_name" bson:"metadata_name"`
 	MetadataDescription   string    `json:"metadata_description" bson:"metadata_description"`
 	MetadataImage         string    `json:"metadata_image" bson:"metadata_image"`
@@ -24,7 +25,7 @@ type Review struct {
 
 type MetadataResponse struct {
 	ID            string  `json:"id" bson:"_id,omitempty"`
-	ProductID     string  `json:"product_id"`
+	HsnCode       string  `json:"hsn_code"`
 	Name          string  `json:"name"`
 	Description   string  `json:"description"`
 	Image         string  `json:"image"`
@@ -40,6 +41,7 @@ type MetadataResponse struct {
 // CreateMetadataRequest represents the request structure for creating metadata
 type CreateMetadataRequest struct {
 	Name          string  `json:"name" binding:"required"`
+	HsnCode       string  `json:"hsn_code" binding:"required"`
 	Description   string  `json:"description"`
 	Image         string  `json:"image"`
 	CategoryID    string  `json:"category_id"`
