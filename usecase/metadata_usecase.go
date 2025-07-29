@@ -99,13 +99,13 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 		return response, err
 	}
 	if response.Success {
-
 		reviewResponse, err := uc.metadataRepo.CreateReview(ctx, response.Id)
 		if err != nil {
 			return reviewResponse, err
 		}
+		metadata.MetadataProductID = response.Id
+		response.Metadata = metadata
 	}
-
 	return response, nil
 }
 
