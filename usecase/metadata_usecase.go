@@ -77,7 +77,7 @@ func (uc *MetadataUseCase) GetMetadataByID(ctx context.Context, id string) (*ent
 }
 
 // CreateMetadata creates a new metadata
-func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.MetadataResponse, error) {
+func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.Metadata, error) {
 	// Generate a new product ID automatically (like UUID)
 
 	now := time.Now()
@@ -104,22 +104,9 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 		return nil, err
 	}
 
-	createData := &entities.MetadataResponse{
-		ID:            metadataId,
-		HsnCode:       req.HsnCode,
-		Name:          req.Name,
-		Description:   req.Description,
-		Image:         req.Image,
-		CategoryID:    req.CategoryID,
-		SubcategoryID: req.SubcategoryID,
-		MRP:           req.MRP,
-		CreatedAt:     now.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:     now.Format("2006-01-02T15:04:05Z07:00"),
-		TotalStars:    0,
-		TotalReviews:  0,
-	}
+	metadata.MetadataProductID = metadataId
 
-	return createData, nil
+	return metadata, nil
 }
 
 // UpdateMetadata updates an existing metadata
