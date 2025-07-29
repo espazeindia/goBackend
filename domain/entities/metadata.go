@@ -5,16 +5,16 @@ import (
 )
 
 type Metadata struct {
-	MetadataProductID     string    `json:"metadata_product_id" bson:"_id,omitempty"`
+	MetadataProductID     string    `json:"product_id" bson:"_id,omitempty"`
 	MetadataHSNCode       string    `json:"hsn_code" bson:"hsn_code"`
-	MetadataName          string    `json:"metadata_name" bson:"metadata_name"`
-	MetadataDescription   string    `json:"metadata_description" bson:"metadata_description"`
-	MetadataImage         string    `json:"metadata_image" bson:"metadata_image"`
-	MetadataCategoryID    string    `json:"metadata_category_id" bson:"metadata_category_id"`
-	MetadataSubcategoryID string    `json:"metadata_subcategory_id" bson:"metadata_subcategory_id"`
-	MetadataMRP           float64   `json:"metadata_mrp" bson:"metadata_mrp"`
-	MetadataCreatedAt     time.Time `json:"metadata_created_at" bson:"metadata_created_at"`
-	MetadataUpdatedAt     time.Time `json:"metadata_updated_at" bson:"metadata_updated_at"`
+	MetadataName          string    `json:"name" bson:"metadata_name"`
+	MetadataDescription   string    `json:"description" bson:"metadata_description"`
+	MetadataImage         string    `json:"image" bson:"metadata_image"`
+	MetadataCategoryID    string    `json:"category_id" bson:"metadata_category_id"`
+	MetadataSubcategoryID string    `json:"subcategory_id" bson:"metadata_subcategory_id"`
+	MetadataMRP           float64   `json:"mrp" bson:"metadata_mrp"`
+	MetadataCreatedAt     time.Time `json:"created_at" bson:"metadata_created_at"`
+	MetadataUpdatedAt     time.Time `json:"updated_at" bson:"metadata_updated_at"`
 }
 
 type Review struct {
@@ -36,6 +36,14 @@ type MetadataResponse struct {
 	UpdatedAt     string  `json:"updated_at"`
 	TotalStars    int     `json:"total_stars"`
 	TotalReviews  int     `json:"total_reviews"`
+}
+
+type CreateMetadataResponse struct {
+	Success  bool      `json:"success"`
+	Message  string    `json:"message"`
+	Error    string    `json:"error" binding:"omitempty"`
+	Id       string    `json:"id" binding:"omitempty"`
+	Metadata *Metadata `json:"metadata" binding:"omitempty"`
 }
 
 // CreateMetadataRequest represents the request structure for creating metadata
@@ -61,12 +69,13 @@ type UpdateMetadataRequest struct {
 
 // PaginatedMetadataResponse represents paginated metadata response
 type PaginatedMetadataResponse struct {
-	Metadata    []*MetadataResponse `json:"metadata"`
-	Total       int64               `json:"total"`
-	Limit       int64               `json:"limit"`
-	Offset      int64               `json:"offset"`
-	HasNext     bool                `json:"has_next"`
-	HasPrevious bool                `json:"has_previous"`
+	Metadata    []*Metadata `json:"metadata"`
+	Total       int64       `json:"total"`
+	Limit       int64       `json:"limit"`
+	Offset      int64       `json:"offset"`
+	HasNext     bool        `json:"has_next"`
+	HasPrevious bool        `json:"has_previous"`
+	TotalPages  int64       `json:"total_pages"`
 }
 
 type AddReviewRequest struct {

@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"espazeBackend/domain/entities"
@@ -55,6 +54,7 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 
 	hasNext := offset+limit < total
 	hasPrevious := offset > 0
+	var totalPages int64 = (total + limit - 1) / limit
 
 	return &entities.PaginatedMetadataResponse{
 		Metadata:    metadata,
@@ -63,6 +63,7 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 		Offset:      offset,
 		HasNext:     hasNext,
 		HasPrevious: hasPrevious,
+		TotalPages:  totalPages,
 	}, nil
 }
 
@@ -77,7 +78,7 @@ func (uc *MetadataUseCase) GetMetadataByID(ctx context.Context, id string) (*ent
 }
 
 // CreateMetadata creates a new metadata
-func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.Metadata, error) {
+func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.CreateMetadataResponse, error) {
 	// Generate a new product ID automatically (like UUID)
 
 	now := time.Now()
@@ -93,20 +94,19 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 		MetadataUpdatedAt:     now,
 	}
 
-	metadataId, err := uc.metadataRepo.CreateMetadata(ctx, metadata)
+	response, err := uc.metadataRepo.CreateMetadata(ctx, metadata)
 	if err != nil {
-		fmt.Print(err)
-		return nil, err
+		return response, err
 	}
 
-	err = uc.metadataRepo.CreateReview(ctx, metadataId)
+	response, err = uc.metadataRepo.CreateReview(ctx, response.Id)
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 
-	metadata.MetadataProductID = metadataId
+	metadata.MetadataProductID = response.Id
 
-	return metadata, nil
+	return response, nil
 }
 
 // UpdateMetadata updates an existing metadata

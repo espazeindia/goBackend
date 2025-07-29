@@ -26,10 +26,9 @@ func NewMetadataRepositoryMongoDB(db *mongo.Database) repositories.MetadataRepos
 }
 
 // GetAllMetadata retrieves all metadata with pagination
-func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.MetadataResponse, int64, error) {
+func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.Metadata, int64, error) {
 	// Build filter based on search parameter
 
-	reviews := r.db.Collection("reviews")
 	filter := bson.M{}
 	if search != "" {
 		filter = bson.M{
@@ -58,33 +57,11 @@ func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, o
 
 	// Decode results
 	var metadata []*entities.Metadata
-	var metadataResponse []*entities.MetadataResponse
 	if err = cursor.All(ctx, &metadata); err != nil {
 		return nil, 0, err
 	}
 
-	for _, m := range metadata {
-		review := entities.Review{}
-		err = reviews.FindOne(ctx, bson.M{"metadata_product_id": m.MetadataProductID}).Decode(&review)
-		if err != nil {
-			return nil, 0, err
-		}
-		metadataResponseCreated := &entities.MetadataResponse{
-			ID:            m.MetadataProductID,
-			Name:          m.MetadataName,
-			Description:   m.MetadataDescription,
-			Image:         m.MetadataImage,
-			CategoryID:    m.MetadataCategoryID,
-			SubcategoryID: m.MetadataSubcategoryID,
-			MRP:           m.MetadataMRP,
-			CreatedAt:     m.MetadataCreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:     m.MetadataUpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			TotalStars:    review.TotalStars,
-			TotalReviews:  review.TotalReviews,
-		}
-		metadataResponse = append(metadataResponse, metadataResponseCreated)
-	}
-	return metadataResponse, total, nil
+	return metadata, total, nil
 }
 
 // GetMetadataByID retrieves a metadata by ID
@@ -128,14 +105,26 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 }
 
 // CreateMetadata creates a new metadata
-func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata *entities.Metadata) (string, error) {
+func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata *entities.Metadata) (*entities.CreateMetadataResponse, error) {
+	collection := r.db.Collection("metadata")
+
+	filter := bson.M{"hsn_code": metadata.MetadataHSNCode}
+	var Metadata *entities.Metadata
+	err := collection.FindOne(ctx, filter).Decode(&Metadata)
+	if err == nil {
+		return &entities.CreateMetadataResponse{Success: false, Message: "Metadata for this HSN Code already exists", Error: "Metadata Already Exists"}, err
+	}
+	if err != mongo.ErrNoDocuments {
+		return &entities.CreateMetadataResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
+	}
+
 	result, err := r.db.Collection("metadata").InsertOne(ctx, metadata)
 	if err != nil {
-		return "", err
+		return &entities.CreateMetadataResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
 	}
 	objectID := result.InsertedID.(primitive.ObjectID)
 	stringID := objectID.Hex()
-	return stringID, nil
+	return &entities.CreateMetadataResponse{Success: true, Message: "Metadata Created Successfully", Id: stringID}, nil
 }
 
 // UpdateMetadata updates an existing metadata
@@ -233,7 +222,7 @@ func (r *MetadataRepositoryMongoDB) AddReview(ctx context.Context, req *entities
 	return nil
 }
 
-func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string) error {
+func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string) (*entities.CreateMetadataResponse, error) {
 	collection := r.db.Collection("reviews")
 	review := entities.Review{
 		MetadataProductID: id,
@@ -241,5 +230,8 @@ func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string)
 		TotalReviews:      0,
 	}
 	_, err := collection.InsertOne(ctx, review)
-	return err
+	if err != nil {
+		return &entities.CreateMetadataResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
+	}
+	return &entities.CreateMetadataResponse{Success: true, Message: "Metadata Created Successfully"}, nil
 }
