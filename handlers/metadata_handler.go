@@ -108,13 +108,12 @@ func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
 			"success": response.Success,
 			"message": response.Message,
-			"data":    response.Metadata,
 		})
 	} else {
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": response.Success,
 			"message": response.Message,
-			"data":    response.Metadata,
+			"error":   response.Error,
 		})
 	}
 
