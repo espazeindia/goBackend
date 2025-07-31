@@ -45,7 +45,7 @@ func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, o
 	// Set up pagination options
 	opts := options.Find().
 		SetLimit(limit).
-		SetSkip(offset).
+		SetSkip(offset * limit).
 		SetSort(bson.D{{Key: "metadata_created_at", Value: -1}}) // Sort by creation date descending
 
 	// Execute query

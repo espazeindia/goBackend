@@ -52,7 +52,7 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 		return nil, err
 	}
 
-	hasNext := offset+limit < total
+	hasNext := offset*limit+limit < total
 	hasPrevious := offset > 0
 	var totalPages int64 = (total + limit - 1) / limit
 
@@ -103,8 +103,6 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 		if err != nil {
 			return reviewResponse, err
 		}
-		metadata.MetadataProductID = response.Id
-		response.Metadata = metadata
 	}
 	return response, nil
 }
