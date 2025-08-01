@@ -118,6 +118,7 @@ func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *e
 		MetadataCategoryID:    req.CategoryID,
 		MetadataSubcategoryID: req.SubcategoryID,
 		MetadataMRP:           req.MRP,
+		MetadataHSNCode:       req.HsnCode,
 		MetadataUpdatedAt:     now,
 	}
 

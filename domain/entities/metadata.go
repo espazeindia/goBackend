@@ -65,6 +65,7 @@ type UpdateMetadataRequest struct {
 	CategoryID    string  `json:"category_id"`
 	SubcategoryID string  `json:"subcategory_id"`
 	MRP           float64 `json:"mrp"`
+	HsnCode       string  `json:"hsn_code"`
 }
 
 // PaginatedMetadataResponse represents paginated metadata response

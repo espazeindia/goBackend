@@ -27,7 +27,7 @@ type OperationalGuyRegistrationRequest struct {
 
 type OperationalGuyLoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=5"`
+	Password string `json:"password" binding:"required"`
 }
 
 type OperationalGuyLoginResponse struct {

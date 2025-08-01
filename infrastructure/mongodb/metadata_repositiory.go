@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"espazeBackend/domain/entities"
@@ -130,35 +131,40 @@ func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata
 // UpdateMetadata updates an existing metadata
 func (r *MetadataRepositoryMongoDB) UpdateMetadata(ctx context.Context, id string, metadata *entities.Metadata) error {
 	// Convert string ID to ObjectID
+	fmt.Print("id", id, "\n")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
+	fmt.Print("id", objectID, " \n ")
 
 	// Build update document
 	updateDoc := bson.M{}
 	if metadata.MetadataName != "" {
-		updateDoc["metadata_name"] = metadata.MetadataName
+		updateDoc["name"] = metadata.MetadataName
 	}
 	if metadata.MetadataDescription != "" {
-		updateDoc["metadata_description"] = metadata.MetadataDescription
+		updateDoc["description"] = metadata.MetadataDescription
 	}
 	if metadata.MetadataImage != "" {
-		updateDoc["metadata_image"] = metadata.MetadataImage
+		updateDoc["image"] = metadata.MetadataImage
 	}
 	if metadata.MetadataCategoryID != "" {
-		updateDoc["metadata_category_id"] = metadata.MetadataCategoryID
+		updateDoc["category_id"] = metadata.MetadataCategoryID
 	}
 	if metadata.MetadataSubcategoryID != "" {
-		updateDoc["metadata_subcategory_id"] = metadata.MetadataSubcategoryID
+		updateDoc["subcategory_id"] = metadata.MetadataSubcategoryID
+	}
+	if metadata.MetadataHSNCode != "" {
+		updateDoc["hsn_code"] = metadata.MetadataHSNCode
 	}
 	if metadata.MetadataMRP > 0 {
-		updateDoc["metadata_mrp"] = metadata.MetadataMRP
+		updateDoc["mrp"] = metadata.MetadataMRP
 	}
-	updateDoc["metadata_updated_at"] = time.Now()
+	updateDoc["updated_at"] = time.Now()
 
 	// Execute update
-	filter := bson.M{"metadata_product_id": objectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": updateDoc}
 
 	result, err := r.db.Collection("metadata").UpdateOne(ctx, filter, update)
