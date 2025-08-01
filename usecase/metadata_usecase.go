@@ -78,7 +78,7 @@ func (uc *MetadataUseCase) GetMetadataByID(ctx context.Context, id string) (*ent
 }
 
 // CreateMetadata creates a new metadata
-func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.CreateMetadataResponse, error) {
+func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.MetadataApiResponse, error) {
 	// Generate a new product ID automatically (like UUID)
 
 	now := time.Now()
@@ -108,7 +108,7 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 }
 
 // UpdateMetadata updates an existing metadata
-func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *entities.UpdateMetadataRequest) (*entities.MetadataResponse, error) {
+func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *entities.UpdateMetadataRequest) (*entities.MetadataApiResponse, error) {
 
 	now := time.Now()
 	metadata := &entities.Metadata{
@@ -122,26 +122,16 @@ func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *e
 		MetadataUpdatedAt:     now,
 	}
 
-	err := uc.metadataRepo.UpdateMetadata(ctx, id, metadata)
+	response, err := uc.metadataRepo.UpdateMetadata(ctx, id, metadata)
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 
-	// For now, return the updated metadata (in a real app, you'd fetch the updated record)
-	return &entities.MetadataResponse{
-		ID:            id,
-		Name:          req.Name,
-		Description:   req.Description,
-		Image:         req.Image,
-		CategoryID:    req.CategoryID,
-		SubcategoryID: req.SubcategoryID,
-		MRP:           req.MRP,
-		UpdatedAt:     now.Format("2006-01-02T15:04:05Z07:00"),
-	}, nil
+	return response, nil
 }
 
 // DeleteMetadata deletes a metadata by ID
-func (uc *MetadataUseCase) DeleteMetadata(ctx context.Context, id string) error {
+func (uc *MetadataUseCase) DeleteMetadata(ctx context.Context, id string) (*entities.MetadataApiResponse, error) {
 	return uc.metadataRepo.DeleteMetadata(ctx, id)
 }
 

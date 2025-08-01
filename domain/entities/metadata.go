@@ -38,7 +38,7 @@ type MetadataResponse struct {
 	TotalReviews  int     `json:"total_reviews"`
 }
 
-type CreateMetadataResponse struct {
+type MetadataApiResponse struct {
 	Success  bool      `json:"success"`
 	Message  string    `json:"message"`
 	Error    string    `json:"error" binding:"omitempty"`

@@ -126,6 +126,7 @@ func (h *MetadataHandler) UpdateMetadata(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Metadata ID is required",
+			"message": "Metadata ID is empty",
 		})
 		return
 	}
@@ -135,6 +136,7 @@ func (h *MetadataHandler) UpdateMetadata(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Invalid request body: " + err.Error(),
+			"message": "Invalid request body",
 		})
 		return
 	}
@@ -148,10 +150,22 @@ func (h *MetadataHandler) UpdateMetadata(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    result,
-	})
+	if result.Success {
+		c.JSON(http.StatusAccepted, gin.H{
+			"success": result.Success,
+			"error":   result.Error,
+			"message": result.Message,
+		})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": result.Success,
+			"error":   result.Error,
+			"message": result.Message,
+		})
+		return
+	}
+
 }
 
 // DeleteMetadata deletes a metadata by ID
@@ -165,7 +179,7 @@ func (h *MetadataHandler) DeleteMetadata(c *gin.Context) {
 		return
 	}
 
-	err := h.metadataUseCase.DeleteMetadata(c.Request.Context(), id)
+	result, err := h.metadataUseCase.DeleteMetadata(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -173,11 +187,22 @@ func (h *MetadataHandler) DeleteMetadata(c *gin.Context) {
 		})
 		return
 	}
+	if result.Success {
+		c.JSON(http.StatusOK, gin.H{
+			"success": result.Success,
+			"message": result.Message,
+		})
+		return
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Metadata deleted successfully",
-	})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": result.Success,
+			"message": result.Message,
+			"error":   result.Error,
+		})
+		return
+	}
+
 }
 
 func (h *MetadataHandler) AddReview(c *gin.Context) {

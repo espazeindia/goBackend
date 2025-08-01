@@ -9,9 +9,9 @@ import (
 type MetadataRepository interface {
 	GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.Metadata, int64, error)
 	GetMetadataByID(ctx context.Context, id string) (*entities.MetadataResponse, error)
-	CreateMetadata(ctx context.Context, metadata *entities.Metadata) (*entities.CreateMetadataResponse, error)
-	UpdateMetadata(ctx context.Context, id string, metadata *entities.Metadata) error
-	DeleteMetadata(ctx context.Context, id string) error
+	CreateMetadata(ctx context.Context, metadata *entities.Metadata) (*entities.MetadataApiResponse, error)
+	UpdateMetadata(ctx context.Context, id string, metadata *entities.Metadata) (*entities.MetadataApiResponse, error)
+	DeleteMetadata(ctx context.Context, id string) (*entities.MetadataApiResponse, error)
 	AddReview(ctx context.Context, req *entities.AddReviewRequest) error
-	CreateReview(ctx context.Context, id string) (*entities.CreateMetadataResponse, error)
+	CreateReview(ctx context.Context, id string) (*entities.MetadataApiResponse, error)
 }
