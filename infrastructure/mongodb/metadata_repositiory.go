@@ -187,7 +187,7 @@ func (r *MetadataRepositoryMongoDB) UpdateMetadata(ctx context.Context, id strin
 
 	return &entities.MetadataApiResponse{
 		Message: "Metadata updated successfully",
-		Success: false,
+		Success: true,
 	}, nil
 }
 
@@ -222,8 +222,8 @@ func (r *MetadataRepositoryMongoDB) DeleteMetadata(ctx context.Context, id strin
 	}
 
 	return &entities.MetadataApiResponse{
-		Message: "Metadata updated successfully",
-		Success: false,
+		Message: "Metadata deleted successfully",
+		Success: true,
 	}, nil
 }
 
