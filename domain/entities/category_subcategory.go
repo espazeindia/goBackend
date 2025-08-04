@@ -3,7 +3,7 @@ package entities
 import "time"
 
 type Category struct {
-	CategoryID        string    `json:"id" bson:"_id"`
+	CategoryID        string    `json:"id" bson:"_id" binding:"omitempty"`
 	CategoryName      string    `json:"category_name" bson:"category_name"`
 	CategoryImage     string    `json:"category_image" bson:"category_image"`
 	CategoryCreatedAt time.Time `json:"category_created_at" bson:"category_created_at"`
@@ -11,7 +11,7 @@ type Category struct {
 }
 
 type Subcategory struct {
-	SubcategoryID        string    `json:"id" bson:"_id"`
+	SubcategoryID        string    `json:"id" bson:"_id" binding:"omitempty"`
 	SubcategoryName      string    `json:"subcategory_name" bson:"subcategory_name"`
 	SubcategoryImage     string    `json:"subcategory_image" bson:"subcategory_image"`
 	CategoryID           string    `json:"category_id" bson:"category_id"`
