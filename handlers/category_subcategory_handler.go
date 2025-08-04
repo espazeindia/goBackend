@@ -210,6 +210,44 @@ func (h *CategorySubcategoryHandler) GetSubcategoryByCategoryId(c *gin.Context) 
 		"data":    subcategory,
 	})
 }
+func (h *CategorySubcategoryHandler) UpdateCategory(c *gin.Context) {
+	categoryID := c.Param("id")
+	if categoryID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Category ID is invalid",
+			"message": "Category ID is required",
+		})
+		return
+	}
+
+	var request entities.UpdateCategoryRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "Request body is invalid",
+		})
+		return
+	}
+
+	response, err := h.categorySubcategoryUseCase.UpdateCategory(c.Request.Context(), &categoryID, &request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+		return
+	}
+	if response.Success {
+		c.JSON(http.StatusAccepted, gin.H{
+			"success": response.Success,
+			"message": response.Message,
+		})
+		return
+	}
+}
 
 // func (h *CategorySubcategoryHandler) GetCategoryById(c *gin.Context) {
 // 	categoryID := c.Param("id")
@@ -238,48 +276,7 @@ func (h *CategorySubcategoryHandler) GetSubcategoryByCategoryId(c *gin.Context) 
 // 	})
 // }
 
-// func (h *CategorySubcategoryHandler) UpdateCategory(c *gin.Context) {
-// 	categoryID := c.Param("id")
-// 	if categoryID == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Bad request",
-// 			"message": "Category ID is required",
-// 		})
-// 		return
-// 	}
-
-// 	var request entities.UpdateCategoryRequest
-// 	if err := c.ShouldBindJSON(&request); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Validation error",
-// 			"message": "request body is invalid",
-// 		})
-// 		return
-// 	}
-
-// 	category := &entities.Category{
-// 		CategoryID:    categoryID,
-// 		CategoryName:  request.CategoryName,
-// 		CategoryImage: request.CategoryImage,
-// 	}
-
-// 	err := h.categorySubcategoryUseCase.UpdateCategory(c.Request.Context(), category)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": "Some Internal Server Error Occured",
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"message": "Category updated successfully",
-// 	})
-// }
+//
 
 // func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
 // 	categoryID := c.Param("id")

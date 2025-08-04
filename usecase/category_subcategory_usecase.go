@@ -115,15 +115,12 @@ func (u *CategorySubcategoryUseCase) CreateSubcategory(ctx context.Context, requ
 	return u.categorySubcategoryRepo.CreateSubcategory(ctx, subcategory)
 }
 
+func (u *CategorySubcategoryUseCase) UpdateCategory(ctx context.Context, categoryId *string, request *entities.UpdateCategoryRequest) (*entities.MessageResponse, error) {
+	return u.categorySubcategoryRepo.UpdateCategory(ctx, categoryId, request)
+}
+
 // func (u *CategorySubcategoryUseCase) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
 // 	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
-// }
-
-// func (u *CategorySubcategoryUseCase) UpdateCategory(ctx context.Context, category *entities.Category) error {
-// 	// Update timestamp
-// 	category.CategoryUpdatedAt = time.Now()
-
-// 	return u.categorySubcategoryRepo.UpdateCategory(ctx, category)
 // }
 
 // func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categoryID string) error {
