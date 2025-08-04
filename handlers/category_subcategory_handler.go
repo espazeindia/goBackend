@@ -63,6 +63,46 @@ func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
 	})
 }
 
+func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+	search := c.DefaultQuery("search", "")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid limit parameter",
+			"message": "Limit parameter is invalid",
+		})
+		return
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid offset parameter",
+			"message": "Offset parameter is invalid",
+		})
+		return
+	}
+	subcategories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context(), limit, offset, &search)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    subcategories,
+	})
+}
+
 // func (h *CategorySubcategoryHandler) GetCategoryById(c *gin.Context) {
 // 	categoryID := c.Param("id")
 // 	if categoryID == "" {
@@ -234,24 +274,6 @@ func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{
 // 		"success": true,
 // 		"data":    category,
-// 	})
-// }
-
-// // Subcategory handlers
-// func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
-// 	subcategories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context())
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"data":    subcategories,
 // 	})
 // }
 

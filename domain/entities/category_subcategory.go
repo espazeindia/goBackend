@@ -59,3 +59,10 @@ type PaginatedCategoryResponse struct {
 	Offset     int64       `json:"offset"`
 	TotalPages int64       `json:"total_pages"`
 }
+type PaginatedSubCategoryResponse struct {
+	SubCategory []*Subcategory `json:"sub_category"`
+	Total       int64          `json:"total"`
+	Limit       int64          `json:"limit"`
+	Offset      int64          `json:"offset"`
+	TotalPages  int64          `json:"total_pages"`
+}

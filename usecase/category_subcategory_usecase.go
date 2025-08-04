@@ -42,6 +42,28 @@ func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context, limit
 	}, nil
 }
 
+func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedSubCategoryResponse, error) {
+	if limit < 10 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	sub_category, total, err := u.categorySubcategoryRepo.GetAllSubcategories(ctx, limit, offset, search)
+	if err != nil {
+		return nil, err
+	}
+	var totalPages int64 = (total + limit - 1) / limit
+
+	return &entities.PaginatedSubCategoryResponse{
+		SubCategory: sub_category,
+		Total:       total,
+		Limit:       limit,
+		Offset:      offset,
+		TotalPages:  totalPages,
+	}, nil
+}
+
 // func (u *CategorySubcategoryUseCase) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
 // 	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
 // }
@@ -64,11 +86,6 @@ func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context, limit
 
 // func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categoryID string) error {
 // 	return u.categorySubcategoryRepo.DeleteCategory(ctx, categoryID)
-// }
-
-// // Subcategory operations
-// func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
-// 	return u.categorySubcategoryRepo.GetAllSubcategories(ctx)
 // }
 
 // func (u *CategorySubcategoryUseCase) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {

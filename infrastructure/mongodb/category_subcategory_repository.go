@@ -26,7 +26,7 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 	filter := bson.M{}
 	if *search != "" {
 		filter = bson.M{
-			"metadata_name": bson.M{"$regex": search, "$options": "i"},
+			"category_name": bson.M{"$regex": search, "$options": "i"},
 		}
 	}
 	total, err := collection.CountDocuments(ctx, filter)
@@ -37,7 +37,7 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 	opts := options.Find().
 		SetLimit(limit).
 		SetSkip(offset * limit).
-		SetSort(bson.D{{Key: "metadata_created_at", Value: -1}}) // Sort by creation date descending
+		SetSort(bson.D{{Key: "category_created_at", Value: -1}}) // Sort by creation date descending
 
 	cursor, err := collection.Find(ctx, filter, opts)
 	if err != nil {
@@ -51,6 +51,39 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 	}
 
 	return categories, total, nil
+}
+
+// Subcategory operations
+func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error) {
+	collection := r.db.Collection("subcategories")
+	filter := bson.M{}
+	if *search != "" {
+		filter = bson.M{
+			"subcategory_name": bson.M{"$regex": search, "$options": "i"},
+		}
+	}
+	total, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetLimit(limit).
+		SetSkip(offset * limit).
+		SetSort(bson.D{{Key: "subcategory_created_at", Value: -1}}) // Sort by creation date descending
+
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var subcategories []*entities.Subcategory
+	if err := cursor.All(ctx, &subcategories); err != nil {
+		return nil, 0, err
+	}
+
+	return subcategories, total, nil
 }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
@@ -114,22 +147,6 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 
 // 	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
 // 	return err
-// }
-
-// // Subcategory operations
-// func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
-// 	collection := r.db.Collection("subcategories")
-// 	cursor, err := collection.Find(ctx, bson.M{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer cursor.Close(ctx)
-
-// 	var subcategories []*entities.Subcategory
-// 	if err := cursor.All(ctx, &subcategories); err != nil {
-// 		return nil, err
-// 	}
-// 	return subcategories, nil
 // }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
