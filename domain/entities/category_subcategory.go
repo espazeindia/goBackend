@@ -22,7 +22,7 @@ type Subcategory struct {
 // Request DTOs
 type CreateCategoryRequest struct {
 	CategoryName  string `json:"category_name" binding:"required"`
-	CategoryImage string `json:"category_image" binding: "required"`
+	CategoryImage string `json:"category_image" binding:"required"`
 }
 
 type UpdateCategoryRequest struct {
