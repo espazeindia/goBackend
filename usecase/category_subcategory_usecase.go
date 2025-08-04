@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
@@ -64,17 +65,21 @@ func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context, li
 	}, nil
 }
 
+func (u *CategorySubcategoryUseCase) CreateCategory(ctx context.Context, request *entities.CreateCategoryRequest) (*entities.MessageResponse, error) {
+	// Set timestamps
+	now := time.Now()
+	category := &entities.Category{
+		CategoryName:      request.CategoryName,
+		CategoryImage:     request.CategoryImage,
+		CategoryCreatedAt: now,
+		CategoryUpdatedAt: now,
+	}
+
+	return u.categorySubcategoryRepo.CreateCategory(ctx, category)
+}
+
 // func (u *CategorySubcategoryUseCase) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
 // 	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
-// }
-
-// func (u *CategorySubcategoryUseCase) CreateCategory(ctx context.Context, category *entities.Category) error {
-// 	// Set timestamps
-// 	now := time.Now()
-// 	category.CategoryCreatedAt = now
-// 	category.CategoryUpdatedAt = now
-
-// 	return u.categorySubcategoryRepo.CreateCategory(ctx, category)
 // }
 
 // func (u *CategorySubcategoryUseCase) UpdateCategory(ctx context.Context, category *entities.Category) error {

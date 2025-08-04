@@ -122,7 +122,10 @@ func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata
 	if err != nil {
 		return &entities.MetadataApiResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
 	}
-	objectID := result.InsertedID.(primitive.ObjectID)
+	objectID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MetadataApiResponse{Success: false, Message: "Error Creating Metadata", Error: "ObjectId fetch error"}, nil
+	}
 	stringID := objectID.Hex()
 	return &entities.MetadataApiResponse{Success: true, Message: "Metadata Created Successfully", Id: stringID}, nil
 }

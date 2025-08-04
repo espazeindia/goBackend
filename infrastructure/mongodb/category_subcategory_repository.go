@@ -6,6 +6,7 @@ import (
 	"espazeBackend/domain/repositories"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -86,6 +87,32 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.C
 	return subcategories, total, nil
 }
 
+func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Context, category *entities.Category) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("categories")
+
+	result, err := collection.InsertOne(ctx, category)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating category",
+			Error:   "Database error",
+		}, err
+	}
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating category",
+			Error:   "InsertedId error",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Category Created",
+	}, err
+
+}
+
 // func (r *CategorySubcategoryRepositoryMongoDB) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
 // 	collection := r.db.Collection("categories")
 
@@ -100,22 +127,6 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.C
 // 		return nil, err
 // 	}
 // 	return &category, nil
-// }
-
-// func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Context, category *entities.Category) error {
-// 	collection := r.db.Collection("categories")
-
-// 	// Generate new ObjectID
-// 	objectID := primitive.NewObjectID()
-// 	category.CategoryID = objectID.Hex()
-
-// 	// Set timestamps
-// 	now := primitive.NewDateTimeFromTime(category.CategoryCreatedAt)
-// 	category.CategoryCreatedAt = now.Time()
-// 	category.CategoryUpdatedAt = now.Time()
-
-// 	_, err := collection.InsertOne(ctx, category)
-// 	return err
 // }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) UpdateCategory(ctx context.Context, category *entities.Category) error {

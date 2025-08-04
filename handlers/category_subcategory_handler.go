@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"espazeBackend/domain/entities"
 	"espazeBackend/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -103,6 +104,36 @@ func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
 	})
 }
 
+func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
+	var request entities.CreateCategoryRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "Request body is invalid",
+		})
+		return
+	}
+
+	result, err := h.categorySubcategoryUseCase.CreateCategory(c.Request.Context(), &request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "Some Internal Server Error Occured",
+		})
+		return
+	}
+	if result.Success {
+		c.JSON(http.StatusCreated, gin.H{
+			"success": result.Success,
+			"message": result.Message,
+		})
+		return
+	}
+
+}
+
 // func (h *CategorySubcategoryHandler) GetCategoryById(c *gin.Context) {
 // 	categoryID := c.Param("id")
 // 	if categoryID == "" {
@@ -127,38 +158,6 @@ func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{
 // 		"success": true,
 // 		"data":    category,
-// 	})
-// }
-
-// func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
-// 	var request entities.CreateCategoryRequest
-// 	if err := c.ShouldBindJSON(&request); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Validation error",
-// 			"message": "Request body is invalid",
-// 		})
-// 		return
-// 	}
-
-// 	category := &entities.Category{
-// 		CategoryName:  request.CategoryName,
-// 		CategoryImage: request.CategoryImage,
-// 	}
-
-// 	err := h.categorySubcategoryUseCase.CreateCategory(c.Request.Context(), category)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": "Some Internal Server Error Occured",
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusCreated, gin.H{
-// 		"success": true,
-// 		"message": "Category created successfully",
 // 	})
 // }
 

@@ -22,7 +22,7 @@ type Subcategory struct {
 // Request DTOs
 type CreateCategoryRequest struct {
 	CategoryName  string `json:"category_name" binding:"required"`
-	CategoryImage string `json:"category_image"`
+	CategoryImage string `json:"category_image" binding: "required"`
 }
 
 type UpdateCategoryRequest struct {
@@ -65,4 +65,12 @@ type PaginatedSubCategoryResponse struct {
 	Limit       int64          `json:"limit"`
 	Offset      int64          `json:"offset"`
 	TotalPages  int64          `json:"total_pages"`
+}
+
+type MessageResponse struct {
+	Success     bool         `json:"success"`
+	Message     string       `json:"message"`
+	Error       string       `json:"error" binding:"omitempty"`
+	Category    *Category    `json:"category" binding:"omitempty"`
+	SubCategory *Subcategory `json:"sub_category" binding:"omitempty"`
 }
