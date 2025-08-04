@@ -87,6 +87,39 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.C
 	return subcategories, total, nil
 }
 
+func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryByCategoryId(ctx context.Context, categoryId *string, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error) {
+	collection := r.db.Collection("subcategories")
+	filter := bson.M{"category_id": categoryId}
+	if *search != "" {
+		filter = bson.M{
+			"subcategory_name": bson.M{"$regex": search, "$options": "i"},
+			"category_id":      categoryId,
+		}
+	}
+	total, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetLimit(limit).
+		SetSkip(offset * limit).
+		SetSort(bson.D{{Key: "subcategory_created_at", Value: -1}}) // Sort by creation date descending
+
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var subcategories []*entities.Subcategory
+	if err := cursor.All(ctx, &subcategories); err != nil {
+		return nil, 0, err
+	}
+
+	return subcategories, total, nil
+}
+
 func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Context, category *entities.Category) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("categories")
 

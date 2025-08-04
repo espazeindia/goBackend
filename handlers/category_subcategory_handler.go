@@ -161,6 +161,56 @@ func (h *CategorySubcategoryHandler) CreateSubcategory(c *gin.Context) {
 	})
 }
 
+func (h *CategorySubcategoryHandler) GetSubcategoryByCategoryId(c *gin.Context) {
+	CategoryID := c.Param("id")
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+	search := c.DefaultQuery("search", "")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid limit parameter",
+			"message": "Limit parameter is invalid",
+		})
+		return
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid offset parameter",
+			"message": "Offset parameter is invalid",
+		})
+		return
+	}
+	if CategoryID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid ca",
+			"message": "Subcategory ID is required",
+		})
+		return
+	}
+
+	subcategory, err := h.categorySubcategoryUseCase.GetSubcategoryByCategoryId(c.Request.Context(), &CategoryID, limit, offset, &search)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "Not found",
+			"message": "Subcategory not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    subcategory,
+	})
+}
+
 // func (h *CategorySubcategoryHandler) GetCategoryById(c *gin.Context) {
 // 	categoryID := c.Param("id")
 // 	if categoryID == "" {
@@ -300,33 +350,6 @@ func (h *CategorySubcategoryHandler) CreateSubcategory(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{
 // 		"success": true,
 // 		"data":    category,
-// 	})
-// }
-
-// func (h *CategorySubcategoryHandler) GetSubcategoryById(c *gin.Context) {
-// 	subcategoryID := c.Param("id")
-// 	if subcategoryID == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Bad request",
-// 			"message": "Subcategory ID is required",
-// 		})
-// 		return
-// 	}
-
-// 	subcategory, err := h.categorySubcategoryUseCase.GetSubcategoryById(c.Request.Context(), subcategoryID)
-// 	if err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{
-// 			"success": false,
-// 			"error":   "Not found",
-// 			"message": "Subcategory not found",
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"data":    subcategory,
 // 	})
 // }
 
