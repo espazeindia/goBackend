@@ -32,7 +32,7 @@ type UpdateCategoryRequest struct {
 
 type CreateSubcategoryRequest struct {
 	SubcategoryName  string `json:"subcategory_name" binding:"required"`
-	SubcategoryImage string `json:"subcategory_image"`
+	SubcategoryImage string `json:"subcategory_image" binding:"required"`
 	CategoryID       string `json:"category_id" binding:"required"`
 }
 

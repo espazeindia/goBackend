@@ -118,9 +118,9 @@ func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
 	result, err := h.categorySubcategoryUseCase.CreateCategory(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "Some Internal Server Error Occured",
+			"success": result.Success,
+			"error":   result.Error,
+			"message": result.Message,
 		})
 		return
 	}
@@ -132,6 +132,33 @@ func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 
+}
+
+func (h *CategorySubcategoryHandler) CreateSubcategory(c *gin.Context) {
+	var request entities.CreateSubcategoryRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	response, err := h.categorySubcategoryUseCase.CreateSubcategory(c.Request.Context(), &request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"message": response.Message,
+	})
 }
 
 // func (h *CategorySubcategoryHandler) GetCategoryById(c *gin.Context) {
@@ -300,40 +327,6 @@ func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{
 // 		"success": true,
 // 		"data":    subcategory,
-// 	})
-// }
-
-// func (h *CategorySubcategoryHandler) CreateSubcategory(c *gin.Context) {
-// 	var request entities.CreateSubcategoryRequest
-// 	if err := c.ShouldBindJSON(&request); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Validation error",
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	subcategory := &entities.Subcategory{
-// 		SubcategoryName:  request.SubcategoryName,
-// 		SubcategoryImage: request.SubcategoryImage,
-// 		CategoryID:       request.CategoryID,
-// 	}
-
-// 	err := h.categorySubcategoryUseCase.CreateSubcategory(c.Request.Context(), subcategory)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusCreated, gin.H{
-// 		"success": true,
-// 		"data":    subcategory,
-// 		"message": "Subcategory created successfully",
 // 	})
 // }
 

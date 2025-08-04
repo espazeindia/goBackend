@@ -109,8 +109,32 @@ func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Contex
 	return &entities.MessageResponse{
 		Success: true,
 		Message: "Category Created",
-	}, err
+	}, nil
 
+}
+func (r *CategorySubcategoryRepositoryMongoDB) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("subcategories")
+
+	result, err := collection.InsertOne(ctx, subcategory)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating sub-category",
+			Error:   "Database error",
+		}, err
+	}
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating sub-category",
+			Error:   "InsertedId error",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Sub-Category Created",
+	}, nil
 }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
@@ -190,22 +214,6 @@ func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Contex
 // 		return nil, err
 // 	}
 // 	return subcategories, nil
-// }
-
-// func (r *CategorySubcategoryRepositoryMongoDB) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
-// 	collection := r.db.Collection("subcategories")
-
-// 	// Generate new ObjectID
-// 	objectID := primitive.NewObjectID()
-// 	subcategory.SubcategoryID = objectID.Hex()
-
-// 	// Set timestamps
-// 	now := primitive.NewDateTimeFromTime(subcategory.SubcategoryCreatedAt)
-// 	subcategory.SubcategoryCreatedAt = now.Time()
-// 	subcategory.SubcategoryUpdatedAt = now.Time()
-
-// 	_, err := collection.InsertOne(ctx, subcategory)
-// 	return err
 // }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {

@@ -78,6 +78,20 @@ func (u *CategorySubcategoryUseCase) CreateCategory(ctx context.Context, request
 	return u.categorySubcategoryRepo.CreateCategory(ctx, category)
 }
 
+func (u *CategorySubcategoryUseCase) CreateSubcategory(ctx context.Context, request *entities.CreateSubcategoryRequest) (*entities.MessageResponse, error) {
+	// Set timestamps
+	now := time.Now()
+	subcategory := &entities.Subcategory{
+		SubcategoryName:      request.SubcategoryName,
+		SubcategoryImage:     request.SubcategoryImage,
+		CategoryID:           request.CategoryID,
+		SubcategoryCreatedAt: now,
+		SubcategoryUpdatedAt: now,
+	}
+
+	return u.categorySubcategoryRepo.CreateSubcategory(ctx, subcategory)
+}
+
 // func (u *CategorySubcategoryUseCase) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
 // 	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
 // }
@@ -101,14 +115,7 @@ func (u *CategorySubcategoryUseCase) CreateCategory(ctx context.Context, request
 // 	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
 // }
 
-// func (u *CategorySubcategoryUseCase) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
-// 	// Set timestamps
-// 	now := time.Now()
-// 	subcategory.SubcategoryCreatedAt = now
-// 	subcategory.SubcategoryUpdatedAt = now
-
-// 	return u.categorySubcategoryRepo.CreateSubcategory(ctx, subcategory)
-// }
+//
 
 // func (u *CategorySubcategoryUseCase) UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
 // 	// Update timestamp
