@@ -7,6 +7,7 @@ import (
 	db "espazeBackend/config"
 	routes "espazeBackend/routes"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,13 +44,13 @@ func main() {
 	// 🚀 Setup Gin
 	router := gin.Default()
 
-	// router.Use(cors.New(cors.Config{
-	// 	AllowAllOrigins:  true, // Allow all origins
-	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	// 	AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-	// 	ExposeHeaders:    []string{"Content-Length"},
-	// 	AllowCredentials: true,
-	// }))
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true, // Allow all origins
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 	router.Use(SecurityHeaders())
 
 	// Setup routes
