@@ -52,18 +52,14 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 		return nil, err
 	}
 
-	hasNext := offset*limit+limit < total
-	hasPrevious := offset > 0
 	var totalPages int64 = (total + limit - 1) / limit
 
 	return &entities.PaginatedMetadataResponse{
-		Metadata:    metadata,
-		Total:       total,
-		Limit:       limit,
-		Offset:      offset,
-		HasNext:     hasNext,
-		HasPrevious: hasPrevious,
-		TotalPages:  totalPages,
+		Metadata:   metadata,
+		Total:      total,
+		Limit:      limit,
+		Offset:     offset,
+		TotalPages: totalPages,
 	}, nil
 }
 

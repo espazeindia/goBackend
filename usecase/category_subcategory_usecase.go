@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
@@ -21,113 +20,131 @@ func NewCategorySubcategoryUseCase(categorySubcategoryRepo repositories.Category
 }
 
 // Category operations
-func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context) ([]*entities.Category, error) {
-	return u.categorySubcategoryRepo.GetAllCategories(ctx)
-}
-
-func (u *CategorySubcategoryUseCase) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
-	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
-}
-
-func (u *CategorySubcategoryUseCase) CreateCategory(ctx context.Context, category *entities.Category) error {
-	// Set timestamps
-	now := time.Now()
-	category.CategoryCreatedAt = now
-	category.CategoryUpdatedAt = now
-
-	return u.categorySubcategoryRepo.CreateCategory(ctx, category)
-}
-
-func (u *CategorySubcategoryUseCase) UpdateCategory(ctx context.Context, category *entities.Category) error {
-	// Update timestamp
-	category.CategoryUpdatedAt = time.Now()
-
-	return u.categorySubcategoryRepo.UpdateCategory(ctx, category)
-}
-
-func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categoryID string) error {
-	return u.categorySubcategoryRepo.DeleteCategory(ctx, categoryID)
-}
-
-// Subcategory operations
-func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
-	return u.categorySubcategoryRepo.GetAllSubcategories(ctx)
-}
-
-func (u *CategorySubcategoryUseCase) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
-	return u.categorySubcategoryRepo.GetSubcategoryById(ctx, subcategoryID)
-}
-
-func (u *CategorySubcategoryUseCase) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
-	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
-}
-
-func (u *CategorySubcategoryUseCase) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
-	// Set timestamps
-	now := time.Now()
-	subcategory.SubcategoryCreatedAt = now
-	subcategory.SubcategoryUpdatedAt = now
-
-	return u.categorySubcategoryRepo.CreateSubcategory(ctx, subcategory)
-}
-
-func (u *CategorySubcategoryUseCase) UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
-	// Update timestamp
-	subcategory.SubcategoryUpdatedAt = time.Now()
-
-	return u.categorySubcategoryRepo.UpdateSubcategory(ctx, subcategory)
-}
-
-func (u *CategorySubcategoryUseCase) DeleteSubcategory(ctx context.Context, subcategoryID string) error {
-	return u.categorySubcategoryRepo.DeleteSubcategory(ctx, subcategoryID)
-}
-
-// Enhanced category response with subcategories
-type CategoryWithSubcategories struct {
-	*entities.Category
-	Subcategories []*entities.Subcategory `json:"subcategories"`
-}
-
-func (u *CategorySubcategoryUseCase) GetCategoryWithSubcategories(ctx context.Context, categoryID string) (*CategoryWithSubcategories, error) {
-	// Get category
-	category, err := u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
+func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedCategoryResponse, error) {
+	if limit < 10 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	categories, total, err := u.categorySubcategoryRepo.GetAllCategories(ctx, limit, offset, search)
 	if err != nil {
 		return nil, err
 	}
+	var totalPages int64 = (total + limit - 1) / limit
 
-	// Get subcategories for this category
-	subcategories, err := u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CategoryWithSubcategories{
-		Category:      category,
-		Subcategories: subcategories,
+	return &entities.PaginatedCategoryResponse{
+		Category:   categories,
+		Total:      total,
+		Limit:      limit,
+		Offset:     offset,
+		TotalPages: totalPages,
 	}, nil
 }
 
-func (u *CategorySubcategoryUseCase) GetAllCategoriesWithSubcategories(ctx context.Context) ([]*CategoryWithSubcategories, error) {
-	// Get all categories
-	categories, err := u.categorySubcategoryRepo.GetAllCategories(ctx)
-	if err != nil {
-		return nil, err
-	}
+// func (u *CategorySubcategoryUseCase) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
+// 	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
+// }
 
-	var result []*CategoryWithSubcategories
+// func (u *CategorySubcategoryUseCase) CreateCategory(ctx context.Context, category *entities.Category) error {
+// 	// Set timestamps
+// 	now := time.Now()
+// 	category.CategoryCreatedAt = now
+// 	category.CategoryUpdatedAt = now
 
-	// For each category, get its subcategories
-	for _, category := range categories {
-		subcategories, err := u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, category.CategoryID)
-		if err != nil {
-			return nil, err
-		}
+// 	return u.categorySubcategoryRepo.CreateCategory(ctx, category)
+// }
 
-		result = append(result, &CategoryWithSubcategories{
-			Category:      category,
-			Subcategories: subcategories,
-		})
-	}
+// func (u *CategorySubcategoryUseCase) UpdateCategory(ctx context.Context, category *entities.Category) error {
+// 	// Update timestamp
+// 	category.CategoryUpdatedAt = time.Now()
 
-	return result, nil
-}
+// 	return u.categorySubcategoryRepo.UpdateCategory(ctx, category)
+// }
+
+// func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categoryID string) error {
+// 	return u.categorySubcategoryRepo.DeleteCategory(ctx, categoryID)
+// }
+
+// // Subcategory operations
+// func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
+// 	return u.categorySubcategoryRepo.GetAllSubcategories(ctx)
+// }
+
+// func (u *CategorySubcategoryUseCase) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
+// 	return u.categorySubcategoryRepo.GetSubcategoryById(ctx, subcategoryID)
+// }
+
+// func (u *CategorySubcategoryUseCase) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
+// 	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
+// }
+
+// func (u *CategorySubcategoryUseCase) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
+// 	// Set timestamps
+// 	now := time.Now()
+// 	subcategory.SubcategoryCreatedAt = now
+// 	subcategory.SubcategoryUpdatedAt = now
+
+// 	return u.categorySubcategoryRepo.CreateSubcategory(ctx, subcategory)
+// }
+
+// func (u *CategorySubcategoryUseCase) UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
+// 	// Update timestamp
+// 	subcategory.SubcategoryUpdatedAt = time.Now()
+
+// 	return u.categorySubcategoryRepo.UpdateSubcategory(ctx, subcategory)
+// }
+
+// func (u *CategorySubcategoryUseCase) DeleteSubcategory(ctx context.Context, subcategoryID string) error {
+// 	return u.categorySubcategoryRepo.DeleteSubcategory(ctx, subcategoryID)
+// }
+
+// // Enhanced category response with subcategories
+// type CategoryWithSubcategories struct {
+// 	*entities.Category
+// 	Subcategories []*entities.Subcategory `json:"subcategories"`
+// }
+
+// func (u *CategorySubcategoryUseCase) GetCategoryWithSubcategories(ctx context.Context, categoryID string) (*CategoryWithSubcategories, error) {
+// 	// Get category
+// 	category, err := u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Get subcategories for this category
+// 	subcategories, err := u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &CategoryWithSubcategories{
+// 		Category:      category,
+// 		Subcategories: subcategories,
+// 	}, nil
+// }
+
+// func (u *CategorySubcategoryUseCase) GetAllCategoriesWithSubcategories(ctx context.Context) ([]*CategoryWithSubcategories, error) {
+// 	// Get all categories
+// 	categories, err := u.categorySubcategoryRepo.GetAllCategories(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var result []*CategoryWithSubcategories
+
+// 	// For each category, get its subcategories
+// 	for _, category := range categories {
+// 		subcategories, err := u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, category.CategoryID)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+
+// 		result = append(result, &CategoryWithSubcategories{
+// 			Category:      category,
+// 			Subcategories: subcategories,
+// 		})
+// 	}
+
+// 	return result, nil
+// }

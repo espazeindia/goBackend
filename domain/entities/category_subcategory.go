@@ -51,3 +51,11 @@ type CategoryWithSubcategoriesResponse struct {
 type CategoriesWithSubcategoriesResponse struct {
 	Categories []*CategoryWithSubcategoriesResponse `json:"categories"`
 }
+
+type PaginatedCategoryResponse struct {
+	Category   []*Category `json:"category"`
+	Total      int64       `json:"total"`
+	Limit      int64       `json:"limit"`
+	Offset     int64       `json:"offset"`
+	TotalPages int64       `json:"total_pages"`
+}

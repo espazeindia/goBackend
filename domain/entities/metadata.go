@@ -70,13 +70,11 @@ type UpdateMetadataRequest struct {
 
 // PaginatedMetadataResponse represents paginated metadata response
 type PaginatedMetadataResponse struct {
-	Metadata    []*Metadata `json:"metadata"`
-	Total       int64       `json:"total"`
-	Limit       int64       `json:"limit"`
-	Offset      int64       `json:"offset"`
-	HasNext     bool        `json:"has_next"`
-	HasPrevious bool        `json:"has_previous"`
-	TotalPages  int64       `json:"total_pages"`
+	Metadata   []*Metadata `json:"metadata"`
+	Total      int64       `json:"total"`
+	Limit      int64       `json:"limit"`
+	Offset     int64       `json:"offset"`
+	TotalPages int64       `json:"total_pages"`
 }
 
 type AddReviewRequest struct {

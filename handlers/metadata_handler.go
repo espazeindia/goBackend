@@ -31,6 +31,7 @@ func (h *MetadataHandler) GetMetadata(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Invalid limit parameter",
+			"message": "Limit parameter is invalid",
 		})
 		return
 	}
@@ -40,6 +41,7 @@ func (h *MetadataHandler) GetMetadata(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Invalid offset parameter",
+			"message": "Offset parameter is invalid",
 		})
 		return
 	}
@@ -49,6 +51,7 @@ func (h *MetadataHandler) GetMetadata(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to retrieve metadata: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
 		})
 		return
 	}
@@ -66,6 +69,7 @@ func (h *MetadataHandler) GetMetadataByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Metadata ID is required",
+			"message": "Metadata ID is invalid",
 		})
 		return
 	}
@@ -75,6 +79,7 @@ func (h *MetadataHandler) GetMetadataByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"error":   "Metadata not found: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
 		})
 		return
 	}
@@ -92,6 +97,7 @@ func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Invalid request body: " + err.Error(),
+			"message": "Request body is invalid",
 		})
 		return
 	}
@@ -101,6 +107,7 @@ func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to create metadata: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
 		})
 		return
 	}
@@ -146,6 +153,7 @@ func (h *MetadataHandler) UpdateMetadata(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to update metadata: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
 		})
 		return
 	}
@@ -175,6 +183,7 @@ func (h *MetadataHandler) DeleteMetadata(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Metadata ID is required",
+			"message": "Metadata ID is invalid",
 		})
 		return
 	}
@@ -184,6 +193,7 @@ func (h *MetadataHandler) DeleteMetadata(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to delete metadata: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
 		})
 		return
 	}
@@ -211,12 +221,14 @@ func (h *MetadataHandler) AddReview(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Invalid request body: " + err.Error(),
+			"message": "Request body is invalid",
 		})
 	}
 	if req.Rating < 1 || req.Rating > 5 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Rating must be between 1 and 5",
+			"message": "Star rating is out of the range 1 to 5",
 		})
 		return
 	}
@@ -225,6 +237,7 @@ func (h *MetadataHandler) AddReview(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to add review: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{
