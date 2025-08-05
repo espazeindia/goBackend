@@ -23,7 +23,7 @@ func NewCategorySubcategoryRepositoryMongoDB(db *mongo.Database) repositories.Ca
 }
 
 // Category operations
-func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error) {
+func (r *CategorySubcategoryRepositoryMongoDB) GetCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error) {
 	collection := r.db.Collection("categories")
 	filter := bson.M{}
 	if *search != "" {
@@ -53,6 +53,24 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 	}
 
 	return categories, total, nil
+}
+
+func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Context) ([]*entities.Category, error) {
+	collection := r.db.Collection("categories")
+	filter := bson.M{}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var categories []*entities.Category
+	if err := cursor.All(ctx, &categories); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }
 
 // Subcategory operations

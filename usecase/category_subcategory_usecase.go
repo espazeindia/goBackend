@@ -21,14 +21,14 @@ func NewCategorySubcategoryUseCase(categorySubcategoryRepo repositories.Category
 }
 
 // Category operations
-func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedCategoryResponse, error) {
+func (u *CategorySubcategoryUseCase) GetCategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedCategoryResponse, error) {
 	if limit < 10 {
 		limit = 10
 	}
 	if offset < 0 {
 		offset = 0
 	}
-	categories, total, err := u.categorySubcategoryRepo.GetAllCategories(ctx, limit, offset, search)
+	categories, total, err := u.categorySubcategoryRepo.GetCategories(ctx, limit, offset, search)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +41,9 @@ func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context, limit
 		Offset:     offset,
 		TotalPages: totalPages,
 	}, nil
+}
+func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context) ([]*entities.Category, error) {
+	return u.categorySubcategoryRepo.GetAllCategories(ctx)
 }
 
 func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedSubCategoryResponse, error) {

@@ -23,7 +23,7 @@ func NewCategorySubcategoryHandler(categorySubcategoryUseCase *usecase.CategoryS
 }
 
 // Category handlers
-func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
+func (h *CategorySubcategoryHandler) GetCategories(c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "10")
 	offsetStr := c.DefaultQuery("offset", "0")
 	search := c.DefaultQuery("search", "")
@@ -48,7 +48,24 @@ func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
 		return
 	}
 
-	categories, err := h.categorySubcategoryUseCase.GetAllCategories(c.Request.Context(), limit, offset, &search)
+	categories, err := h.categorySubcategoryUseCase.GetCategories(c.Request.Context(), limit, offset, &search)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "Some Internal Server Error Occured",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    categories,
+	})
+}
+
+func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
+	categories, err := h.categorySubcategoryUseCase.GetAllCategories(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -249,6 +266,51 @@ func (h *CategorySubcategoryHandler) UpdateCategory(c *gin.Context) {
 	}
 }
 
+// func (h *CategorySubcategoryHandler) UpdateSubcategory(c *gin.Context) {
+// 	subcategoryID := c.Param("id")
+// 	if subcategoryID == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"success": false,
+// 			"error":   "Bad request",
+// 			"message": "Subcategory ID is required",
+// 		})
+// 		return
+// 	}
+
+// 	var request entities.UpdateSubcategoryRequest
+// 	if err := c.ShouldBindJSON(&request); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"success": false,
+// 			"error":   "Validation error",
+// 			"message": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	subcategory := &entities.Subcategory{
+// 		SubcategoryID:    subcategoryID,
+// 		SubcategoryName:  request.SubcategoryName,
+// 		SubcategoryImage: request.SubcategoryImage,
+// 		CategoryID:       request.CategoryID,
+// 	}
+
+// 	err := h.categorySubcategoryUseCase.UpdateSubcategory(c.Request.Context(), subcategory)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"success": false,
+// 			"error":   "Internal server error",
+// 			"message": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"success": true,
+// 		"data":    subcategory,
+// 		"message": "Subcategory updated successfully",
+// 	})
+// }
+
 // func (h *CategorySubcategoryHandler) GetCategoryById(c *gin.Context) {
 // 	categoryID := c.Param("id")
 // 	if categoryID == "" {
@@ -347,51 +409,6 @@ func (h *CategorySubcategoryHandler) UpdateCategory(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{
 // 		"success": true,
 // 		"data":    category,
-// 	})
-// }
-
-// func (h *CategorySubcategoryHandler) UpdateSubcategory(c *gin.Context) {
-// 	subcategoryID := c.Param("id")
-// 	if subcategoryID == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Bad request",
-// 			"message": "Subcategory ID is required",
-// 		})
-// 		return
-// 	}
-
-// 	var request entities.UpdateSubcategoryRequest
-// 	if err := c.ShouldBindJSON(&request); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Validation error",
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	subcategory := &entities.Subcategory{
-// 		SubcategoryID:    subcategoryID,
-// 		SubcategoryName:  request.SubcategoryName,
-// 		SubcategoryImage: request.SubcategoryImage,
-// 		CategoryID:       request.CategoryID,
-// 	}
-
-// 	err := h.categorySubcategoryUseCase.UpdateSubcategory(c.Request.Context(), subcategory)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"data":    subcategory,
-// 		"message": "Subcategory updated successfully",
 // 	})
 // }
 

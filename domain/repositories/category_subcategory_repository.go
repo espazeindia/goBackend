@@ -9,7 +9,8 @@ import (
 // CategorySubcategoryRepository defines the interface for category and subcategory data access operations
 type CategorySubcategoryRepository interface {
 	// Category operations
-	GetAllCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error)
+	GetCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error)
+	GetAllCategories(ctx context.Context) ([]*entities.Category, error)
 	GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)
 	CreateCategory(ctx context.Context, category *entities.Category) (*entities.MessageResponse, error)
 	CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (*entities.MessageResponse, error)

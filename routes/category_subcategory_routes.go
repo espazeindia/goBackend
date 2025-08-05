@@ -17,7 +17,9 @@ func SetupCategorySubcategoryRoutes(router *gin.RouterGroup) {
 	var categorySubcategoryHandler *handlers.CategorySubcategoryHandler = handlers.NewCategorySubcategoryHandler(categorySubcategoryUseCase)
 
 	// Category routes
-	router.GET("/getCategories", categorySubcategoryHandler.GetAllCategories)
+
+	router.GET("/getCategories", categorySubcategoryHandler.GetCategories)
+	router.GET("/getAllCategories", categorySubcategoryHandler.GetAllCategories)
 	// router.GET("/with-subcategories", categorySubcategoryHandler.GetAllCategoriesWithSubcategories)
 	// router.GET("/:id", categorySubcategoryHandler.GetCategoryById)
 	// router.GET("/:id/with-subcategories", categorySubcategoryHandler.GetCategoryWithSubcategories)
