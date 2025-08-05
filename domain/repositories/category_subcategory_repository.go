@@ -16,6 +16,7 @@ type CategorySubcategoryRepository interface {
 	CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (*entities.MessageResponse, error)
 	GetSubcategoryByCategoryId(ctx context.Context, categoryId *string, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)
 	UpdateCategory(ctx context.Context, categoryId *string, request *entities.UpdateCategoryRequest) (*entities.MessageResponse, error)
+	UpdateSubcategory(ctx context.Context, subcategoryID string, request *entities.UpdateSubcategoryRequest) (*entities.MessageResponse, error)
 
 	// GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error)
 	// DeleteCategory(ctx context.Context, categoryID string) error
@@ -23,6 +24,5 @@ type CategorySubcategoryRepository interface {
 	// // Subcategory operations
 	// GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error)
 	// GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error)
-	// UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error
 	// DeleteSubcategory(ctx context.Context, subcategoryID string) error
 }

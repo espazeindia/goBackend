@@ -261,6 +261,48 @@ func (r *CategorySubcategoryRepositoryMongoDB) UpdateCategory(ctx context.Contex
 
 }
 
+func (r *CategorySubcategoryRepositoryMongoDB) UpdateSubcategory(ctx context.Context, subcategoryID string, request *entities.UpdateSubcategoryRequest) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("subcategories")
+
+	objectID, err := primitive.ObjectIDFromHex(subcategoryID)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from Sub-Category Id",
+			Error:   "ObjectId from Hex error",
+		}, err
+	}
+	updateDocs := bson.M{}
+	if request.SubcategoryName != "" {
+		updateDocs["subcategory_name"] = request.SubcategoryName
+	}
+	if request.SubcategoryImage != "" {
+		updateDocs["category_image"] = request.SubcategoryImage
+	}
+	if request.CategoryID != "" {
+		updateDocs["category_id"] = request.CategoryID
+	}
+	updateDocs["subcategory_updated_at"] = time.Now()
+
+	result, err := collection.UpdateOne(
+		ctx,
+		bson.M{"_id": objectID},
+		bson.M{"$set": updateDocs},
+	)
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No matching document found",
+			Error:   "No Document Matched",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Category Updated Successfully",
+	}, nil
+
+}
+
 // func (r *CategorySubcategoryRepositoryMongoDB) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
 // 	collection := r.db.Collection("categories")
 
