@@ -102,7 +102,7 @@ func (r *ProductRepositoryMongoDB) GetProductsForSpecificStore(ctx context.Conte
 				}{
 					InventoryId:              inventory.InventoryID,
 					InventoryProductId:       inventoryProduct.InventoryProductID,
-					MetadataProductId:        metadata.MetadataProductID.Hex(),
+					MetadataProductId:        metadata.MetadataProductID,
 					ProductVisibility:        inventoryProduct.ProductVisibility,
 					MetadataName:             metadata.MetadataName,
 					MetadataDescription:      metadata.MetadataDescription,

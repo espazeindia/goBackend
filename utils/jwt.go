@@ -11,6 +11,8 @@ import (
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -23,7 +25,7 @@ type TokenResponse struct {
 }
 
 // GenerateJWTToken generates a JWT token for the user
-func GenerateJWTToken(userID, email string) (string, error) {
+func GenerateJWTToken(userID, email, name, role string) (string, error) {
 	// Get JWT secret from environment variable
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
@@ -34,10 +36,11 @@ func GenerateJWTToken(userID, email string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
+		Name:   name,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "espaze-backend",
 			Subject:   userID,
 		},

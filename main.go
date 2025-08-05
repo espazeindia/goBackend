@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func SecurityHeaders() gin.HandlerFunc {
@@ -24,9 +23,14 @@ func SecurityHeaders() gin.HandlerFunc {
 
 func main() {
 	// 📦 Load environment variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("❌ Error loading .env file")
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("❌ Error loading .env file")
+	// }
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
 	mongoURI := os.Getenv("MONGO_URI")
@@ -40,11 +44,17 @@ func main() {
 	// 🚀 Setup Gin
 	router := gin.Default()
 
-	router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true, // Allow all origins
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 	router.Use(SecurityHeaders())
 
 	// Setup routes
 	routes.SetupRoutes(router)
 
-	router.Run(":8080")
+	router.Run(":" + port)
 }

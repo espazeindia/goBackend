@@ -55,7 +55,7 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Email)
+	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Email, operationalGuy.Name, "operations")
 	if err != nil {
 		return &entities.OperationalGuyLoginResponse{
 			Success: false,
@@ -250,7 +250,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.PhoneNumber)
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.PhoneNumber, existingUser.Name, "seller")
 	if err != nil {
 		return &entities.SellerVerifyOTPResponse{
 			Success: false,

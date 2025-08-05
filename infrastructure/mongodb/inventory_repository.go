@@ -73,7 +73,7 @@ func (r *InventoryRepositoryMongoDB) GetAllInventory(ctx context.Context, invent
 			responseInventory = append(responseInventory, entities.GetAllInventoryResponse{
 				InventoryId:              inventory.InventoryID,
 				InventoryProductId:       product.InventoryProductID,
-				MetadataProductId:        metadata.MetadataProductID.Hex(),
+				MetadataProductId:        metadata.MetadataProductID,
 				ProductVisibility:        product.ProductVisibility,
 				MetadataName:             metadata.MetadataName,
 				MetadataDescription:      metadata.MetadataDescription,
@@ -252,7 +252,7 @@ func (r *InventoryRepositoryMongoDB) GetInventoryById(ctx context.Context, inven
 	response := &entities.GetInventoryByIdResponse{
 		InventoryId:              inventory.InventoryID,
 		InventoryProductId:       inventoryProduct.InventoryProductID,
-		MetadataProductId:        metadata.MetadataProductID.Hex(),
+		MetadataProductId:        metadata.MetadataProductID,
 		ProductVisibility:        inventoryProduct.ProductVisibility,
 		MetadataName:             metadata.MetadataName,
 		MetadataDescription:      metadata.MetadataDescription,

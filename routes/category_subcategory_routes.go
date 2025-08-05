@@ -17,18 +17,20 @@ func SetupCategorySubcategoryRoutes(router *gin.RouterGroup) {
 	var categorySubcategoryHandler *handlers.CategorySubcategoryHandler = handlers.NewCategorySubcategoryHandler(categorySubcategoryUseCase)
 
 	// Category routes
-	router.GET("/", categorySubcategoryHandler.GetAllCategories)
-	router.GET("/with-subcategories", categorySubcategoryHandler.GetAllCategoriesWithSubcategories)
-	router.GET("/:id", categorySubcategoryHandler.GetCategoryById)
-	router.GET("/:id/with-subcategories", categorySubcategoryHandler.GetCategoryWithSubcategories)
-	router.POST("/", categorySubcategoryHandler.CreateCategory)
-	router.PUT("/:id", categorySubcategoryHandler.UpdateCategory)
-	router.DELETE("/:id", categorySubcategoryHandler.DeleteCategory)
 
-	// Subcategory routes
-	router.GET("/subcategory", categorySubcategoryHandler.GetAllSubcategories)
-	router.GET("/subcategory/:id", categorySubcategoryHandler.GetSubcategoryById)
-	router.POST("/subcategory", categorySubcategoryHandler.CreateSubcategory)
+	router.GET("/getCategories", categorySubcategoryHandler.GetCategories)
+	router.GET("/getAllCategories", categorySubcategoryHandler.GetAllCategories)
+	// router.GET("/with-subcategories", categorySubcategoryHandler.GetAllCategoriesWithSubcategories)
+	// router.GET("/:id", categorySubcategoryHandler.GetCategoryById)
+	// router.GET("/:id/with-subcategories", categorySubcategoryHandler.GetCategoryWithSubcategories)
+	router.POST("/createCategory", categorySubcategoryHandler.CreateCategory)
+	router.PUT("/updateCategory/:id", categorySubcategoryHandler.UpdateCategory)
+	// router.DELETE("/:id", categorySubcategoryHandler.DeleteCategory)
+
+	// // Subcategory routes
+	router.GET("/getSubCategories", categorySubcategoryHandler.GetAllSubcategories)
+	router.GET("/getSubcategoryByCategoryId/:id", categorySubcategoryHandler.GetSubcategoryByCategoryId)
+	router.POST("/createSubCategory", categorySubcategoryHandler.CreateSubcategory)
 	router.PUT("/subcategory/:id", categorySubcategoryHandler.UpdateSubcategory)
-	router.DELETE("/subcategory/:id", categorySubcategoryHandler.DeleteSubcategory)
+	// router.DELETE("/subcategory/:id", categorySubcategoryHandler.DeleteSubcategory)
 }

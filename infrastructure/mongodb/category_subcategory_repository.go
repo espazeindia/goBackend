@@ -4,10 +4,12 @@ import (
 	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // CategorySubcategoryRepositoryMongoDB implements the CategorySubcategoryRepository interface using MongoDB
@@ -21,9 +23,43 @@ func NewCategorySubcategoryRepositoryMongoDB(db *mongo.Database) repositories.Ca
 }
 
 // Category operations
+func (r *CategorySubcategoryRepositoryMongoDB) GetCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error) {
+	collection := r.db.Collection("categories")
+	filter := bson.M{}
+	if *search != "" {
+		filter = bson.M{
+			"category_name": bson.M{"$regex": search, "$options": "i"},
+		}
+	}
+	total, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetLimit(limit).
+		SetSkip(offset * limit).
+		SetSort(bson.D{{Key: "category_created_at", Value: -1}}) // Sort by creation date descending
+
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var categories []*entities.Category
+	if err := cursor.All(ctx, &categories); err != nil {
+		return nil, 0, err
+	}
+
+	return categories, total, nil
+}
+
 func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Context) ([]*entities.Category, error) {
 	collection := r.db.Collection("categories")
-	cursor, err := collection.Find(ctx, bson.M{})
+	filter := bson.M{}
+
+	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -33,163 +69,327 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 	if err := cursor.All(ctx, &categories); err != nil {
 		return nil, err
 	}
+
 	return categories, nil
 }
 
-func (r *CategorySubcategoryRepositoryMongoDB) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
-	collection := r.db.Collection("categories")
-
-	objectID, err := primitive.ObjectIDFromHex(categoryID)
-	if err != nil {
-		return nil, err
-	}
-
-	var category entities.Category
-	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&category)
-	if err != nil {
-		return nil, err
-	}
-	return &category, nil
-}
-
-func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Context, category *entities.Category) error {
-	collection := r.db.Collection("categories")
-
-	// Generate new ObjectID
-	objectID := primitive.NewObjectID()
-	category.CategoryID = objectID.Hex()
-
-	// Set timestamps
-	now := primitive.NewDateTimeFromTime(category.CategoryCreatedAt)
-	category.CategoryCreatedAt = now.Time()
-	category.CategoryUpdatedAt = now.Time()
-
-	_, err := collection.InsertOne(ctx, category)
-	return err
-}
-
-func (r *CategorySubcategoryRepositoryMongoDB) UpdateCategory(ctx context.Context, category *entities.Category) error {
-	collection := r.db.Collection("categories")
-
-	objectID, err := primitive.ObjectIDFromHex(category.CategoryID)
-	if err != nil {
-		return err
-	}
-
-	// Update timestamp
-	category.CategoryUpdatedAt = primitive.NewDateTimeFromTime(category.CategoryUpdatedAt).Time()
-
-	_, err = collection.UpdateOne(
-		ctx,
-		bson.M{"_id": objectID},
-		bson.M{"$set": category},
-	)
-	return err
-}
-
-func (r *CategorySubcategoryRepositoryMongoDB) DeleteCategory(ctx context.Context, categoryID string) error {
-	collection := r.db.Collection("categories")
-
-	objectID, err := primitive.ObjectIDFromHex(categoryID)
-	if err != nil {
-		return err
-	}
-
-	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
-	return err
-}
-
 // Subcategory operations
-func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
+func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error) {
 	collection := r.db.Collection("subcategories")
-	cursor, err := collection.Find(ctx, bson.M{})
+	filter := bson.M{}
+	if *search != "" {
+		filter = bson.M{
+			"subcategory_name": bson.M{"$regex": search, "$options": "i"},
+		}
+	}
+	total, err := collection.CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetLimit(limit).
+		SetSkip(offset * limit).
+		SetSort(bson.D{{Key: "subcategory_created_at", Value: -1}}) // Sort by creation date descending
+
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
 	var subcategories []*entities.Subcategory
 	if err := cursor.All(ctx, &subcategories); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return subcategories, nil
+
+	return subcategories, total, nil
 }
 
-func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
+func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryByCategoryId(ctx context.Context, categoryId *string, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error) {
 	collection := r.db.Collection("subcategories")
-
-	objectID, err := primitive.ObjectIDFromHex(subcategoryID)
+	filter := bson.M{"category_id": categoryId}
+	if *search != "" {
+		filter = bson.M{
+			"subcategory_name": bson.M{"$regex": search, "$options": "i"},
+			"category_id":      categoryId,
+		}
+	}
+	total, err := collection.CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	var subcategory entities.Subcategory
-	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&subcategory)
-	if err != nil {
-		return nil, err
-	}
-	return &subcategory, nil
-}
+	opts := options.Find().
+		SetLimit(limit).
+		SetSkip(offset * limit).
+		SetSort(bson.D{{Key: "subcategory_created_at", Value: -1}}) // Sort by creation date descending
 
-func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
-	collection := r.db.Collection("subcategories")
-
-	cursor, err := collection.Find(ctx, bson.M{"category_id": categoryID})
+	cursor, err := collection.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
 	var subcategories []*entities.Subcategory
 	if err := cursor.All(ctx, &subcategories); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return subcategories, nil
+
+	return subcategories, total, nil
 }
 
-func (r *CategorySubcategoryRepositoryMongoDB) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
-	collection := r.db.Collection("subcategories")
+func (r *CategorySubcategoryRepositoryMongoDB) CreateCategory(ctx context.Context, category *entities.Category) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("categories")
+	filter := bson.M{"category_name": category.CategoryName}
+	var existingCategory *entities.Category
+	err := collection.FindOne(ctx, filter).Decode(&existingCategory)
+	if err == nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "This category already exists",
+			Error:   "Category already exists",
+		}, err
+	} else if err != mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating category",
+			Error:   "Database error",
+		}, err
+	}
 
-	// Generate new ObjectID
-	objectID := primitive.NewObjectID()
-	subcategory.SubcategoryID = objectID.Hex()
-
-	// Set timestamps
-	now := primitive.NewDateTimeFromTime(subcategory.SubcategoryCreatedAt)
-	subcategory.SubcategoryCreatedAt = now.Time()
-	subcategory.SubcategoryUpdatedAt = now.Time()
-
-	_, err := collection.InsertOne(ctx, subcategory)
-	return err
-}
-
-func (r *CategorySubcategoryRepositoryMongoDB) UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
-	collection := r.db.Collection("subcategories")
-
-	objectID, err := primitive.ObjectIDFromHex(subcategory.SubcategoryID)
+	result, err := collection.InsertOne(ctx, category)
 	if err != nil {
-		return err
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating category",
+			Error:   "Database error",
+		}, err
+	}
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating category",
+			Error:   "InsertedId error",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Category Created",
+	}, nil
+
+}
+func (r *CategorySubcategoryRepositoryMongoDB) CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("subcategories")
+
+	filter := bson.M{"subcategory_name": subcategory.SubcategoryName}
+	var existingSubCategory *entities.Category
+	err := collection.FindOne(ctx, filter).Decode(&existingSubCategory)
+	if err == nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "This sub-category already exists",
+			Error:   "Sub-Category already exists",
+		}, err
+	} else if err != mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating sub-category",
+			Error:   "Database error",
+		}, err
 	}
 
-	// Update timestamp
-	subcategory.SubcategoryUpdatedAt = primitive.NewDateTimeFromTime(subcategory.SubcategoryUpdatedAt).Time()
+	result, err := collection.InsertOne(ctx, subcategory)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating sub-category",
+			Error:   "Database error",
+		}, err
+	}
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating sub-category",
+			Error:   "InsertedId error",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Sub-Category Created",
+	}, nil
+}
 
-	_, err = collection.UpdateOne(
+func (r *CategorySubcategoryRepositoryMongoDB) UpdateCategory(ctx context.Context, categoryId *string, request *entities.UpdateCategoryRequest) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("categories")
+
+	objectID, err := primitive.ObjectIDFromHex(*categoryId)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from Category Id",
+			Error:   "ObjectId from Hex error",
+		}, err
+	}
+	updateDocs := bson.M{}
+	if request.CategoryName != "" {
+		updateDocs["category_name"] = request.CategoryName
+	}
+	if request.CategoryImage != "" {
+		updateDocs["category_image"] = request.CategoryImage
+	}
+	updateDocs["category_updated_at"] = time.Now()
+
+	result, err := collection.UpdateOne(
 		ctx,
 		bson.M{"_id": objectID},
-		bson.M{"$set": subcategory},
+		bson.M{"$set": updateDocs},
 	)
-	return err
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No matching document found",
+			Error:   "No Document Matched",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Category Updated Successfully",
+	}, nil
+
 }
 
-func (r *CategorySubcategoryRepositoryMongoDB) DeleteSubcategory(ctx context.Context, subcategoryID string) error {
+func (r *CategorySubcategoryRepositoryMongoDB) UpdateSubcategory(ctx context.Context, subcategoryID string, request *entities.UpdateSubcategoryRequest) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("subcategories")
 
 	objectID, err := primitive.ObjectIDFromHex(subcategoryID)
 	if err != nil {
-		return err
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from Sub-Category Id",
+			Error:   "ObjectId from Hex error",
+		}, err
 	}
+	updateDocs := bson.M{}
+	if request.SubcategoryName != "" {
+		updateDocs["subcategory_name"] = request.SubcategoryName
+	}
+	if request.SubcategoryImage != "" {
+		updateDocs["category_image"] = request.SubcategoryImage
+	}
+	if request.CategoryID != "" {
+		updateDocs["category_id"] = request.CategoryID
+	}
+	updateDocs["subcategory_updated_at"] = time.Now()
 
-	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
-	return err
+	result, err := collection.UpdateOne(
+		ctx,
+		bson.M{"_id": objectID},
+		bson.M{"$set": updateDocs},
+	)
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No matching document found",
+			Error:   "No Document Matched",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Category Updated Successfully",
+	}, nil
+
 }
+
+// func (r *CategorySubcategoryRepositoryMongoDB) GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error) {
+// 	collection := r.db.Collection("categories")
+
+// 	objectID, err := primitive.ObjectIDFromHex(categoryID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var category entities.Category
+// 	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&category)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &category, nil
+// }
+
+// func (r *CategorySubcategoryRepositoryMongoDB) DeleteCategory(ctx context.Context, categoryID string) error {
+// 	collection := r.db.Collection("categories")
+
+// 	objectID, err := primitive.ObjectIDFromHex(categoryID)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
+// 	return err
+// }
+
+// func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
+// 	collection := r.db.Collection("subcategories")
+
+// 	objectID, err := primitive.ObjectIDFromHex(subcategoryID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var subcategory entities.Subcategory
+// 	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&subcategory)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &subcategory, nil
+// }
+
+// func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
+// 	collection := r.db.Collection("subcategories")
+
+// 	cursor, err := collection.Find(ctx, bson.M{"category_id": categoryID})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer cursor.Close(ctx)
+
+// 	var subcategories []*entities.Subcategory
+// 	if err := cursor.All(ctx, &subcategories); err != nil {
+// 		return nil, err
+// 	}
+// 	return subcategories, nil
+// }
+
+// func (r *CategorySubcategoryRepositoryMongoDB) UpdateSubcategory(ctx context.Context, subcategory *entities.Subcategory) error {
+// 	collection := r.db.Collection("subcategories")
+
+// 	objectID, err := primitive.ObjectIDFromHex(subcategory.SubcategoryID)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	// Update timestamp
+// 	subcategory.SubcategoryUpdatedAt = primitive.NewDateTimeFromTime(subcategory.SubcategoryUpdatedAt).Time()
+
+// 	_, err = collection.UpdateOne(
+// 		ctx,
+// 		bson.M{"_id": objectID},
+// 		bson.M{"$set": subcategory},
+// 	)
+// 	return err
+// }
+
+// func (r *CategorySubcategoryRepositoryMongoDB) DeleteSubcategory(ctx context.Context, subcategoryID string) error {
+// 	collection := r.db.Collection("subcategories")
+
+// 	objectID, err := primitive.ObjectIDFromHex(subcategoryID)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
+// 	return err
+// }

@@ -2,31 +2,30 @@ package entities
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Metadata struct {
-	MetadataProductID     primitive.ObjectID `json:"metadata_product_id" bson:"metadata_product_id"`
-	MetadataName          string             `json:"metadata_name" bson:"metadata_name"`
-	MetadataDescription   string             `json:"metadata_description" bson:"metadata_description"`
-	MetadataImage         string             `json:"metadata_image" bson:"metadata_image"`
-	MetadataCategoryID    string             `json:"metadata_category_id" bson:"metadata_category_id"`
-	MetadataSubcategoryID string             `json:"metadata_subcategory_id" bson:"metadata_subcategory_id"`
-	MetadataMRP           float64            `json:"metadata_mrp" bson:"metadata_mrp"`
-	MetadataCreatedAt     time.Time          `json:"metadata_created_at" bson:"metadata_created_at"`
-	MetadataUpdatedAt     time.Time          `json:"metadata_updated_at" bson:"metadata_updated_at"`
+	MetadataProductID     string    `json:"product_id" bson:"_id,omitempty"`
+	MetadataHSNCode       string    `json:"hsn_code" bson:"hsn_code"`
+	MetadataName          string    `json:"name" bson:"metadata_name"`
+	MetadataDescription   string    `json:"description" bson:"metadata_description"`
+	MetadataImage         string    `json:"image" bson:"metadata_image"`
+	MetadataCategoryID    string    `json:"category_id" bson:"metadata_category_id"`
+	MetadataSubcategoryID string    `json:"subcategory_id" bson:"metadata_subcategory_id"`
+	MetadataMRP           float64   `json:"mrp" bson:"metadata_mrp"`
+	MetadataCreatedAt     time.Time `json:"created_at" bson:"metadata_created_at"`
+	MetadataUpdatedAt     time.Time `json:"updated_at" bson:"metadata_updated_at"`
 }
 
 type Review struct {
-	MetadataProductID primitive.ObjectID `json:"metadata_product_id" bson:"metadata_product_id"`
-	TotalStars        int                `json:"total_stars" bson:"total_stars"`
-	TotalReviews      int                `json:"total_reviews" bson:"total_reviews"`
+	MetadataProductID string `json:"metadata_product_id" bson:"_id"`
+	TotalStars        int    `json:"total_stars" bson:"total_stars"`
+	TotalReviews      int    `json:"total_reviews" bson:"total_reviews"`
 }
 
 type MetadataResponse struct {
-	ID            string  `json:"id"`
-	ProductID     string  `json:"product_id"`
+	ID            string  `json:"id" bson:"_id,omitempty"`
+	HsnCode       string  `json:"hsn_code"`
 	Name          string  `json:"name"`
 	Description   string  `json:"description"`
 	Image         string  `json:"image"`
@@ -39,9 +38,18 @@ type MetadataResponse struct {
 	TotalReviews  int     `json:"total_reviews"`
 }
 
+type MetadataApiResponse struct {
+	Success  bool      `json:"success"`
+	Message  string    `json:"message"`
+	Error    string    `json:"error" binding:"omitempty"`
+	Id       string    `json:"id" binding:"omitempty"`
+	Metadata *Metadata `json:"metadata" binding:"omitempty"`
+}
+
 // CreateMetadataRequest represents the request structure for creating metadata
 type CreateMetadataRequest struct {
 	Name          string  `json:"name" binding:"required"`
+	HsnCode       string  `json:"hsn_code" binding:"required"`
 	Description   string  `json:"description"`
 	Image         string  `json:"image"`
 	CategoryID    string  `json:"category_id"`
@@ -57,19 +65,19 @@ type UpdateMetadataRequest struct {
 	CategoryID    string  `json:"category_id"`
 	SubcategoryID string  `json:"subcategory_id"`
 	MRP           float64 `json:"mrp"`
+	HsnCode       string  `json:"hsn_code"`
 }
 
 // PaginatedMetadataResponse represents paginated metadata response
 type PaginatedMetadataResponse struct {
-	Metadata    []*MetadataResponse `json:"metadata"`
-	Total       int64               `json:"total"`
-	Limit       int64               `json:"limit"`
-	Offset      int64               `json:"offset"`
-	HasNext     bool                `json:"has_next"`
-	HasPrevious bool                `json:"has_previous"`
+	Metadata   []*Metadata `json:"metadata"`
+	Total      int64       `json:"total"`
+	Limit      int64       `json:"limit"`
+	Offset     int64       `json:"offset"`
+	TotalPages int64       `json:"total_pages"`
 }
 
 type AddReviewRequest struct {
-	MetadataProductID primitive.ObjectID `json:"metadata_product_id" binding:"required"`
-	Rating            int                `json:"rating" binding:"required"`
+	MetadataProductID string `json:"metadata_product_id" binding:"required"`
+	Rating            int    `json:"rating" binding:"required"`
 }

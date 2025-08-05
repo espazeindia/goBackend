@@ -3,7 +3,7 @@ package entities
 import "time"
 
 type Category struct {
-	CategoryID        string    `json:"id" bson:"_id"`
+	CategoryID        string    `json:"id" bson:"_id,omitempty"`
 	CategoryName      string    `json:"category_name" bson:"category_name"`
 	CategoryImage     string    `json:"category_image" bson:"category_image"`
 	CategoryCreatedAt time.Time `json:"category_created_at" bson:"category_created_at"`
@@ -11,7 +11,7 @@ type Category struct {
 }
 
 type Subcategory struct {
-	SubcategoryID        string    `json:"id" bson:"_id"`
+	SubcategoryID        string    `json:"id" bson:"_id,omitempty"`
 	SubcategoryName      string    `json:"subcategory_name" bson:"subcategory_name"`
 	SubcategoryImage     string    `json:"subcategory_image" bson:"subcategory_image"`
 	CategoryID           string    `json:"category_id" bson:"category_id"`
@@ -22,7 +22,7 @@ type Subcategory struct {
 // Request DTOs
 type CreateCategoryRequest struct {
 	CategoryName  string `json:"category_name" binding:"required"`
-	CategoryImage string `json:"category_image"`
+	CategoryImage string `json:"category_image" binding:"required"`
 }
 
 type UpdateCategoryRequest struct {
@@ -32,7 +32,7 @@ type UpdateCategoryRequest struct {
 
 type CreateSubcategoryRequest struct {
 	SubcategoryName  string `json:"subcategory_name" binding:"required"`
-	SubcategoryImage string `json:"subcategory_image"`
+	SubcategoryImage string `json:"subcategory_image" binding:"required"`
 	CategoryID       string `json:"category_id" binding:"required"`
 }
 
@@ -50,4 +50,27 @@ type CategoryWithSubcategoriesResponse struct {
 
 type CategoriesWithSubcategoriesResponse struct {
 	Categories []*CategoryWithSubcategoriesResponse `json:"categories"`
+}
+
+type PaginatedCategoryResponse struct {
+	Category   []*Category `json:"category"`
+	Total      int64       `json:"total"`
+	Limit      int64       `json:"limit"`
+	Offset     int64       `json:"offset"`
+	TotalPages int64       `json:"total_pages"`
+}
+type PaginatedSubCategoryResponse struct {
+	SubCategory []*Subcategory `json:"sub_category"`
+	Total       int64          `json:"total"`
+	Limit       int64          `json:"limit"`
+	Offset      int64          `json:"offset"`
+	TotalPages  int64          `json:"total_pages"`
+}
+
+type MessageResponse struct {
+	Success     bool         `json:"success"`
+	Message     string       `json:"message"`
+	Error       string       `json:"error" binding:"omitempty"`
+	Category    *Category    `json:"category" binding:"omitempty"`
+	SubCategory *Subcategory `json:"sub_category" binding:"omitempty"`
 }

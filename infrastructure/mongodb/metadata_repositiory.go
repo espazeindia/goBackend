@@ -26,10 +26,9 @@ func NewMetadataRepositoryMongoDB(db *mongo.Database) repositories.MetadataRepos
 }
 
 // GetAllMetadata retrieves all metadata with pagination
-func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.MetadataResponse, int64, error) {
+func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.Metadata, int64, error) {
 	// Build filter based on search parameter
 
-	reviews := r.db.Collection("reviews")
 	filter := bson.M{}
 	if search != "" {
 		filter = bson.M{
@@ -46,7 +45,7 @@ func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, o
 	// Set up pagination options
 	opts := options.Find().
 		SetLimit(limit).
-		SetSkip(offset).
+		SetSkip(offset * limit).
 		SetSort(bson.D{{Key: "metadata_created_at", Value: -1}}) // Sort by creation date descending
 
 	// Execute query
@@ -58,34 +57,11 @@ func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, o
 
 	// Decode results
 	var metadata []*entities.Metadata
-	var metadataResponse []*entities.MetadataResponse
 	if err = cursor.All(ctx, &metadata); err != nil {
 		return nil, 0, err
 	}
 
-	for _, m := range metadata {
-		review := entities.Review{}
-		err = reviews.FindOne(ctx, bson.M{"metadata_product_id": m.MetadataProductID}).Decode(&review)
-		if err != nil {
-			return nil, 0, err
-		}
-		metadataResponseCreated := &entities.MetadataResponse{
-			ID:            m.MetadataProductID.Hex(),
-			ProductID:     m.MetadataProductID.Hex(),
-			Name:          m.MetadataName,
-			Description:   m.MetadataDescription,
-			Image:         m.MetadataImage,
-			CategoryID:    m.MetadataCategoryID,
-			SubcategoryID: m.MetadataSubcategoryID,
-			MRP:           m.MetadataMRP,
-			CreatedAt:     m.MetadataCreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:     m.MetadataUpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			TotalStars:    review.TotalStars,
-			TotalReviews:  review.TotalReviews,
-		}
-		metadataResponse = append(metadataResponse, metadataResponseCreated)
-	}
-	return metadataResponse, total, nil
+	return metadata, total, nil
 }
 
 // GetMetadataByID retrieves a metadata by ID
@@ -96,7 +72,7 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 		return nil, err
 	}
 
-	filter := bson.M{"metadata_product_id": objectID}
+	filter := bson.M{"_id": objectID}
 	var metadata entities.Metadata
 
 	err = r.db.Collection("metadata").FindOne(ctx, filter).Decode(&metadata)
@@ -113,8 +89,7 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 	}
 
 	metadataResponse := &entities.MetadataResponse{
-		ID:            metadata.MetadataProductID.Hex(),
-		ProductID:     metadata.MetadataProductID.Hex(),
+		ID:            metadata.MetadataProductID,
 		Name:          metadata.MetadataName,
 		Description:   metadata.MetadataDescription,
 		Image:         metadata.MetadataImage,
@@ -130,17 +105,41 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 }
 
 // CreateMetadata creates a new metadata
-func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata *entities.Metadata) error {
-	_, err := r.db.Collection("metadata").InsertOne(ctx, metadata)
-	return err
+func (r *MetadataRepositoryMongoDB) CreateMetadata(ctx context.Context, metadata *entities.Metadata) (*entities.MetadataApiResponse, error) {
+	collection := r.db.Collection("metadata")
+
+	filter := bson.M{"hsn_code": metadata.MetadataHSNCode}
+	var Metadata *entities.Metadata
+	err := collection.FindOne(ctx, filter).Decode(&Metadata)
+	if err == nil {
+		return &entities.MetadataApiResponse{Success: false, Message: "Metadata for this HSN Code already exists", Error: "Metadata Already Exists"}, err
+	}
+	if err != mongo.ErrNoDocuments {
+		return &entities.MetadataApiResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
+	}
+
+	result, err := r.db.Collection("metadata").InsertOne(ctx, metadata)
+	if err != nil {
+		return &entities.MetadataApiResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
+	}
+	objectID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MetadataApiResponse{Success: false, Message: "Error Creating Metadata", Error: "ObjectId fetch error"}, nil
+	}
+	stringID := objectID.Hex()
+	return &entities.MetadataApiResponse{Success: true, Message: "Metadata Created Successfully", Id: stringID}, nil
 }
 
 // UpdateMetadata updates an existing metadata
-func (r *MetadataRepositoryMongoDB) UpdateMetadata(ctx context.Context, id string, metadata *entities.Metadata) error {
+func (r *MetadataRepositoryMongoDB) UpdateMetadata(ctx context.Context, id string, metadata *entities.Metadata) (*entities.MetadataApiResponse, error) {
 	// Convert string ID to ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return &entities.MetadataApiResponse{
+			Error:   "Error Transforming ObjectIDFromHex",
+			Message: "Error in transforming metadata id to object id",
+			Success: false,
+		}, err
 	}
 
 	// Build update document
@@ -160,46 +159,75 @@ func (r *MetadataRepositoryMongoDB) UpdateMetadata(ctx context.Context, id strin
 	if metadata.MetadataSubcategoryID != "" {
 		updateDoc["metadata_subcategory_id"] = metadata.MetadataSubcategoryID
 	}
+	if metadata.MetadataHSNCode != "" {
+		updateDoc["hsn_code"] = metadata.MetadataHSNCode
+	}
 	if metadata.MetadataMRP > 0 {
 		updateDoc["metadata_mrp"] = metadata.MetadataMRP
 	}
 	updateDoc["metadata_updated_at"] = time.Now()
 
 	// Execute update
-	filter := bson.M{"metadata_product_id": objectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": updateDoc}
 
 	result, err := r.db.Collection("metadata").UpdateOne(ctx, filter, update)
 	if err != nil {
-		return err
+		return &entities.MetadataApiResponse{
+			Error:   "Database Error",
+			Message: "Error in database while updating",
+			Success: false,
+		}, err
 	}
 
 	if result.MatchedCount == 0 {
-		return mongo.ErrNoDocuments
+		return &entities.MetadataApiResponse{
+			Error:   "No matching document in db",
+			Message: "Metadata not found in db",
+			Success: false,
+		}, err
 	}
 
-	return nil
+	return &entities.MetadataApiResponse{
+		Message: "Metadata updated successfully",
+		Success: true,
+	}, nil
 }
 
 // DeleteMetadata deletes a metadata by ID
-func (r *MetadataRepositoryMongoDB) DeleteMetadata(ctx context.Context, id string) error {
+func (r *MetadataRepositoryMongoDB) DeleteMetadata(ctx context.Context, id string) (*entities.MetadataApiResponse, error) {
 	// Convert string ID to ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return &entities.MetadataApiResponse{
+			Error:   "Error Transforming ObjectIDFromHex",
+			Message: "Error in transforming metadata id to object id",
+			Success: false,
+		}, err
 	}
 
-	filter := bson.M{"metadata_product_id": objectID}
+	filter := bson.M{"_id": objectID}
 	result, err := r.db.Collection("metadata").DeleteOne(ctx, filter)
 	if err != nil {
-		return err
+		return &entities.MetadataApiResponse{
+			Error:   "Database Error",
+			Message: "Error in database while deleting",
+			Success: false,
+		}, err
 	}
 
 	if result.DeletedCount == 0 {
-		return mongo.ErrNoDocuments
+		return &entities.MetadataApiResponse{
+			Error:   "No matching document in db",
+			Message: "Metadata not found in db",
+			Success: false,
+		}, err
 	}
 
-	return nil
+	return &entities.MetadataApiResponse{
+		Message: "Metadata deleted successfully",
+		Success: true,
+	}, nil
 }
 
 func (r *MetadataRepositoryMongoDB) AddReview(ctx context.Context, req *entities.AddReviewRequest) error {
@@ -230,17 +258,16 @@ func (r *MetadataRepositoryMongoDB) AddReview(ctx context.Context, req *entities
 	return nil
 }
 
-func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string) error {
+func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string) (*entities.MetadataApiResponse, error) {
 	collection := r.db.Collection("reviews")
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
 	review := entities.Review{
-		MetadataProductID: objectID,
+		MetadataProductID: id,
 		TotalStars:        0,
 		TotalReviews:      0,
 	}
-	_, err = collection.InsertOne(ctx, review)
-	return err
+	_, err := collection.InsertOne(ctx, review)
+	if err != nil {
+		return &entities.MetadataApiResponse{Success: false, Message: "Internal Server Error", Error: "DataBase Error"}, err
+	}
+	return &entities.MetadataApiResponse{Success: true, Message: "Metadata Created Successfully"}, nil
 }

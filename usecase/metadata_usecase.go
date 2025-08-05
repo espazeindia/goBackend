@@ -6,8 +6,6 @@ import (
 
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // MetadataUseCase handles business logic for metadata operations
@@ -25,7 +23,7 @@ func NewMetadataUseCase(metadataRepo repositories.MetadataRepository) *MetadataU
 func (uc *MetadataUseCase) toMetadataResponse(metadata *entities.MetadataResponse) *entities.MetadataResponse {
 	return &entities.MetadataResponse{
 		ID:            metadata.ID,
-		ProductID:     metadata.ProductID,
+		HsnCode:       metadata.HsnCode,
 		Name:          metadata.Name,
 		Description:   metadata.Description,
 		Image:         metadata.Image,
@@ -54,16 +52,14 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 		return nil, err
 	}
 
-	hasNext := offset+limit < total
-	hasPrevious := offset > 0
+	var totalPages int64 = (total + limit - 1) / limit
 
 	return &entities.PaginatedMetadataResponse{
-		Metadata:    metadata,
-		Total:       total,
-		Limit:       limit,
-		Offset:      offset,
-		HasNext:     hasNext,
-		HasPrevious: hasPrevious,
+		Metadata:   metadata,
+		Total:      total,
+		Limit:      limit,
+		Offset:     offset,
+		TotalPages: totalPages,
 	}, nil
 }
 
@@ -78,14 +74,13 @@ func (uc *MetadataUseCase) GetMetadataByID(ctx context.Context, id string) (*ent
 }
 
 // CreateMetadata creates a new metadata
-func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) error {
+func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.CreateMetadataRequest) (*entities.MetadataApiResponse, error) {
 	// Generate a new product ID automatically (like UUID)
-	productID := primitive.NewObjectID()
 
 	now := time.Now()
 	metadata := &entities.Metadata{
-		MetadataProductID:     productID,
 		MetadataName:          req.Name,
+		MetadataHSNCode:       req.HsnCode,
 		MetadataDescription:   req.Description,
 		MetadataImage:         req.Image,
 		MetadataCategoryID:    req.CategoryID,
@@ -95,21 +90,21 @@ func (uc *MetadataUseCase) CreateMetadata(ctx context.Context, req *entities.Cre
 		MetadataUpdatedAt:     now,
 	}
 
-	err := uc.metadataRepo.CreateMetadata(ctx, metadata)
+	response, err := uc.metadataRepo.CreateMetadata(ctx, metadata)
 	if err != nil {
-		return err
+		return response, err
 	}
-
-	err = uc.metadataRepo.CreateReview(ctx, productID.Hex())
-	if err != nil {
-		return err
+	if response.Success {
+		reviewResponse, err := uc.metadataRepo.CreateReview(ctx, response.Id)
+		if err != nil {
+			return reviewResponse, err
+		}
 	}
-
-	return nil
+	return response, nil
 }
 
 // UpdateMetadata updates an existing metadata
-func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *entities.UpdateMetadataRequest) (*entities.MetadataResponse, error) {
+func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *entities.UpdateMetadataRequest) (*entities.MetadataApiResponse, error) {
 
 	now := time.Now()
 	metadata := &entities.Metadata{
@@ -119,29 +114,20 @@ func (uc *MetadataUseCase) UpdateMetadata(ctx context.Context, id string, req *e
 		MetadataCategoryID:    req.CategoryID,
 		MetadataSubcategoryID: req.SubcategoryID,
 		MetadataMRP:           req.MRP,
+		MetadataHSNCode:       req.HsnCode,
 		MetadataUpdatedAt:     now,
 	}
 
-	err := uc.metadataRepo.UpdateMetadata(ctx, id, metadata)
+	response, err := uc.metadataRepo.UpdateMetadata(ctx, id, metadata)
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 
-	// For now, return the updated metadata (in a real app, you'd fetch the updated record)
-	return &entities.MetadataResponse{
-		ID:            id,
-		Name:          req.Name,
-		Description:   req.Description,
-		Image:         req.Image,
-		CategoryID:    req.CategoryID,
-		SubcategoryID: req.SubcategoryID,
-		MRP:           req.MRP,
-		UpdatedAt:     now.Format("2006-01-02T15:04:05Z07:00"),
-	}, nil
+	return response, nil
 }
 
 // DeleteMetadata deletes a metadata by ID
-func (uc *MetadataUseCase) DeleteMetadata(ctx context.Context, id string) error {
+func (uc *MetadataUseCase) DeleteMetadata(ctx context.Context, id string) (*entities.MetadataApiResponse, error) {
 	return uc.metadataRepo.DeleteMetadata(ctx, id)
 }
 
