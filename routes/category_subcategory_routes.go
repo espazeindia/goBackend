@@ -20,17 +20,19 @@ func SetupCategorySubcategoryRoutes(router *gin.RouterGroup) {
 
 	router.GET("/getCategories", categorySubcategoryHandler.GetCategories)
 	router.GET("/getAllCategories", categorySubcategoryHandler.GetAllCategories)
-	// router.GET("/with-subcategories", categorySubcategoryHandler.GetAllCategoriesWithSubcategories)
-	// router.GET("/:id", categorySubcategoryHandler.GetCategoryById)
-	// router.GET("/:id/with-subcategories", categorySubcategoryHandler.GetCategoryWithSubcategories)
+	router.GET("/getAllSubCategories", categorySubcategoryHandler.GetAllSubcategories)
 	router.POST("/createCategory", categorySubcategoryHandler.CreateCategory)
 	router.PUT("/updateCategory/:id", categorySubcategoryHandler.UpdateCategory)
 	router.DELETE("/deleteCategory/:id", categorySubcategoryHandler.DeleteCategory)
 
 	// // Subcategory routes
-	router.GET("/getSubCategories", categorySubcategoryHandler.GetAllSubcategories)
+	router.GET("/getSubCategories", categorySubcategoryHandler.GetSubcategories)
 	router.GET("/getSubcategoryByCategoryId/:id", categorySubcategoryHandler.GetSubcategoryByCategoryId)
 	router.POST("/createSubCategory", categorySubcategoryHandler.CreateSubcategory)
 	router.PUT("/subcategory/:id", categorySubcategoryHandler.UpdateSubcategory)
-	// router.DELETE("/subcategory/:id", categorySubcategoryHandler.DeleteSubcategory)
+	router.DELETE("/subcategory/:id", categorySubcategoryHandler.DeleteSubcategory)
+
+	// router.GET("/with-subcategories", categorySubcategoryHandler.GetAllCategoriesWithSubcategories)
+	// router.GET("/:id", categorySubcategoryHandler.GetCategoryById)
+	// router.GET("/:id/with-subcategories", categorySubcategoryHandler.GetCategoryWithSubcategories)
 }

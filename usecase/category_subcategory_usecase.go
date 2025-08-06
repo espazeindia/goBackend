@@ -46,14 +46,18 @@ func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context) ([]*e
 	return u.categorySubcategoryRepo.GetAllCategories(ctx)
 }
 
-func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedSubCategoryResponse, error) {
+func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
+	return u.categorySubcategoryRepo.GetAllSubcategories(ctx)
+}
+
+func (u *CategorySubcategoryUseCase) GetSubcategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedSubCategoryResponse, error) {
 	if limit < 10 {
 		limit = 10
 	}
 	if offset < 0 {
 		offset = 0
 	}
-	sub_category, total, err := u.categorySubcategoryRepo.GetAllSubcategories(ctx, limit, offset, search)
+	sub_category, total, err := u.categorySubcategoryRepo.GetSubcategories(ctx, limit, offset, search)
 	if err != nil {
 		return nil, err
 	}
@@ -134,15 +138,15 @@ func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categor
 	return u.categorySubcategoryRepo.DeleteCategory(ctx, categoryID)
 }
 
+func (u *CategorySubcategoryUseCase) DeleteSubcategory(ctx context.Context, subcategoryID string) (*entities.MessageResponse, error) {
+	return u.categorySubcategoryRepo.DeleteSubcategory(ctx, subcategoryID)
+}
+
 // func (u *CategorySubcategoryUseCase) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
 // 	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
 // }
 
 //
-
-// func (u *CategorySubcategoryUseCase) DeleteSubcategory(ctx context.Context, subcategoryID string) error {
-// 	return u.categorySubcategoryRepo.DeleteSubcategory(ctx, subcategoryID)
-// }
 
 // // Enhanced category response with subcategories
 // type CategoryWithSubcategories struct {

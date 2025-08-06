@@ -74,7 +74,25 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 }
 
 // Subcategory operations
-func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error) {
+func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
+	collection := r.db.Collection("subcategories")
+	filter := bson.M{}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var subcategories []*entities.Subcategory
+	if err := cursor.All(ctx, &subcategories); err != nil {
+		return nil, err
+	}
+
+	return subcategories, nil
+}
+
+func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error) {
 	collection := r.db.Collection("subcategories")
 	filter := bson.M{}
 	if *search != "" {
@@ -353,7 +371,7 @@ func (r *CategorySubcategoryRepositoryMongoDB) DeleteCategory(ctx context.Contex
 		}, nil
 	}
 
-	_, err = categoryCollection.DeleteOne(ctx, bson.M{"_id": objectID})
+	result, err := categoryCollection.DeleteOne(ctx, bson.M{"_id": objectID})
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -362,10 +380,75 @@ func (r *CategorySubcategoryRepositoryMongoDB) DeleteCategory(ctx context.Contex
 		}, nil
 	}
 
+	if result.DeletedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No matching entry found",
+			Error:   "no matching document in db ",
+		}, nil
+	}
 	return &entities.MessageResponse{
 		Success: true,
 		Message: "Category deleted successfully",
 	}, nil
+
+}
+
+func (r *CategorySubcategoryRepositoryMongoDB) DeleteSubcategory(ctx context.Context, subcategoryID string) (*entities.MessageResponse, error) {
+	metadataCollection := r.db.Collection("metadata")
+	SubCollection := r.db.Collection("subcategories")
+
+	filter := bson.M{"metadata_subcategory_id": subcategoryID}
+
+	var metadata *entities.Metadata
+
+	err := metadataCollection.FindOne(ctx, filter).Decode(&metadata)
+	if err == nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "This sub-category contains some metadata so DELETION is not possible",
+			Error:   "metadata exists for sub-category",
+		}, nil
+	}
+
+	if err != mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database error",
+			Error:   "error fetching metadata",
+		}, err
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(subcategoryID)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from category Id",
+			Error:   "object ID from hex error",
+		}, nil
+	}
+
+	result, err := SubCollection.DeleteOne(ctx, bson.M{"_id": objectID})
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database error",
+			Error:   "error deleting category",
+		}, nil
+	}
+
+	if result.DeletedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No matching entry found",
+			Error:   "no matching document in db ",
+		}, nil
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Sub-Category deleted successfully",
+	}, nil
+
 }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {

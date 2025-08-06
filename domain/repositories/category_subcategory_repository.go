@@ -11,7 +11,8 @@ type CategorySubcategoryRepository interface {
 	// Category operations
 	GetCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error)
 	GetAllCategories(ctx context.Context) ([]*entities.Category, error)
-	GetAllSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)
+	GetSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)
+	GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error)
 	CreateCategory(ctx context.Context, category *entities.Category) (*entities.MessageResponse, error)
 	CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (*entities.MessageResponse, error)
 	GetSubcategoryByCategoryId(ctx context.Context, categoryId *string, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)
@@ -20,6 +21,7 @@ type CategorySubcategoryRepository interface {
 
 	// GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error)
 	DeleteCategory(ctx context.Context, categoryID string) (*entities.MessageResponse, error)
+	DeleteSubcategory(ctx context.Context, subcategoryID string) (*entities.MessageResponse, error)
 
 	// // Subcategory operations
 	// GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error)

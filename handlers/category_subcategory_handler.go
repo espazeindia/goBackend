@@ -82,6 +82,23 @@ func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
 }
 
 func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
+	sub_categories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "Some Internal Server Error Occured",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    sub_categories,
+	})
+}
+
+func (h *CategorySubcategoryHandler) GetSubcategories(c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "10")
 	offsetStr := c.DefaultQuery("offset", "0")
 	search := c.DefaultQuery("search", "")
@@ -105,7 +122,7 @@ func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
 		})
 		return
 	}
-	subcategories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context(), limit, offset, &search)
+	subcategories, err := h.categorySubcategoryUseCase.GetSubcategories(c.Request.Context(), limit, offset, &search)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -358,6 +375,32 @@ func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
 		"message": response.Message,
 	})
 }
+func (h *CategorySubcategoryHandler) DeleteSubcategory(c *gin.Context) {
+	subcategoryID := c.Param("id")
+	if subcategoryID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Sub-Category ID is invalid",
+			"message": "Subcategory ID is required",
+		})
+		return
+	}
+
+	response, _ := h.categorySubcategoryUseCase.DeleteSubcategory(c.Request.Context(), subcategoryID)
+	if !response.Success {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+	})
+}
 
 // // Enhanced category handlers with subcategories
 // func (h *CategorySubcategoryHandler) GetAllCategoriesWithSubcategories(c *gin.Context) {
@@ -404,29 +447,4 @@ func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
 // 	})
 // }
 
-// func (h *CategorySubcategoryHandler) DeleteSubcategory(c *gin.Context) {
-// 	subcategoryID := c.Param("id")
-// 	if subcategoryID == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Bad request",
-// 			"message": "Subcategory ID is required",
-// 		})
-// 		return
-// 	}
-
-// 	err := h.categorySubcategoryUseCase.DeleteSubcategory(c.Request.Context(), subcategoryID)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"message": "Subcategory deleted successfully",
-// 	})
-// }
+//
