@@ -332,32 +332,32 @@ func (h *CategorySubcategoryHandler) UpdateSubcategory(c *gin.Context) {
 
 //
 
-// func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
-// 	categoryID := c.Param("id")
-// 	if categoryID == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Bad request",
-// 			"message": "Category ID is required",
-// 		})
-// 		return
-// 	}
+func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
+	categoryID := c.Param("id")
+	if categoryID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Category ID is invalid",
+			"message": "Category ID is required",
+		})
+		return
+	}
 
-// 	err := h.categorySubcategoryUseCase.DeleteCategory(c.Request.Context(), categoryID)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": "Some Internal Server Error Occured",
-// 		})
-// 		return
-// 	}
+	response, _ := h.categorySubcategoryUseCase.DeleteCategory(c.Request.Context(), categoryID)
+	if !response.Success {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+		return
+	}
 
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"message": "Category deleted successfully",
-// 	})
-// }
+	c.JSON(http.StatusOK, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+	})
+}
 
 // // Enhanced category handlers with subcategories
 // func (h *CategorySubcategoryHandler) GetAllCategoriesWithSubcategories(c *gin.Context) {

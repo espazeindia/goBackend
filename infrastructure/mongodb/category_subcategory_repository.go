@@ -319,17 +319,54 @@ func (r *CategorySubcategoryRepositoryMongoDB) UpdateSubcategory(ctx context.Con
 // 	return &category, nil
 // }
 
-// func (r *CategorySubcategoryRepositoryMongoDB) DeleteCategory(ctx context.Context, categoryID string) error {
-// 	collection := r.db.Collection("categories")
+func (r *CategorySubcategoryRepositoryMongoDB) DeleteCategory(ctx context.Context, categoryID string) (*entities.MessageResponse, error) {
+	categoryCollection := r.db.Collection("categories")
+	SubCollection := r.db.Collection("subcategories")
 
-// 	objectID, err := primitive.ObjectIDFromHex(categoryID)
-// 	if err != nil {
-// 		return err
-// 	}
+	filter := bson.M{"category_id": categoryID}
 
-// 	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
-// 	return err
-// }
+	var subcategory *entities.Subcategory
+
+	err := SubCollection.FindOne(ctx, filter).Decode(&subcategory)
+	if err == nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "This category contains some subcategories so DELETION is not possible",
+			Error:   "Subcategoy exists for category",
+		}, nil
+	}
+
+	if err != mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database error",
+			Error:   "error fetching suubcategories",
+		}, err
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(categoryID)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from category Id",
+			Error:   "object ID from hex error",
+		}, nil
+	}
+
+	_, err = categoryCollection.DeleteOne(ctx, bson.M{"_id": objectID})
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database error",
+			Error:   "error deleting category",
+		}, nil
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Category deleted successfully",
+	}, nil
+}
 
 // func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
 // 	collection := r.db.Collection("subcategories")

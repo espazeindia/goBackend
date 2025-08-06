@@ -130,9 +130,9 @@ func (u *CategorySubcategoryUseCase) UpdateSubcategory(ctx context.Context, subc
 // 	return u.categorySubcategoryRepo.GetCategoryById(ctx, categoryID)
 // }
 
-// func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categoryID string) error {
-// 	return u.categorySubcategoryRepo.DeleteCategory(ctx, categoryID)
-// }
+func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categoryID string) (*entities.MessageResponse, error) {
+	return u.categorySubcategoryRepo.DeleteCategory(ctx, categoryID)
+}
 
 // func (u *CategorySubcategoryUseCase) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
 // 	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
