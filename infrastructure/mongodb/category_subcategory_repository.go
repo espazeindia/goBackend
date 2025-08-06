@@ -74,9 +74,9 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetAllCategories(ctx context.Cont
 }
 
 // Subcategory operations
-func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context) ([]*entities.Subcategory, error) {
+func (r *CategorySubcategoryRepositoryMongoDB) GetAllSubcategories(ctx context.Context, categoryId string) ([]*entities.Subcategory, error) {
 	collection := r.db.Collection("subcategories")
-	filter := bson.M{}
+	filter := bson.M{"category_id": categoryId}
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {

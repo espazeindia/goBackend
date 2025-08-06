@@ -82,7 +82,17 @@ func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
 }
 
 func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
-	sub_categories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context())
+	categoryID := c.Param("id")
+	if categoryID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Category ID is invalid",
+			"message": "Category ID is required",
+		})
+		return
+	}
+
+	sub_categories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context(), categoryID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
