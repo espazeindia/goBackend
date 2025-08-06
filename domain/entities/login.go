@@ -70,9 +70,7 @@ type Customer struct {
 }
 
 type SellerRegistrationRequest struct {
-	Name        string `json:"name" binding:"required"`
 	PhoneNumber string `json:"phoneNumber" binding:"required,min=10"`
-	Address     string `json:"address" binding:"required"`
 }
 
 type SellerRegistrationResponse struct {

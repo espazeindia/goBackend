@@ -423,7 +423,7 @@ func (r *CategorySubcategoryRepositoryMongoDB) DeleteSubcategory(ctx context.Con
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
-			Message: "Error creating object from category Id",
+			Message: "Error creating object from sub-category Id",
 			Error:   "object ID from hex error",
 		}, nil
 	}

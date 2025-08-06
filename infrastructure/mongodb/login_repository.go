@@ -183,9 +183,9 @@ func (r *LoginRepositoryMongoDB) RegisterSeller(ctx context.Context, registratio
 
 	now := time.Now()
 	newUser := entities.Seller{
-		Name:               registrationRequest.Name,
+		Name:               "new user",
 		PhoneNumber:        registrationRequest.PhoneNumber,
-		Address:            registrationRequest.Address,
+		Address:            "dummy",
 		OTP:                otp,
 		OTPGeneratedAt:     now,
 		NumberOfRetriesOTP: 0,
@@ -194,7 +194,7 @@ func (r *LoginRepositoryMongoDB) RegisterSeller(ctx context.Context, registratio
 		LastLoginAt:        now,
 		StoreID:            "",
 	}
-	fmt.Printf("OTP", otp)
+	fmt.Print("OTP", otp)
 	// Insert user into database
 	_, err = collection.InsertOne(ctx, newUser)
 	if err != nil {
