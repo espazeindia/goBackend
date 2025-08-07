@@ -66,11 +66,3 @@ type PaginatedSubCategoryResponse struct {
 	Offset      int64          `json:"offset"`
 	TotalPages  int64          `json:"total_pages"`
 }
-
-type MessageResponse struct {
-	Success     bool         `json:"success"`
-	Message     string       `json:"message"`
-	Error       string       `json:"error" binding:"omitempty"`
-	Category    *Category    `json:"category" binding:"omitempty"`
-	SubCategory *Subcategory `json:"sub_category" binding:"omitempty"`
-}

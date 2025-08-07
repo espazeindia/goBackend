@@ -30,6 +30,10 @@ func (l *LoginUseCaseInterface) VerifyOTP(ctx context.Context, phoneNumber *stri
 	return l.loginRepo.VerifyOTP(ctx, phoneNumber, otp)
 }
 
+// func (l *LoginUseCaseInterface) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {
+// 	return l.loginRepo.AddBasicData(ctx, request)
+// }
+
 // func (l *LoginUseCaseInterface) LoginCustomer(ctx context.Context, loginRequest entities.CustomerLoginRequest) (entities.CustomerLoginResponse, error) {
 // 	return l.loginRepo.LoginCustomer(ctx, loginRequest)
 // }

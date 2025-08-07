@@ -92,6 +92,14 @@ func (h *MetadataHandler) GetMetadataByID(c *gin.Context) {
 
 // CreateMetadata creates a new metadata
 func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	var req entities.CreateMetadataRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -128,6 +136,14 @@ func (h *MetadataHandler) CreateMetadata(c *gin.Context) {
 
 // UpdateMetadata updates an existing metadata
 func (h *MetadataHandler) UpdateMetadata(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -178,6 +194,14 @@ func (h *MetadataHandler) UpdateMetadata(c *gin.Context) {
 
 // DeleteMetadata deletes a metadata by ID
 func (h *MetadataHandler) DeleteMetadata(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{

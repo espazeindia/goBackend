@@ -24,6 +24,7 @@ func SetupLoginRoutes(router *gin.RouterGroup) {
 	router.POST("/operational_guy/register", loginHandler.RegisterOperationalGuy)
 	router.POST("/seller/register", loginHandler.RegisterSeller)
 	router.GET("/seller/verifyOTP", loginHandler.VerifyOTP)
+	// router.POST("/seller/addBasicData", loginHandler.AddBasicData)
 
 	// router.POST("/customer", loginHandler.LoginCustomer)
 	// router.POST("/customer/register", loginHandler.RegisterCustomer)

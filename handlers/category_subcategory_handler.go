@@ -149,6 +149,14 @@ func (h *CategorySubcategoryHandler) GetSubcategories(c *gin.Context) {
 }
 
 func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	var request entities.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -179,6 +187,14 @@ func (h *CategorySubcategoryHandler) CreateCategory(c *gin.Context) {
 }
 
 func (h *CategorySubcategoryHandler) CreateSubcategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	var request entities.CreateSubcategoryRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -255,6 +271,14 @@ func (h *CategorySubcategoryHandler) GetSubcategoryByCategoryId(c *gin.Context) 
 	})
 }
 func (h *CategorySubcategoryHandler) UpdateCategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	categoryID := c.Param("id")
 	if categoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -294,6 +318,14 @@ func (h *CategorySubcategoryHandler) UpdateCategory(c *gin.Context) {
 }
 
 func (h *CategorySubcategoryHandler) UpdateSubcategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	subcategoryID := c.Param("id")
 	if subcategoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -360,6 +392,14 @@ func (h *CategorySubcategoryHandler) UpdateSubcategory(c *gin.Context) {
 //
 
 func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	categoryID := c.Param("id")
 	if categoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -386,6 +426,14 @@ func (h *CategorySubcategoryHandler) DeleteCategory(c *gin.Context) {
 	})
 }
 func (h *CategorySubcategoryHandler) DeleteSubcategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "operations" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
 	subcategoryID := c.Param("id")
 	if subcategoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{

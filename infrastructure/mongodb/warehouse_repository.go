@@ -4,6 +4,7 @@ import (
 	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -52,38 +53,56 @@ func (r *WarehouseRepositoryMongoDB) GetWarehouseById(ctx context.Context, id st
 	return &warehouse, nil
 }
 
-func (r *WarehouseRepositoryMongoDB) CreateWarehouse(ctx context.Context, warehouse *entities.Warehouse) error {
+func (r *WarehouseRepositoryMongoDB) CreateWarehouse(ctx context.Context, warehouse *entities.CreateWarehouseRequest) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("warehouses")
 
-	// Convert string ID to ObjectID for MongoDB
-	objectID, err := primitive.ObjectIDFromHex(warehouse.ID)
-	if err != nil {
-		return err
-	}
+	now := time.Now()
 
 	// Create document with ObjectID
-	doc := bson.M{
-		"_id":                          objectID,
-		"warehouse_name":               warehouse.WarehouseName,
-		"warehouse_address":            warehouse.WarehouseAddress,
-		"warehouse_coordinates":        warehouse.WarehouseCoordinates,
-		"warehouse_storage_capacity":   warehouse.WarehouseStorageCapacity,
-		"warehouse_operational_guy_id": warehouse.WarehouseOperationalGuyID,
-		"warehouse_created_at":         warehouse.WarehouseCreatedAt,
-		"warehouse_updated_at":         warehouse.WarehouseUpdatedAt,
+	warehouseData := &entities.Warehouse{
+		WarehouseName:             warehouse.WarehouseName,
+		WarehouseAddress:          warehouse.WarehouseAddress,
+		WarehouseCoordinates:      warehouse.WarehouseCoordinates,
+		WarehouseStorageCapacity:  warehouse.WarehouseStorageCapacity,
+		WarehouseOperationalGuyID: "",
+		WarehouseCreatedAt:        now,
+		WarehouseUpdatedAt:        now,
 	}
 
-	_, err = collection.InsertOne(ctx, doc)
-	return err
+	response, err := collection.InsertOne(ctx, warehouseData)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "Db error",
+		}, err
+	}
+	_, ok := response.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "Db error",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Warehouse Created Successfully",
+	}, nil
 }
 
-func (r *WarehouseRepositoryMongoDB) UpdateWarehouse(ctx context.Context, id string, warehouse *entities.Warehouse) error {
+func (r *WarehouseRepositoryMongoDB) UpdateWarehouse(ctx context.Context, id string, warehouse *entities.UpdateWarehouseRequest) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("warehouses")
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Internal Server Error",
+			Error:   "Error in converting objectIdFromHex of warehouse",
+		}, err
 	}
+	now := time.Now()
 
 	filter := bson.M{"_id": objectID}
 	update := bson.M{
@@ -93,12 +112,29 @@ func (r *WarehouseRepositoryMongoDB) UpdateWarehouse(ctx context.Context, id str
 			"warehouse_coordinates":        warehouse.WarehouseCoordinates,
 			"warehouse_storage_capacity":   warehouse.WarehouseStorageCapacity,
 			"warehouse_operational_guy_id": warehouse.WarehouseOperationalGuyID,
-			"warehouse_updated_at":         warehouse.WarehouseUpdatedAt,
+			"warehouse_updated_at":         now,
 		},
 	}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
-	return err
+	response, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "Db error",
+		}, err
+	}
+	if response.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Warehouse Not Found",
+			Error:   "No matching document",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Warehouse Updated Successfully",
+	}, nil
 }
 
 func (r *WarehouseRepositoryMongoDB) DeleteWarehouse(ctx context.Context, id string) error {

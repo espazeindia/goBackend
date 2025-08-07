@@ -46,7 +46,6 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 	if offset < 0 {
 		offset = 0
 	}
-
 	metadata, total, err := uc.metadataRepo.GetAllMetadata(ctx, limit, offset, search)
 	if err != nil {
 		return nil, err
@@ -65,12 +64,8 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 
 // GetMetadataByID retrieves a metadata by ID
 func (uc *MetadataUseCase) GetMetadataByID(ctx context.Context, id string) (*entities.MetadataResponse, error) {
-	metadata, err := uc.metadataRepo.GetMetadataByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
+	return uc.metadataRepo.GetMetadataByID(ctx, id)
 
-	return uc.toMetadataResponse(metadata), nil
 }
 
 // CreateMetadata creates a new metadata

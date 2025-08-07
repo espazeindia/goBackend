@@ -66,7 +66,7 @@ func (h *WarehouseHandler) GetWarehouseById(c *gin.Context) {
 }
 
 func (h *WarehouseHandler) CreateWarehouse(c *gin.Context) {
-	var warehouse entities.Warehouse
+	var warehouse entities.CreateWarehouseRequest
 	if err := c.ShouldBindJSON(&warehouse); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -76,20 +76,19 @@ func (h *WarehouseHandler) CreateWarehouse(c *gin.Context) {
 		return
 	}
 
-	err := h.warehouseUseCase.CreateWarehouse(c.Request.Context(), &warehouse)
+	response, err := h.warehouseUseCase.CreateWarehouse(c.Request.Context(), &warehouse)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "Failed to create warehouse",
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"data":    warehouse,
-		"message": "Warehouse created successfully",
+		"success": response.Success,
+		"message": response.Message,
 	})
 }
 
@@ -104,7 +103,7 @@ func (h *WarehouseHandler) UpdateWarehouse(c *gin.Context) {
 		return
 	}
 
-	var warehouse entities.Warehouse
+	var warehouse entities.UpdateWarehouseRequest
 	if err := c.ShouldBindJSON(&warehouse); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -114,19 +113,19 @@ func (h *WarehouseHandler) UpdateWarehouse(c *gin.Context) {
 		return
 	}
 
-	err := h.warehouseUseCase.UpdateWarehouse(c.Request.Context(), id, &warehouse)
+	response, err := h.warehouseUseCase.UpdateWarehouse(c.Request.Context(), id, &warehouse)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "Failed to update warehouse",
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Warehouse updated successfully",
+	c.JSON(http.StatusCreated, gin.H{
+		"success": response.Success,
+		"message": response.Message,
 	})
 }
 

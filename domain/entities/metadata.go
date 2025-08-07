@@ -24,18 +24,20 @@ type Review struct {
 }
 
 type MetadataResponse struct {
-	ID            string  `json:"id" bson:"_id,omitempty"`
-	HsnCode       string  `json:"hsn_code"`
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
-	Image         string  `json:"image"`
-	CategoryID    string  `json:"category_id"`
-	SubcategoryID string  `json:"subcategory_id"`
-	MRP           float64 `json:"mrp"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-	TotalStars    int     `json:"total_stars"`
-	TotalReviews  int     `json:"total_reviews"`
+	ID              string  `json:"id" bson:"_id,omitempty"`
+	HsnCode         string  `json:"hsn_code"`
+	Name            string  `json:"name"`
+	Description     string  `json:"description"`
+	Image           string  `json:"image"`
+	CategoryID      string  `json:"category_id"`
+	SubcategoryID   string  `json:"subcategory_id"`
+	MRP             float64 `json:"mrp"`
+	CategoryName    string  `json:"category_name"`
+	SubCategoryName string  `json:"subcategory_name"`
+	CreatedAt       string  `json:"created_at"`
+	UpdatedAt       string  `json:"updated_at"`
+	TotalStars      int     `json:"total_stars"`
+	TotalReviews    int     `json:"total_reviews"`
 }
 
 type MetadataApiResponse struct {
@@ -70,14 +72,29 @@ type UpdateMetadataRequest struct {
 
 // PaginatedMetadataResponse represents paginated metadata response
 type PaginatedMetadataResponse struct {
-	Metadata   []*Metadata `json:"metadata"`
-	Total      int64       `json:"total"`
-	Limit      int64       `json:"limit"`
-	Offset     int64       `json:"offset"`
-	TotalPages int64       `json:"total_pages"`
+	Metadata   []*GetAllMetadata `json:"metadata"`
+	Total      int64             `json:"total"`
+	Limit      int64             `json:"limit"`
+	Offset     int64             `json:"offset"`
+	TotalPages int64             `json:"total_pages"`
 }
 
 type AddReviewRequest struct {
 	MetadataProductID string `json:"metadata_product_id" binding:"required"`
 	Rating            int    `json:"rating" binding:"required"`
+}
+
+type GetAllMetadata struct {
+	ID              string    `json:"id" bson:"_id,omitempty"`
+	HsnCode         string    `json:"hsn_code"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	Image           string    `json:"image"`
+	CategoryID      string    `json:"category_id"`
+	SubcategoryID   string    `json:"subcategory_id"`
+	MRP             float64   `json:"mrp"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	CategoryName    string    `json:"category_name"`
+	SubCategoryName string    `json:"subcategory_name"`
 }

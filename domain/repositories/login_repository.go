@@ -10,6 +10,7 @@ type LoginRepository interface {
 	RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error)
 	VerifyOTP(ctx context.Context, phoneNumber *string, otp *int64) (*entities.SellerVerifyOTPResponse, error)
 	RegisterSeller(ctx context.Context, registrationRequest *entities.SellerRegistrationRequest) (*entities.SellerRegistrationResponse, error)
+	// AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error)
 	// LoginCustomer(ctx context.Context, loginRequest entities.CustomerLoginRequest) (entities.CustomerLoginResponse, error)
 	// RegisterCustomer(ctx context.Context, registrationRequest entities.CustomerRegistrationRequest) (entities.CustomerRegistrationResponse, error)
 }

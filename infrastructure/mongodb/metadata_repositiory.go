@@ -26,7 +26,7 @@ func NewMetadataRepositoryMongoDB(db *mongo.Database) repositories.MetadataRepos
 }
 
 // GetAllMetadata retrieves all metadata with pagination
-func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.Metadata, int64, error) {
+func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.GetAllMetadata, int64, error) {
 	// Build filter based on search parameter
 
 	filter := bson.M{}
@@ -56,12 +56,55 @@ func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, o
 	defer cursor.Close(ctx)
 
 	// Decode results
-	var metadata []*entities.Metadata
-	if err = cursor.All(ctx, &metadata); err != nil {
+	var metadatas []*entities.Metadata
+	if err = cursor.All(ctx, &metadatas); err != nil {
 		return nil, 0, err
 	}
 
-	return metadata, total, nil
+	categoryCollection := r.db.Collection("categories")
+	subCategoryCollection := r.db.Collection("subcategories")
+	var category *entities.Category
+	var subcategory *entities.Subcategory
+	var GetAllMetadataResponse []*entities.GetAllMetadata
+
+	for _, metadata := range metadatas {
+		categoryObjectId, err := primitive.ObjectIDFromHex(metadata.MetadataCategoryID)
+		if err != nil {
+			return nil, 0, err
+		}
+		categoryFilter := bson.M{"_id": categoryObjectId}
+		err = categoryCollection.FindOne(ctx, categoryFilter).Decode(&category)
+		if err != nil {
+			return nil, 0, err
+		}
+		subcategoryObjectId, err := primitive.ObjectIDFromHex(metadata.MetadataSubcategoryID)
+		if err != nil {
+			return nil, 0, err
+		}
+		subcategoryFilter := bson.M{"_id": subcategoryObjectId}
+		err = subCategoryCollection.FindOne(ctx, subcategoryFilter).Decode(&subcategory)
+		if err != nil {
+			return nil, 0, err
+		}
+		allMetadata := &entities.GetAllMetadata{
+			ID:              metadata.MetadataProductID,
+			HsnCode:         metadata.MetadataHSNCode,
+			Name:            metadata.MetadataName,
+			Image:           metadata.MetadataImage,
+			Description:     metadata.MetadataDescription,
+			CategoryID:      metadata.MetadataCategoryID,
+			CategoryName:    category.CategoryName,
+			SubcategoryID:   metadata.MetadataSubcategoryID,
+			SubCategoryName: subcategory.SubcategoryName,
+			MRP:             metadata.MetadataMRP,
+			CreatedAt:       metadata.MetadataCreatedAt,
+			UpdatedAt:       metadata.MetadataUpdatedAt,
+		}
+		GetAllMetadataResponse = append(GetAllMetadataResponse, allMetadata)
+
+	}
+
+	return GetAllMetadataResponse, total, nil
 }
 
 // GetMetadataByID retrieves a metadata by ID
@@ -77,29 +120,61 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 
 	err = r.db.Collection("metadata").FindOne(ctx, filter).Decode(&metadata)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, err
-		}
 		return nil, err
 	}
+
 	review := entities.Review{}
 	err = reviews.FindOne(ctx, filter).Decode(&review)
 	if err != nil {
 		return nil, err
 	}
 
+	categoryCollection := r.db.Collection("categories")
+
+	subCategoryCollection := r.db.Collection("subcategories")
+
+	var category *entities.Category
+
+	var subcategory *entities.Subcategory
+
+	categoryObjectId, err := primitive.ObjectIDFromHex(metadata.MetadataCategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	categoryFilter := bson.M{"_id": categoryObjectId}
+
+	err = categoryCollection.FindOne(ctx, categoryFilter).Decode(&category)
+	if err != nil {
+		return nil, err
+	}
+
+	subcategoryObjectId, err := primitive.ObjectIDFromHex(metadata.MetadataSubcategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	subcategoryFilter := bson.M{"_id": subcategoryObjectId}
+
+	err = subCategoryCollection.FindOne(ctx, subcategoryFilter).Decode(&subcategory)
+	if err != nil {
+		return nil, err
+	}
+
 	metadataResponse := &entities.MetadataResponse{
-		ID:            metadata.MetadataProductID,
-		Name:          metadata.MetadataName,
-		Description:   metadata.MetadataDescription,
-		Image:         metadata.MetadataImage,
-		CategoryID:    metadata.MetadataCategoryID,
-		SubcategoryID: metadata.MetadataSubcategoryID,
-		MRP:           metadata.MetadataMRP,
-		CreatedAt:     metadata.MetadataCreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:     metadata.MetadataUpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		TotalStars:    review.TotalStars,
-		TotalReviews:  review.TotalReviews,
+		ID:              metadata.MetadataProductID,
+		Name:            metadata.MetadataName,
+		Description:     metadata.MetadataDescription,
+		Image:           metadata.MetadataImage,
+		CategoryID:      metadata.MetadataCategoryID,
+		SubcategoryID:   metadata.MetadataSubcategoryID,
+		CategoryName:    category.CategoryName,
+		SubCategoryName: subcategory.SubcategoryName,
+		MRP:             metadata.MetadataMRP,
+		CreatedAt:       metadata.MetadataCreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:       metadata.MetadataUpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		TotalStars:      review.TotalStars,
+		TotalReviews:    review.TotalReviews,
 	}
 	return metadataResponse, nil
 }

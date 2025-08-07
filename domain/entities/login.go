@@ -110,3 +110,16 @@ type CustomerRegistrationResponse struct {
 	UserID  string `json:"user_id,omitempty"`
 	Error   string `json:"error,omitempty"`
 }
+
+type AddBasicData struct {
+	SellerID string `json:"id" bson:"_id"`
+	Name     string `json:"name" bson:"name"`
+	Address  string `json:"address" bson:"address"`
+	PIN      int    `json:"pin" bson:"pin,min=6"`
+}
+
+type ResponseMessage struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Error   string `json:"error,omitempty"`
+}

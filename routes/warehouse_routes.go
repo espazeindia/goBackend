@@ -18,7 +18,7 @@ func SetupWarehouseRoutes(router *gin.RouterGroup) {
 
 	router.GET("/", warehouseHandler.GetAllWarehouses)
 	router.GET("/:id", warehouseHandler.GetWarehouseById)
-	router.POST("/", warehouseHandler.CreateWarehouse)
-	router.PUT("/:id", warehouseHandler.UpdateWarehouse)
+	router.POST("/createWarehouse", warehouseHandler.CreateWarehouse)
+	router.PUT("/updateWarehouse/:id", warehouseHandler.UpdateWarehouse)
 	router.DELETE("/:id", warehouseHandler.DeleteWarehouse)
 }

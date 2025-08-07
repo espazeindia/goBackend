@@ -280,6 +280,11 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 
 }
 
+// func (r *LoginRepositoryMongoDB) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {
+// 	sellerCollection := r.db.Collection("sellers")
+
+// }
+
 // func (r *LoginRepositoryMongoDB) RegisterCustomer(ctx context.Context, registrationRequest entities.CustomerRegistrationRequest) (entities.CustomerRegistrationResponse, error) {
 // 	collection := r.db.Collection("customers")
 
