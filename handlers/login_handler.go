@@ -182,26 +182,18 @@ func (h *LoginHandler) GetOTP(c *gin.Context) {
 	response, err := h.loginUseCase.GetOTP(c.Request.Context(), &otpRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "An unexpected error occurred",
-		})
-		return
-	}
-
-	// Return response based on success status
-	if response.Success {
-		c.JSON(http.StatusCreated, gin.H{
-			"success": response.Success,
-			"message": response.Message,
-		})
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
 			"success": response.Success,
 			"error":   response.Error,
 			"message": response.Message,
 		})
+		return
 	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+	})
+
 }
 
 func (h *LoginHandler) VerifyOTP(c *gin.Context) {
