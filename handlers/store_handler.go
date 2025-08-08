@@ -87,23 +87,26 @@ func (h *StoreHandler) CreateStore(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
+			"error":   "Invalid Request Data ",
+			"message": "Request data is invalid",
 		})
 		return
 	}
 
-	response, err := h.storeUseCase.CreateStore(c.Request.Context(), request)
+	response, err := h.storeUseCase.CreateStore(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Failed to create store",
-			"message": err.Error(),
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
 		})
 		return
 	}
+	c.JSON(http.StatusAccepted, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+	})
 
-	c.JSON(http.StatusCreated, response)
 }
 
 // UpdateStore handles PUT /stores/:id - Update an existing store

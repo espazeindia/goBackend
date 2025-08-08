@@ -22,8 +22,8 @@ func (h *LoginHandler) LoginOperationalGuy(c *gin.Context) {
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
 		})
 		return
 	}
@@ -63,8 +63,8 @@ func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 		println("Validation error:", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
 		})
 		return
 	}
@@ -136,14 +136,50 @@ func (h *LoginHandler) RegisterSeller(c *gin.Context) {
 	if err := c.ShouldBindJSON(&registrationRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Validation error",
-			"message": err.Error(),
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
 		})
 		return
 	}
 
 	// Call the use case
 	response, err := h.loginUseCase.RegisterSeller(c.Request.Context(), &registrationRequest)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "An unexpected error occurred",
+		})
+		return
+	}
+
+	// Return response based on success status
+	if response.Success {
+		c.JSON(http.StatusCreated, gin.H{
+			"success": response.Success,
+			"message": response.Message,
+		})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+	}
+}
+func (h *LoginHandler) GetOTP(c *gin.Context) {
+	var otpRequest entities.GetOTP
+	if err := c.ShouldBindJSON(&otpRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
+		return
+	}
+
+	// Call the use case
+	response, err := h.loginUseCase.GetOTP(c.Request.Context(), &otpRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -191,6 +227,54 @@ func (h *LoginHandler) VerifyOTP(c *gin.Context) {
 
 	// Call the use case
 	response, err := h.loginUseCase.VerifyOTP(c.Request.Context(), &phoneNumber, &otp)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "An unexpected error occurred",
+		})
+		return
+	}
+
+	// Return response based on success status
+	if response.Success {
+		c.JSON(http.StatusCreated, gin.H{
+			"success": response.Success,
+			"message": response.Message,
+			"token":   response.Token,
+		})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+	}
+}
+
+func (h *LoginHandler) VerifyPin(c *gin.Context) {
+	phoneNumber := c.GetHeader("phonenumber")
+	pinStr := c.GetHeader("pin")
+	pin, err := strconv.ParseInt(pinStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalide Pin",
+			"message": "Invalide Pin Format"})
+		return
+	}
+
+	if len(phoneNumber) < 10 || pin < 100000 || pin > 999999 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Data Inconsistent",
+			"message": "Api Data Invalid",
+		})
+		return
+	}
+
+	// Call the use case
+	response, err := h.loginUseCase.VerifyPin(c.Request.Context(), &phoneNumber, &pin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,

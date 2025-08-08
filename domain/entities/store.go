@@ -3,7 +3,7 @@ package entities
 import "time"
 
 type Store struct {
-	StoreID       string    `json:"store_id" bson:"store_id"`
+	StoreID       string    `json:"store_id" bson:"_id,omitempty"`
 	SellerID      string    `json:"seller_id" bson:"seller_id"`
 	WarehouseID   string    `json:"warehouse_id" bson:"warehouse_id"`
 	StoreName     string    `json:"store_name" bson:"store_name"`
@@ -28,8 +28,8 @@ type GetStoreByIdRequest struct {
 }
 
 type CreateStoreRequest struct {
-	SellerID      string `json:"seller_id" binding:"required"`
 	WarehouseID   string `json:"warehouse_id" binding:"required"`
+	SellerID      string `json:"seller_id" bson:"seller_id"`
 	StoreName     string `json:"store_name" binding:"required"`
 	StoreAddress  string `json:"store_address" binding:"required"`
 	StoreContact  string `json:"store_contact" binding:"required"`

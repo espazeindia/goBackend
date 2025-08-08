@@ -67,57 +67,8 @@ func (u *StoreUseCase) GetStoreById(ctx context.Context, storeId string) (*entit
 	}, nil
 }
 
-func (u *StoreUseCase) CreateStore(ctx context.Context, request entities.CreateStoreRequest) (*entities.CreateStoreResponse, error) {
-	// Validate request
-	if request.SellerID == "" {
-		return nil, errors.New("seller_id is required")
-	}
-	if request.WarehouseID == "" {
-		return nil, errors.New("warehouse_id is required")
-	}
-	if request.StoreName == "" {
-		return nil, errors.New("store_name is required")
-	}
-	if request.StoreAddress == "" {
-		return nil, errors.New("store_address is required")
-	}
-	if request.StoreContact == "" {
-		return nil, errors.New("store_contact is required")
-	}
-	if request.NumberOfRacks <= 0 {
-		return nil, errors.New("number_of_racks must be greater than 0")
-	}
-
-	// Check if store already exists for this seller
-	existingStore, err := u.storeRepository.GetStoreBySellerId(ctx, request.SellerID)
-	if err == nil && existingStore != nil {
-		return nil, errors.New("store already exists for this seller")
-	}
-
-	// Create store entity
-	store := &entities.Store{
-		SellerID:      request.SellerID,
-		WarehouseID:   request.WarehouseID,
-		StoreName:     request.StoreName,
-		StoreAddress:  request.StoreAddress,
-		StoreContact:  request.StoreContact,
-		NumberOfRacks: request.NumberOfRacks,
-		OccupiedRacks: 0, // Default to 0
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-	}
-
-	// Save to repository
-	err = u.storeRepository.CreateStore(ctx, store)
-	if err != nil {
-		return nil, err
-	}
-
-	return &entities.CreateStoreResponse{
-		Success: true,
-		Message: "Store created successfully",
-		Store:   *store,
-	}, nil
+func (u *StoreUseCase) CreateStore(ctx context.Context, request *entities.CreateStoreRequest) (*entities.MessageResponse, error) {
+	return u.storeRepository.CreateStore(ctx, request)
 }
 
 func (u *StoreUseCase) UpdateStore(ctx context.Context, storeId string, request entities.UpdateStoreRequest) (*entities.UpdateStoreResponse, error) {

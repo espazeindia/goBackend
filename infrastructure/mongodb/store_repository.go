@@ -90,26 +90,43 @@ func (r *StoreRepositoryMongoDB) GetStoreById(ctx context.Context, storeId strin
 	return &store, nil
 }
 
-func (r *StoreRepositoryMongoDB) CreateStore(ctx context.Context, store *entities.Store) error {
+func (r *StoreRepositoryMongoDB) CreateStore(ctx context.Context, request *entities.CreateStoreRequest) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("stores")
 
-	// Generate store ID if not provided
-	if store.StoreID == "" {
-		store.StoreID = primitive.NewObjectID().Hex()
-	}
-
-	// Set timestamps
 	now := time.Now()
-	store.CreatedAt = now
-	store.UpdatedAt = now
-
-	// Set default values
-	if store.OccupiedRacks == 0 {
-		store.OccupiedRacks = 0
+	store := &entities.Store{
+		StoreName:     request.StoreName,
+		StoreAddress:  request.StoreAddress,
+		StoreContact:  request.StoreContact,
+		WarehouseID:   request.WarehouseID,
+		SellerID:      request.SellerID,
+		NumberOfRacks: request.NumberOfRacks,
+		OccupiedRacks: 0,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
-	_, err := collection.InsertOne(ctx, store)
-	return err
+	response, err := collection.InsertOne(ctx, store)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Db error",
+			Message: "Database Error",
+		}, err
+	}
+	_, ok := response.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Db error",
+			Message: "Database Error",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Store Creatd Successfully",
+	}, nil
+
 }
 
 func (r *StoreRepositoryMongoDB) UpdateStore(ctx context.Context, storeId string, store *entities.Store) error {

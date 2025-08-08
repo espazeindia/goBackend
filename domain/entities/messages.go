@@ -6,4 +6,5 @@ type MessageResponse struct {
 	Error       string       `json:"error" binding:"omitempty"`
 	Category    *Category    `json:"category" binding:"omitempty"`
 	SubCategory *Subcategory `json:"sub_category" binding:"omitempty"`
+	Token       string       `json:"token" binding:"omitempty"`
 }

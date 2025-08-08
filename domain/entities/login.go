@@ -72,6 +72,9 @@ type Customer struct {
 type SellerRegistrationRequest struct {
 	PhoneNumber string `json:"phoneNumber" binding:"required,min=10"`
 }
+type GetOTP struct {
+	PhoneNumber string `json:"phoneNumber" binding:"required,min=10"`
+}
 
 type SellerRegistrationResponse struct {
 	Success bool   `json:"success"`
