@@ -132,7 +132,7 @@ func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 // }
 
 func (h *LoginHandler) GetOTP(c *gin.Context) {
-	phoneNumber := c.GetHeader("phonenumber")
+	phoneNumber := c.Query("phonenumber")
 
 	if len(phoneNumber) < 10 {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -161,8 +161,8 @@ func (h *LoginHandler) GetOTP(c *gin.Context) {
 }
 
 func (h *LoginHandler) VerifyOTP(c *gin.Context) {
-	phoneNumber := c.GetHeader("phonenumber")
-	otpStr := c.GetHeader("otp")
+	phoneNumber := c.Query("phonenumber")
+	otpStr := c.Query("otp")
 	otp, err := strconv.ParseInt(otpStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -209,8 +209,8 @@ func (h *LoginHandler) VerifyOTP(c *gin.Context) {
 }
 
 func (h *LoginHandler) VerifyPin(c *gin.Context) {
-	phoneNumber := c.GetHeader("phonenumber")
-	pinStr := c.GetHeader("pin")
+	phoneNumber := c.Query("phonenumber")
+	pinStr := c.Query("pin")
 	pin, err := strconv.ParseInt(pinStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
