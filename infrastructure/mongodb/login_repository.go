@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-	"errors"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
 	"espazeBackend/utils"
@@ -151,67 +150,6 @@ func (r *LoginRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context, reg
 	}, nil
 }
 
-func (r *LoginRepositoryMongoDB) RegisterSeller(ctx context.Context, registrationRequest *entities.SellerRegistrationRequest) (*entities.SellerRegistrationResponse, error) {
-	collection := r.db.Collection("sellers")
-
-	// Check if user already exists
-	var existingUser entities.Seller
-	err := collection.FindOne(ctx, bson.M{"phoneNumber": registrationRequest.PhoneNumber}).Decode(&existingUser)
-	if err == nil {
-		// User already exists
-		return &entities.SellerRegistrationResponse{
-			Success: false,
-			Error:   "Seller already exists",
-			Message: "An account with this phone number already exists",
-		}, nil
-	} else if err != mongo.ErrNoDocuments {
-		// Database error
-		return &entities.SellerRegistrationResponse{
-			Success: false,
-			Error:   "Database error",
-			Message: "Failed to check user existence",
-		}, err
-	}
-
-	otp, err := utils.GenerateOTP()
-	if err != nil {
-		return &entities.SellerRegistrationResponse{
-			Success: false,
-			Error:   "OTP generation failed",
-			Message: "Failed to generate OTP",
-		}, err
-	}
-
-	now := time.Now()
-	newUser := entities.Seller{
-		Name:               "new user",
-		PhoneNumber:        registrationRequest.PhoneNumber,
-		Address:            "dummy",
-		OTP:                otp,
-		OTPGeneratedAt:     now,
-		NumberOfRetriesOTP: 0,
-		PIN:                -1,
-		NumberOfRetriesPIN: 0,
-		LastLoginAt:        now,
-		StoreID:            "",
-	}
-	fmt.Print("OTP", otp)
-	// Insert user into database
-	_, err = collection.InsertOne(ctx, newUser)
-	if err != nil {
-		return &entities.SellerRegistrationResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to create seller account",
-		}, err
-	}
-
-	return &entities.SellerRegistrationResponse{
-		Success: true,
-		Message: `OTP sent to the you phone number `,
-	}, nil
-}
-
 func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *string, otp *int64) (*entities.MessageResponse, error) {
 	sellerCollection := r.db.Collection("sellers")
 
@@ -343,18 +281,56 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 
 }
 
-func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, otpRequest *entities.GetOTP) (*entities.MessageResponse, error) {
+func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string) (*entities.MessageResponse, error) {
 	sellerCollection := r.db.Collection("sellers")
 
 	var existingUser entities.Seller
-	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": otpRequest.PhoneNumber}).Decode(&existingUser)
+	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
 	if err == mongo.ErrNoDocuments {
-		// User already exists
+		otp, err := utils.GenerateOTP()
+		if err != nil {
+			return &entities.MessageResponse{
+				Success: false,
+				Error:   "OTP generation failed",
+				Message: "Failed to generate OTP",
+			}, err
+		}
+
+		now := time.Now()
+		newUser := entities.Seller{
+			Name:               "new user",
+			PhoneNumber:        phoneNumber,
+			Address:            "dummy",
+			OTP:                otp,
+			OTPGeneratedAt:     now,
+			NumberOfRetriesOTP: 0,
+			PIN:                -1,
+			NumberOfRetriesPIN: 0,
+			LastLoginAt:        now,
+			StoreID:            "",
+		}
+		// Insert user into database
+		response, err := sellerCollection.InsertOne(ctx, newUser)
+		if err != nil {
+			return &entities.MessageResponse{
+				Success: false,
+				Error:   "Registration failed",
+				Message: "Failed to create seller account",
+			}, err
+		}
+		_, ok := response.InsertedID.(primitive.ObjectID)
+		if !ok {
+			return &entities.MessageResponse{
+				Success: false,
+				Error:   "Registration failed",
+				Message: "Failed to create seller account",
+			}, err
+		}
+
 		return &entities.MessageResponse{
-			Success: false,
-			Error:   "No Seller Found",
-			Message: "No Seller is associated to this phone number ",
-		}, errors.New("no seller with this phone number")
+			Success: true,
+			Message: fmt.Sprint("Otp Sent Successfully ", otp),
+		}, nil
 	} else if err != mongo.ErrNoDocuments && err != nil {
 		// Database error
 		return &entities.MessageResponse{

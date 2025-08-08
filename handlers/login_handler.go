@@ -131,55 +131,19 @@ func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
 // 	}
 // }
 
-func (h *LoginHandler) RegisterSeller(c *gin.Context) {
-	var registrationRequest entities.SellerRegistrationRequest
-	if err := c.ShouldBindJSON(&registrationRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request body",
-			"message": "Request body is invalid",
-		})
-		return
-	}
-
-	// Call the use case
-	response, err := h.loginUseCase.RegisterSeller(c.Request.Context(), &registrationRequest)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "An unexpected error occurred",
-		})
-		return
-	}
-
-	// Return response based on success status
-	if response.Success {
-		c.JSON(http.StatusCreated, gin.H{
-			"success": response.Success,
-			"message": response.Message,
-		})
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
-		})
-	}
-}
 func (h *LoginHandler) GetOTP(c *gin.Context) {
-	var otpRequest entities.GetOTP
-	if err := c.ShouldBindJSON(&otpRequest); err != nil {
+	phoneNumber := c.GetHeader("phonenumber")
+
+	if len(phoneNumber) < 10 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request body",
-			"message": "Request body is invalid",
-		})
+			"error":   "Invalid Phone Number",
+			"message": "Entered phone Number is less than 10"})
 		return
 	}
 
 	// Call the use case
-	response, err := h.loginUseCase.GetOTP(c.Request.Context(), &otpRequest)
+	response, err := h.loginUseCase.GetOTP(c.Request.Context(), phoneNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": response.Success,
