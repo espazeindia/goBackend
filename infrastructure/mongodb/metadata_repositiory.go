@@ -275,7 +275,7 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 	}
 
 	review := entities.Review{}
-	err = reviews.FindOne(ctx, filter).Decode(&review)
+	err = reviews.FindOne(ctx, bson.M{"_id": id}).Decode(&review)
 	if err != nil {
 		return nil, err
 	}
