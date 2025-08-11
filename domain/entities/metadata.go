@@ -86,15 +86,15 @@ type AddReviewRequest struct {
 
 type GetAllMetadata struct {
 	ID              string    `json:"id" bson:"_id,omitempty"`
-	HsnCode         string    `json:"hsn_code"`
-	Name            string    `json:"name"`
-	Description     string    `json:"description"`
-	Image           string    `json:"image"`
-	CategoryID      string    `json:"category_id"`
-	SubcategoryID   string    `json:"subcategory_id"`
-	MRP             float64   `json:"mrp"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	CategoryName    string    `json:"category_name"`
-	SubCategoryName string    `json:"subcategory_name"`
+	HsnCode         string    `json:"hsn_code" bson:"hsn_code"`
+	Name            string    `json:"name" bson:"name"`
+	Description     string    `json:"description" bson:"description"`
+	Image           string    `json:"image" bson:"image"`
+	CategoryID      string    `json:"category_id" bson:"category_id"`
+	SubcategoryID   string    `json:"subcategory_id" bson:"subcategory_id"`
+	MRP             float64   `json:"mrp" bson:"mrp"`
+	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" bson:"updated_at"`
+	CategoryName    string    `json:"category_name" bson:"category_name"`
+	SubCategoryName string    `json:"subcategory_name" bson:"subcategory_name"`
 }

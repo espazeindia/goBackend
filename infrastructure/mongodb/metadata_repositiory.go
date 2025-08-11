@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"espazeBackend/domain/entities"
@@ -10,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // MetadataRepositoryMongoDB implements the MetadataRepository interface using MongoDB
@@ -27,84 +27,235 @@ func NewMetadataRepositoryMongoDB(db *mongo.Database) repositories.MetadataRepos
 
 // GetAllMetadata retrieves all metadata with pagination
 func (r *MetadataRepositoryMongoDB) GetAllMetadata(ctx context.Context, limit, offset int64, search string) ([]*entities.GetAllMetadata, int64, error) {
-	// Build filter based on search parameter
+	metadataColl := r.db.Collection("metadata")
 
-	filter := bson.M{}
-	if search != "" {
-		filter = bson.M{
-			"metadata_name": bson.M{"$regex": search, "$options": "i"},
+	// Base match filter
+	match := bson.M{}
+	if search != "" && search != `""` {
+		regex := bson.M{"$regex": search, "$options": "i"}
+		match["$or"] = []bson.M{
+			{"metadata_name": regex},
+			{"subcategory_info.subcategory_name": regex}, // Will work after $lookup
 		}
 	}
 
-	// Get total count
-	total, err := r.db.Collection("metadata").CountDocuments(ctx, filter)
+	// Aggregation pipeline
+	pipeline := mongo.Pipeline{
+		// convert string IDs to ObjectIDs for lookups
+		{{Key: "$addFields", Value: bson.M{
+			"category_oid":    bson.M{"$toObjectId": "$metadata_category_id"},
+			"subcategory_oid": bson.M{"$toObjectId": "$metadata_subcategory_id"},
+		}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "categories",
+			"localField":   "category_oid",
+			"foreignField": "_id",
+			"as":           "category_info",
+		}}},
+		{{Key: "$unwind", Value: "$category_info"}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "subcategories",
+			"localField":   "subcategory_oid",
+			"foreignField": "_id",
+			"as":           "subcategory_info",
+		}}},
+		{{Key: "$unwind", Value: "$subcategory_info"}},
+	}
+
+	// Apply search filter if provided
+	if len(match) > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
+	}
+
+	// Count stage
+	countStage := append(pipeline, bson.D{{Key: "$count", Value: "total"}})
+	countCursor, err := metadataColl.Aggregate(ctx, countStage)
 	if err != nil {
 		return nil, 0, err
 	}
+	var countResult []struct {
+		Total int64 `bson:"total"`
+	}
+	if err := countCursor.All(ctx, &countResult); err != nil {
+		return nil, 0, err
+	}
+	var total int64
+	if len(countResult) > 0 {
+		total = countResult[0].Total
+	}
 
-	// Set up pagination options
-	opts := options.Find().
-		SetLimit(limit).
-		SetSkip(offset * limit).
-		SetSort(bson.D{{Key: "metadata_created_at", Value: -1}}) // Sort by creation date descending
+	// Pagination + sorting
+	pipeline = append(pipeline,
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "metadata_created_at", Value: -1}}}},
+		bson.D{{Key: "$skip", Value: offset * limit}},
+		bson.D{{Key: "$limit", Value: limit}},
+	)
 
-	// Execute query
-	cursor, err := r.db.Collection("metadata").Find(ctx, filter, opts)
+	// Projection
+	pipeline = append(pipeline, bson.D{{Key: "$project", Value: bson.M{
+		"_id":              bson.M{"$toString": "$_id"},
+		"hsn_code":         "$hsn_code",
+		"name":             "$metadata_name",
+		"description":      "$metadata_description",
+		"image":            "$metadata_image",
+		"category_id":      "$metadata_category_id",
+		"category_name":    "$category_info.category_name",
+		"subcategory_id":   "$metadata_subcategory_id",
+		"subcategory_name": "$subcategory_info.subcategory_name",
+		"mrp":              "$metadata_mrp",
+		"created_at":       "$metadata_created_at",
+		"updated_at":       "$metadata_updated_at",
+	}}})
+
+	// Execute aggregation
+	cursor, err := metadataColl.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
-	// Decode results
-	var metadatas []*entities.Metadata
-	if err = cursor.All(ctx, &metadatas); err != nil {
+	var results []*entities.GetAllMetadata
+	if err := cursor.All(ctx, &results); err != nil {
 		return nil, 0, err
 	}
 
-	categoryCollection := r.db.Collection("categories")
-	subCategoryCollection := r.db.Collection("subcategories")
-	var category *entities.Category
-	var subcategory *entities.Subcategory
-	var GetAllMetadataResponse []*entities.GetAllMetadata
+	return results, total, nil
+}
 
-	for _, metadata := range metadatas {
-		categoryObjectId, err := primitive.ObjectIDFromHex(metadata.MetadataCategoryID)
-		if err != nil {
-			return nil, 0, err
-		}
-		categoryFilter := bson.M{"_id": categoryObjectId}
-		err = categoryCollection.FindOne(ctx, categoryFilter).Decode(&category)
-		if err != nil {
-			return nil, 0, err
-		}
-		subcategoryObjectId, err := primitive.ObjectIDFromHex(metadata.MetadataSubcategoryID)
-		if err != nil {
-			return nil, 0, err
-		}
-		subcategoryFilter := bson.M{"_id": subcategoryObjectId}
-		err = subCategoryCollection.FindOne(ctx, subcategoryFilter).Decode(&subcategory)
-		if err != nil {
-			return nil, 0, err
-		}
-		allMetadata := &entities.GetAllMetadata{
-			ID:              metadata.MetadataProductID,
-			HsnCode:         metadata.MetadataHSNCode,
-			Name:            metadata.MetadataName,
-			Image:           metadata.MetadataImage,
-			Description:     metadata.MetadataDescription,
-			CategoryID:      metadata.MetadataCategoryID,
-			CategoryName:    category.CategoryName,
-			SubcategoryID:   metadata.MetadataSubcategoryID,
-			SubCategoryName: subcategory.SubcategoryName,
-			MRP:             metadata.MetadataMRP,
-			CreatedAt:       metadata.MetadataCreatedAt,
-			UpdatedAt:       metadata.MetadataUpdatedAt,
-		}
-		GetAllMetadataResponse = append(GetAllMetadataResponse, allMetadata)
+// GetAllMetadataForSeller retrieves all metadata not already in seller's inventory with optimized aggregation pipeline
+func (r *MetadataRepositoryMongoDB) GetAllMetadataForSeller(ctx context.Context, limit, offset int64, search, sellerID string) ([]*entities.GetAllMetadata, int64, error) {
+	metadataColl := r.db.Collection("metadata")
+	inventoryColl := r.db.Collection("inventory")
+	inventoryProductColl := r.db.Collection("inventory_product")
 
+	// 1️⃣ Get seller's inventory ID
+	var inventory *entities.Inventory
+	err := inventoryColl.FindOne(ctx, bson.M{"seller_id": sellerID}).Decode(&inventory)
+	if err == mongo.ErrNoDocuments {
+		inventory = nil
+	}
+	if err != nil && err != mongo.ErrNoDocuments {
+		return nil, 0, err
+	}
+	fmt.Print("hello", inventory, "\n")
+	// 2️⃣ Collect product IDs to exclude
+	var excludeIDs []primitive.ObjectID
+	if inventory != nil {
+		cursor, err := inventoryProductColl.Find(ctx, bson.M{"inventory_id": inventory.InventoryID})
+		if err != nil {
+			return nil, 0, err
+		}
+		defer cursor.Close(ctx)
+
+		var products []struct {
+			MetadataProductID primitive.ObjectID `bson:"metadata_product_id"`
+		}
+		if err := cursor.All(ctx, &products); err != nil {
+			return nil, 0, err
+		}
+		fmt.Print(products)
+		excludeIDs = make([]primitive.ObjectID, len(products))
+		for i, p := range products {
+			excludeIDs[i] = p.MetadataProductID
+		}
 	}
 
-	return GetAllMetadataResponse, total, nil
+	// 3️⃣ Base filter for initial match (only exclusions)
+	initialMatch := bson.M{}
+	if len(excludeIDs) > 0 {
+		initialMatch["_id"] = bson.M{"$nin": excludeIDs}
+	}
+
+	// 4️⃣ Aggregation pipeline
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: initialMatch}},
+		{{Key: "$addFields", Value: bson.M{
+			"category_oid":    bson.M{"$toObjectId": "$metadata_category_id"},
+			"subcategory_oid": bson.M{"$toObjectId": "$metadata_subcategory_id"},
+		}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "categories",
+			"localField":   "category_oid",
+			"foreignField": "_id",
+			"as":           "category_info",
+		}}},
+		{{Key: "$unwind", Value: "$category_info"}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "subcategories",
+			"localField":   "subcategory_oid",
+			"foreignField": "_id",
+			"as":           "subcategory_info",
+		}}},
+		{{Key: "$unwind", Value: "$subcategory_info"}},
+	}
+
+	// 5️⃣ Add search filter for both metadata name and subcategory name after lookups
+	if search != "" && search != `""` {
+		searchMatch := bson.M{
+			"$or": []bson.M{
+				{"metadata_name": bson.M{"$regex": search, "$options": "i"}},
+				{"subcategory_info.subcategory_name": bson.M{"$regex": search, "$options": "i"}},
+			},
+		}
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: searchMatch}})
+	}
+
+	// Common sort
+	sortStage := bson.D{
+		{Key: "metadata_created_at", Value: -1},
+		{Key: "_id", Value: 1}, // stable sort
+	}
+
+	// 6️⃣ Count (clone pipeline to avoid rebuilding)
+	countPipeline := append(append(mongo.Pipeline{}, pipeline...), bson.D{{Key: "$count", Value: "total"}})
+	countCursor, err := metadataColl.Aggregate(ctx, countPipeline)
+	if err != nil {
+		return nil, 0, err
+	}
+	var countResult []struct {
+		Total int64 `bson:"total"`
+	}
+	if err := countCursor.All(ctx, &countResult); err != nil {
+		return nil, 0, err
+	}
+	var total int64
+	if len(countResult) > 0 {
+		total = countResult[0].Total
+	}
+
+	// 7️⃣ Data fetch
+	dataPipeline := append(pipeline,
+		bson.D{{Key: "$sort", Value: sortStage}},
+		bson.D{{Key: "$skip", Value: offset * limit}},
+		bson.D{{Key: "$limit", Value: limit}},
+		bson.D{{Key: "$project", Value: bson.M{
+			"_id":              bson.M{"$toString": "$_id"},
+			"hsn_code":         "$hsn_code",
+			"name":             "$metadata_name",
+			"description":      "$metadata_description",
+			"image":            "$metadata_image",
+			"category_id":      "$metadata_category_id",
+			"category_name":    "$category_info.category_name",
+			"subcategory_id":   "$metadata_subcategory_id",
+			"subcategory_name": "$subcategory_info.subcategory_name",
+			"mrp":              "$metadata_mrp",
+			"created_at":       "$metadata_created_at",
+			"updated_at":       "$metadata_updated_at",
+		}}},
+	)
+
+	cursor, err := metadataColl.Aggregate(ctx, dataPipeline)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []*entities.GetAllMetadata
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, 0, err
+	}
+
+	return results, total, nil
 }
 
 // GetMetadataByID retrieves a metadata by ID

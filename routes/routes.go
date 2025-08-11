@@ -24,46 +24,48 @@ func SetupRoutes(router *gin.Engine) {
 	}
 
 	// Protected routes (authentication required)
-	// Apply authentication middleware to all routes below this point
-	router.Use(middlewares.AuthMiddleware())
-
-	metadata := router.Group("/metadata")
+	// Create a protected route group with authentication middleware
+	protected := router.Group("/")
+	protected.Use(middlewares.AuthMiddleware())
 	{
-		SetupMetadataRoutes(metadata)
-	}
+		metadata := protected.Group("/metadata")
+		{
+			SetupMetadataRoutes(metadata)
+		}
 
-	inventory := router.Group("/inventory")
-	{
-		SetupInventoryRoutes(inventory)
-	}
+		inventory := protected.Group("/inventory")
+		{
+			SetupInventoryRoutes(inventory)
+		}
 
-	products := router.Group("/products")
-	{
-		SetupProductRoutes(products)
-	}
+		products := protected.Group("/products")
+		{
+			SetupProductRoutes(products)
+		}
 
-	store := router.Group("/store")
-	{
-		SetupStoreRoutes(store)
-	}
+		store := protected.Group("/store")
+		{
+			SetupStoreRoutes(store)
+		}
 
-	warehouse := router.Group("/warehouse")
-	{
-		SetupWarehouseRoutes(warehouse)
-	}
+		warehouse := protected.Group("/warehouse")
+		{
+			SetupWarehouseRoutes(warehouse)
+		}
 
-	location := router.Group("/location")
-	{
-		SetupLocationRoutes(location)
-	}
+		location := protected.Group("/location")
+		{
+			SetupLocationRoutes(location)
+		}
 
-	category_subcategory := router.Group("/category")
-	{
-		SetupCategorySubcategoryRoutes(category_subcategory)
-	}
+		category_subcategory := protected.Group("/category")
+		{
+			SetupCategorySubcategoryRoutes(category_subcategory)
+		}
 
-	order := router.Group("/order")
-	{
-		SetupOrderRoutes(order)
+		order := protected.Group("/order")
+		{
+			SetupOrderRoutes(order)
+		}
 	}
 }

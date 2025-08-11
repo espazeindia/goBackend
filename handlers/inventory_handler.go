@@ -3,7 +3,9 @@ package handlers
 import (
 	"espazeBackend/domain/entities"
 	"espazeBackend/usecase"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,35 +19,106 @@ func NewInventoryHandler(inventoryUseCase *usecase.InventoryUseCaseInterface) *I
 }
 
 func (h *InventoryHandler) GetAllInventory(c *gin.Context) {
-	var inventoryRequest entities.GetAllInventoryRequest
-	if err := c.ShouldBindJSON(&inventoryRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+	search := c.DefaultQuery("search", "")
+	sort := c.DefaultQuery("sort", "")
+	sellerInterface, isPresent := c.Get("user_id")
+
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
 		return
 	}
 
-	inventory, err := h.inventoryUseCase.GetAllInventory(c.Request.Context(), inventoryRequest)
+	seller, ok := sellerInterface.(string)
+	if !ok || seller == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid limit parameter",
+			"message": "Limit parameter is invalid",
+		})
+		return
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid offset parameter",
+			"message": "Offset parameter is invalid",
+		})
+		return
+	}
+
+	inventory, err := h.inventoryUseCase.GetAllInventory(c.Request.Context(), seller, offset, limit, search, sort)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	c.JSON(http.StatusOK, inventory)
+	c.JSON(http.StatusOK, gin.H{"data": inventory, "success": true})
 }
 
 func (h *InventoryHandler) AddInventory(c *gin.Context) {
-	var inventoryRequest entities.AddInventoryRequest
-	if err := c.ShouldBindJSON(&inventoryRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	seller_id, isPresent := c.Get("user_id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
 		return
 	}
 
-	err := h.inventoryUseCase.AddInventory(c.Request.Context(), inventoryRequest)
+	seller, ok := seller_id.(string)
+	if !ok || seller == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	var inventoryRequest *entities.AddInventoryRequest
+	if err := c.ShouldBindJSON(&inventoryRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Request Body is Invalid",
+			"message": "Invalide Request Body",
+		})
+		return
+	}
+	inventoryRequest.SellerID = seller
+
+	response, err := h.inventoryUseCase.AddInventory(c.Request.Context(), inventoryRequest)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		fmt.Print(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"message": response.Message,
+			"error":   response.Error})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Inventory added successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+	})
 }
 
 func (h *InventoryHandler) UpdateInventory(c *gin.Context) {

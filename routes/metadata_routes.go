@@ -31,4 +31,6 @@ func SetupMetadataRoutes(router *gin.RouterGroup) {
 
 	router.POST("/add_review", metadataHandler.AddReview)
 
+	router.GET("/getMetadataForSeller", metadataHandler.GetMetadataForSeller)
+
 }

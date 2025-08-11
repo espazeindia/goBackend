@@ -4,6 +4,7 @@ import (
 	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -86,24 +87,26 @@ func (r *ProductRepositoryMongoDB) GetProductsForSpecificStore(ctx context.Conte
 
 			for _, metadata := range metadataList {
 				storeProduct := struct {
-					InventoryId              string  `json:"inventory_id"`
-					InventoryProductId       string  `json:"inventory_product_id"`
-					MetadataProductId        string  `json:"metadata_product_id"`
-					ProductVisibility        string  `json:"product_visibility"`
-					MetadataName             string  `json:"metadata_name"`
-					MetadataDescription      string  `json:"metadata_description"`
-					MetadataImage            string  `json:"metadata_image"`
-					MetadataCategoryId       string  `json:"metadata_category_id"`
-					MetadataSubcategoryId    string  `json:"metadata_subcategory_id"`
-					MetadataMrp              float64 `json:"metadata_mrp"`
-					ProductQuantity          int     `json:"product_quantity"`
-					ProductExpiryDate        string  `json:"product_expiry_date"`
-					ProductManufacturingDate string  `json:"product_manufacturing_date"`
+					InventoryId              string    `json:"inventory_id"`
+					InventoryProductId       string    `json:"inventory_product_id"`
+					MetadataProductId        string    `json:"metadata_product_id"`
+					ProductVisibility        bool      `json:"product_visibility"`
+					ProductPrice             float64   `json:"product_price"`
+					MetadataName             string    `json:"metadata_name"`
+					MetadataDescription      string    `json:"metadata_description"`
+					MetadataImage            string    `json:"metadata_image"`
+					MetadataCategoryId       string    `json:"metadata_category_id"`
+					MetadataSubcategoryId    string    `json:"metadata_subcategory_id"`
+					MetadataMrp              float64   `json:"metadata_mrp"`
+					ProductQuantity          int       `json:"product_quantity"`
+					ProductExpiryDate        time.Time `json:"product_expiry_date"`
+					ProductManufacturingDate time.Time `json:"product_manufacturing_date"`
 				}{
 					InventoryId:              inventory.InventoryID,
 					InventoryProductId:       inventoryProduct.InventoryProductID,
 					MetadataProductId:        metadata.MetadataProductID,
 					ProductVisibility:        inventoryProduct.ProductVisibility,
+					ProductPrice:             inventoryProduct.ProductPrice,
 					MetadataName:             metadata.MetadataName,
 					MetadataDescription:      metadata.MetadataDescription,
 					MetadataImage:            metadata.MetadataImage,
@@ -117,19 +120,20 @@ func (r *ProductRepositoryMongoDB) GetProductsForSpecificStore(ctx context.Conte
 
 				response := &entities.GetProductsForSpecificStoreResponse{
 					StoreProducts: []struct {
-						InventoryId              string  `json:"inventory_id"`
-						InventoryProductId       string  `json:"inventory_product_id"`
-						MetadataProductId        string  `json:"metadata_product_id"`
-						ProductVisibility        string  `json:"product_visibility"`
-						MetadataName             string  `json:"metadata_name"`
-						MetadataDescription      string  `json:"metadata_description"`
-						MetadataImage            string  `json:"metadata_image"`
-						MetadataCategoryId       string  `json:"metadata_category_id"`
-						MetadataSubcategoryId    string  `json:"metadata_subcategory_id"`
-						MetadataMrp              float64 `json:"metadata_mrp"`
-						ProductQuantity          int     `json:"product_quantity"`
-						ProductExpiryDate        string  `json:"product_expiry_date"`
-						ProductManufacturingDate string  `json:"product_manufacturing_date"`
+						InventoryId              string    `json:"inventory_id"`
+						InventoryProductId       string    `json:"inventory_product_id"`
+						MetadataProductId        string    `json:"metadata_product_id"`
+						ProductVisibility        bool      `json:"product_visibility"`
+						ProductPrice             float64   `json:"product_price"`
+						MetadataName             string    `json:"metadata_name"`
+						MetadataDescription      string    `json:"metadata_description"`
+						MetadataImage            string    `json:"metadata_image"`
+						MetadataCategoryId       string    `json:"metadata_category_id"`
+						MetadataSubcategoryId    string    `json:"metadata_subcategory_id"`
+						MetadataMrp              float64   `json:"metadata_mrp"`
+						ProductQuantity          int       `json:"product_quantity"`
+						ProductExpiryDate        time.Time `json:"product_expiry_date"`
+						ProductManufacturingDate time.Time `json:"product_manufacturing_date"`
 					}{storeProduct},
 				}
 				responseData = append(responseData, response)

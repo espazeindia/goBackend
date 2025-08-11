@@ -4,8 +4,6 @@ import (
 	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type InventoryUseCaseInterface struct {
@@ -16,36 +14,31 @@ func NewInventoryUseCase(inventoryRepo repositories.InventoryRepository) *Invent
 	return &InventoryUseCaseInterface{inventoryRepo: inventoryRepo}
 }
 
-func (u *InventoryUseCaseInterface) GetAllInventory(ctx context.Context, inventoryRequest entities.GetAllInventoryRequest) ([]entities.GetAllInventoryResponse, error) {
-	inventory, err := u.inventoryRepo.GetAllInventory(ctx, inventoryRequest)
+func (u *InventoryUseCaseInterface) GetAllInventory(ctx context.Context, seller_id string, offset, limit int64, search, sort string) (*entities.PaginatedInventoryResponse, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	inventory, total, err := u.inventoryRepo.GetAllInventory(ctx, seller_id, offset, limit, search, sort)
 	if err != nil {
 		return nil, err
 	}
-	return inventory, nil
+	var totalPages int64 = (total + limit - 1) / limit
+
+	return &entities.PaginatedInventoryResponse{
+		InventoryProduct: inventory,
+		Total:            total,
+		Limit:            limit,
+		Offset:           offset,
+		TotalPages:       totalPages,
+	}, nil
 }
 
-func (u *InventoryUseCaseInterface) AddInventory(ctx context.Context, inventoryRequest entities.AddInventoryRequest) error {
-	InventoryProductId := primitive.NewObjectID()
+func (u *InventoryUseCaseInterface) AddInventory(ctx context.Context, inventoryRequest *entities.AddInventoryRequest) (*entities.MessageResponse, error) {
+	return u.inventoryRepo.CreateInventory(ctx, inventoryRequest)
 
-	inventoryId, err := u.inventoryRepo.CreateInventory(ctx, inventoryRequest)
-	if err != nil {
-		return err
-	}
-	var InventoryId primitive.ObjectID
-	// Convert the returned inventory ID string back to ObjectID for CreateInventoryProduct
-	if inventoryId != "" {
-		InventoryId, err = primitive.ObjectIDFromHex(inventoryId)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = u.inventoryRepo.CreateInventoryProduct(ctx, InventoryId, InventoryProductId, inventoryRequest)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (u *InventoryUseCaseInterface) UpdateInventory(ctx context.Context, inventoryRequest entities.UpdateInventoryRequest) error {

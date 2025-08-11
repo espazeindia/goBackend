@@ -20,23 +20,6 @@ func NewMetadataUseCase(metadataRepo repositories.MetadataRepository) *MetadataU
 	}
 }
 
-func (uc *MetadataUseCase) toMetadataResponse(metadata *entities.MetadataResponse) *entities.MetadataResponse {
-	return &entities.MetadataResponse{
-		ID:            metadata.ID,
-		HsnCode:       metadata.HsnCode,
-		Name:          metadata.Name,
-		Description:   metadata.Description,
-		Image:         metadata.Image,
-		CategoryID:    metadata.CategoryID,
-		SubcategoryID: metadata.SubcategoryID,
-		MRP:           metadata.MRP,
-		CreatedAt:     metadata.CreatedAt,
-		UpdatedAt:     metadata.UpdatedAt,
-		TotalStars:    metadata.TotalStars,
-		TotalReviews:  metadata.TotalReviews,
-	}
-}
-
 // GetAllMetadata retrieves all metadata with pagination
 func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int64, search string) (*entities.PaginatedMetadataResponse, error) {
 	// Validate pagination parameters
@@ -46,7 +29,32 @@ func (uc *MetadataUseCase) GetAllMetadata(ctx context.Context, limit, offset int
 	if offset < 0 {
 		offset = 0
 	}
+
 	metadata, total, err := uc.metadataRepo.GetAllMetadata(ctx, limit, offset, search)
+	if err != nil {
+		return nil, err
+	}
+
+	var totalPages int64 = (total + limit - 1) / limit
+
+	return &entities.PaginatedMetadataResponse{
+		Metadata:   metadata,
+		Total:      total,
+		Limit:      limit,
+		Offset:     offset,
+		TotalPages: totalPages,
+	}, nil
+}
+
+func (uc *MetadataUseCase) GetAllMetadataForSeller(ctx context.Context, limit, offset int64, search, seller string) (*entities.PaginatedMetadataResponse, error) {
+	// Validate pagination parameters
+	if limit <= 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	metadata, total, err := uc.metadataRepo.GetAllMetadataForSeller(ctx, limit, offset, search, seller)
 	if err != nil {
 		return nil, err
 	}

@@ -62,6 +62,67 @@ func (h *MetadataHandler) GetMetadata(c *gin.Context) {
 	})
 }
 
+func (h *MetadataHandler) GetMetadataForSeller(c *gin.Context) {
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+	search := c.DefaultQuery("search", "")
+	sellerInterface, isPresent := c.Get("user_id")
+
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	seller, ok := sellerInterface.(string)
+	if !ok || seller == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid limit parameter",
+			"message": "Limit parameter is invalid",
+		})
+		return
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid offset parameter",
+			"message": "Offset parameter is invalid",
+		})
+		return
+	}
+
+	result, err := h.metadataUseCase.GetAllMetadataForSeller(c.Request.Context(), limit, offset, search, seller)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to retrieve metadata: " + err.Error(),
+			"message": "Some Internal Server Error Occured",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    result,
+	})
+}
+
 // GetMetadataByID retrieves a metadata by ID
 func (h *MetadataHandler) GetMetadataByID(c *gin.Context) {
 	id := c.Param("id")
