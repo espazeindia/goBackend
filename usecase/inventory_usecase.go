@@ -41,12 +41,9 @@ func (u *InventoryUseCaseInterface) AddInventory(ctx context.Context, inventoryR
 
 }
 
-func (u *InventoryUseCaseInterface) UpdateInventory(ctx context.Context, inventoryRequest entities.UpdateInventoryRequest) error {
-	err := u.inventoryRepo.UpdateInventory(ctx, inventoryRequest)
-	if err != nil {
-		return err
-	}
-	return nil
+func (u *InventoryUseCaseInterface) UpdateInventory(ctx context.Context, inventoryRequest entities.UpdateInventoryRequest) (*entities.MessageResponse, error) {
+	return u.inventoryRepo.UpdateInventory(ctx, inventoryRequest)
+
 }
 
 func (u *InventoryUseCaseInterface) DeleteInventory(ctx context.Context, inventoryRequest entities.DeleteInventoryRequest) error {
@@ -57,10 +54,7 @@ func (u *InventoryUseCaseInterface) DeleteInventory(ctx context.Context, invento
 	return nil
 }
 
-func (u *InventoryUseCaseInterface) GetInventoryById(ctx context.Context, inventoryRequest entities.GetInventoryByIdRequest) (*entities.GetInventoryByIdResponse, error) {
-	inventory, err := u.inventoryRepo.GetInventoryById(ctx, inventoryRequest)
-	if err != nil {
-		return nil, err
-	}
-	return inventory, nil
+func (u *InventoryUseCaseInterface) GetInventoryById(ctx context.Context, inventoryRequest string) (*entities.GetInventoryByIdResponse, error) {
+	return u.inventoryRepo.GetInventoryById(ctx, inventoryRequest)
+
 }

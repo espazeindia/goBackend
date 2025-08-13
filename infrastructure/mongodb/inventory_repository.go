@@ -98,16 +98,15 @@ func (r *InventoryRepositoryMongoDB) GetAllInventory(ctx context.Context, seller
 	// 5. Sorting
 	sortStage := bson.D{{Key: "metadata_info.metadata_created_at", Value: -1}, {Key: "_id", Value: 1}}
 	switch sort {
-	case "name_asc":
-		sortStage = bson.D{{Key: "metadata_info.metadata_name", Value: 1}, {Key: "_id", Value: 1}}
-	case "name_desc":
-		sortStage = bson.D{{Key: "metadata_info.metadata_name", Value: -1}, {Key: "_id", Value: 1}}
+	case "asc":
+		sortStage = bson.D{{Key: "product_price", Value: 1}, {Key: "_id", Value: 1}}
+	case "desc":
+		sortStage = bson.D{{Key: "product_price", Value: -1}, {Key: "_id", Value: 1}}
 	case "mrp_asc":
 		sortStage = bson.D{{Key: "metadata_info.metadata_mrp", Value: 1}, {Key: "_id", Value: 1}}
 	case "mrp_desc":
 		sortStage = bson.D{{Key: "metadata_info.metadata_mrp", Value: -1}, {Key: "_id", Value: 1}}
-	case "oldest":
-		sortStage = bson.D{{Key: "metadata_info.metadata_created_at", Value: 1}, {Key: "_id", Value: 1}}
+
 	}
 
 	// 6. Data fetch with pagination and projection
@@ -116,24 +115,36 @@ func (r *InventoryRepositoryMongoDB) GetAllInventory(ctx context.Context, seller
 		bson.D{{Key: "$skip", Value: offset * limit}},
 		bson.D{{Key: "$limit", Value: limit}},
 		bson.D{{Key: "$project", Value: bson.M{
-			"inventory_id":               "$inventory_id",
-			"inventory_product_id":       bson.M{"$toString": "$_id"},
-			"metadata_product_id":        bson.M{"$toString": "$metadata_info._id"},
-			"product_visibility":         "$product_visibility",
-			"product_price":              "$product_price",
-			"metadata_name":              "$metadata_info.metadata_name",
-			"metadata_description":       "$metadata_info.metadata_description",
-			"metadata_image":             "$metadata_info.metadata_image",
-			"metadata_category_id":       "$metadata_info.metadata_category_id",
-			"metadata_subcategory_id":    "$metadata_info.metadata_subcategory_id",
-			"metadata_mrp":               "$metadata_info.metadata_mrp",
-			"metadata_hsn_code":          "$metadata_info.hsn_code",
-			"product_quantity":           "$product_quantity",
-			"product_expiry_date":        bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d %H:%M:%S", "date": "$product_expiry_date"}},
-			"product_manufacturing_date": bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d %H:%M:%S", "date": "$product_manufacturing_date"}},
-			"metadata_created_at":        bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d %H:%M:%S", "date": "$metadata_info.metadata_created_at"}},
-			"metadata_category_name":     "$category_info.category_name",
-			"metadata_subcategory_name":  "$subcategory_info.subcategory_name",
+			"inventory_id":            "$inventory_id",
+			"inventory_product_id":    bson.M{"$toString": "$_id"},
+			"metadata_product_id":     bson.M{"$toString": "$metadata_info._id"},
+			"product_visibility":      "$product_visibility",
+			"product_price":           "$product_price",
+			"metadata_name":           "$metadata_info.metadata_name",
+			"metadata_description":    "$metadata_info.metadata_description",
+			"metadata_image":          "$metadata_info.metadata_image",
+			"metadata_category_id":    "$metadata_info.metadata_category_id",
+			"metadata_subcategory_id": "$metadata_info.metadata_subcategory_id",
+			"metadata_mrp":            "$metadata_info.metadata_mrp",
+			"metadata_hsn_code":       "$metadata_info.hsn_code",
+			"product_quantity":        "$product_quantity",
+			"product_expiry_date": bson.M{"$cond": bson.M{
+				"if":   bson.M{"$eq": []interface{}{bson.M{"$type": "$product_expiry_date"}, "date"}},
+				"then": bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d %H:%M:%S", "date": "$product_expiry_date"}},
+				"else": "$product_expiry_date",
+			}},
+			"product_manufacturing_date": bson.M{"$cond": bson.M{
+				"if":   bson.M{"$eq": []interface{}{bson.M{"$type": "$product_manufacturing_date"}, "date"}},
+				"then": bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d %H:%M:%S", "date": "$product_manufacturing_date"}},
+				"else": "$product_manufacturing_date",
+			}},
+			"metadata_created_at": bson.M{"$cond": bson.M{
+				"if":   bson.M{"$eq": []interface{}{bson.M{"$type": "$metadata_info.metadata_created_at"}, "date"}},
+				"then": bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d %H:%M:%S", "date": "$metadata_info.metadata_created_at"}},
+				"else": "$metadata_info.metadata_created_at",
+			}},
+			"metadata_category_name":    "$category_info.category_name",
+			"metadata_subcategory_name": "$subcategory_info.subcategory_name",
 		}}},
 	)
 
@@ -273,30 +284,79 @@ func (r *InventoryRepositoryMongoDB) CreateInventory(ctx context.Context, invent
 
 }
 
-func (r *InventoryRepositoryMongoDB) UpdateInventory(ctx context.Context, inventoryRequest entities.UpdateInventoryRequest) error {
+func (r *InventoryRepositoryMongoDB) UpdateInventory(ctx context.Context, inventoryRequest entities.UpdateInventoryRequest) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("inventory_product")
 
+	objectId, err := primitive.ObjectIDFromHex(inventoryRequest.InventoryProductID)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from productId",
+			Error:   "ObjectIdFromHex Error",
+		}, err
+	}
+
 	filter := bson.M{
-		"inventory_id":         inventoryRequest.InventoryID,
-		"inventory_product_id": inventoryRequest.InventoryProductID,
+		"_id": objectId,
+	}
+
+	// Parse date strings to time.Time
+	var expiryDate, manufacturingDate time.Time
+	var err1, err2 error
+
+	if inventoryRequest.ProductExpiryDate != "" {
+		expiryDate, err1 = time.Parse("2006-01-02 15:04:05", inventoryRequest.ProductExpiryDate)
+		if err1 != nil {
+			// Try alternative format
+			expiryDate, err1 = time.Parse("2006-01-02", inventoryRequest.ProductExpiryDate)
+		}
+	}
+
+	if inventoryRequest.ProductManufacturingDate != "" {
+		manufacturingDate, err2 = time.Parse("2006-01-02 15:04:05", inventoryRequest.ProductManufacturingDate)
+		if err2 != nil {
+			// Try alternative format
+			manufacturingDate, err2 = time.Parse("2006-01-02", inventoryRequest.ProductManufacturingDate)
+		}
 	}
 
 	update := bson.M{
 		"$set": bson.M{
-			"product_visibility":         inventoryRequest.ProductVisibility,
-			"product_quantity":           inventoryRequest.ProductQuantity,
-			"product_price":              inventoryRequest.ProductPrice,
-			"product_expiry_date":        inventoryRequest.ProductExpiryDate,
-			"product_manufacturing_date": inventoryRequest.ProductManufacturingDate,
+			"product_visibility": inventoryRequest.ProductVisibility,
+			"product_quantity":   inventoryRequest.ProductQuantity,
+			"product_price":      inventoryRequest.ProductPrice,
 		},
 	}
 
-	_, err := collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		return err
+	// Only add date fields if they were successfully parsed
+	if err1 == nil && !expiryDate.IsZero() {
+		update["$set"].(bson.M)["product_expiry_date"] = expiryDate
+	}
+	if err2 == nil && !manufacturingDate.IsZero() {
+		update["$set"].(bson.M)["product_manufacturing_date"] = manufacturingDate
 	}
 
-	return nil
+	response, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "Db Error",
+		}, err
+	}
+
+	if response.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "No Matching Document ",
+		}, err
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Product Updated Successfully",
+	}, nil
 }
 
 func (r *InventoryRepositoryMongoDB) DeleteInventory(ctx context.Context, inventoryRequest entities.DeleteInventoryRequest) error {
@@ -315,61 +375,50 @@ func (r *InventoryRepositoryMongoDB) DeleteInventory(ctx context.Context, invent
 	return nil
 }
 
-func (r *InventoryRepositoryMongoDB) GetInventoryById(ctx context.Context, inventoryRequest entities.GetInventoryByIdRequest) (*entities.GetInventoryByIdResponse, error) {
-	collection := r.db.Collection("inventory")
+func (r *InventoryRepositoryMongoDB) GetInventoryById(ctx context.Context, InventoryId string) (*entities.GetInventoryByIdResponse, error) {
 	collectionProduct := r.db.Collection("inventory_product")
-	collectionMetadata := r.db.Collection("metadata")
-
-	// First, get the inventory
-	filterInventory := bson.M{
-		"inventory_id": inventoryRequest.InventoryID,
-	}
-
-	var inventory entities.Inventory
-	err := collection.FindOne(ctx, filterInventory).Decode(&inventory)
+	objectId, err := primitive.ObjectIDFromHex(InventoryId)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the inventory product
-	filterProduct := bson.M{
-		"inventory_id": inventoryRequest.InventoryID,
+	filter := bson.M{
+		"_id": objectId,
 	}
-
-	var inventoryProduct entities.InventoryProduct
-	err = collectionProduct.FindOne(ctx, filterProduct).Decode(&inventoryProduct)
+	var ProductDetails *entities.InventoryProduct
+	err = collectionProduct.FindOne(ctx, filter).Decode(&ProductDetails)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the metadata
-	filterMetadata := bson.M{
-		"metadata_product_id": inventoryProduct.MetadataProductID,
-	}
-
-	var metadata entities.Metadata
-	err = collectionMetadata.FindOne(ctx, filterMetadata).Decode(&metadata)
+	// Create metadata repository to get metadata details
+	metadataRepo := NewMetadataRepositoryMongoDB(r.db)
+	metadataResponse, err := metadataRepo.GetMetadataByID(ctx, ProductDetails.MetadataProductID)
 	if err != nil {
 		return nil, err
 	}
 
-	response := &entities.GetInventoryByIdResponse{
-		InventoryId:              inventory.InventoryID,
-		InventoryProductId:       inventoryProduct.InventoryProductID,
-		MetadataProductId:        metadata.MetadataProductID,
-		ProductVisibility:        inventoryProduct.ProductVisibility,
-		ProductPrice:             inventoryProduct.ProductPrice,
-		MetadataName:             metadata.MetadataName,
-		MetadataDescription:      metadata.MetadataDescription,
-		MetadataImage:            metadata.MetadataImage,
-		MetadataCategoryId:       metadata.MetadataCategoryID,
-		MetadataSubcategoryId:    metadata.MetadataSubcategoryID,
-		MetadataMrp:              metadata.MetadataMRP,
-		ProductQuantity:          inventoryProduct.ProductQuantity,
-		ProductExpiryDate:        inventoryProduct.ProductExpiryDate,
-		ProductManufacturingDate: inventoryProduct.ProductManufacturingDate,
-		MetadataCreatedAt:        metadata.MetadataCreatedAt.Format("2006-01-02 15:04:05"),
+	result := &entities.GetInventoryByIdResponse{
+		InventoryProductId:       ProductDetails.InventoryProductID,
+		MetadataProductId:        metadataResponse.ID,
+		ProductVisibility:        ProductDetails.ProductVisibility,
+		MetadataName:             metadataResponse.Name,
+		MetadataDescription:      metadataResponse.Description,
+		MetadataImage:            metadataResponse.Image,
+		MetadataCategoryId:       metadataResponse.CategoryID,
+		MetadataSubcategoryId:    metadataResponse.SubcategoryID,
+		MetadataMrp:              metadataResponse.MRP,
+		ProductQuantity:          ProductDetails.ProductQuantity,
+		ProductPrice:             ProductDetails.ProductPrice,
+		ProductExpiryDate:        ProductDetails.ProductExpiryDate,
+		ProductManufacturingDate: ProductDetails.ProductManufacturingDate,
+		MetadataCreatedAt:        metadataResponse.CreatedAt,
+		MetadataCategoryName:     metadataResponse.CategoryName,
+		MetadataSubcategoryName:  metadataResponse.SubCategoryName,
+		MetadataHSNCode:          metadataResponse.HsnCode,
+		TotalReviews:             metadataResponse.TotalReviews,
+		TotalStars:               metadataResponse.TotalStars,
 	}
 
-	return response, nil
+	return result, nil
 }

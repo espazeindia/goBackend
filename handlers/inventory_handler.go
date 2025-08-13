@@ -124,17 +124,23 @@ func (h *InventoryHandler) AddInventory(c *gin.Context) {
 func (h *InventoryHandler) UpdateInventory(c *gin.Context) {
 	var inventoryRequest entities.UpdateInventoryRequest
 	if err := c.ShouldBindJSON(&inventoryRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false,
+			"error":   err.Error(),
+			"message": "Invalid Request Body"})
 		return
 	}
 
-	err := h.inventoryUseCase.UpdateInventory(c.Request.Context(), inventoryRequest)
+	response, err := h.inventoryUseCase.UpdateInventory(c.Request.Context(), inventoryRequest)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Inventory updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": response.Message, "success": response.Success})
 }
 
 func (h *InventoryHandler) DeleteInventory(c *gin.Context) {
@@ -154,17 +160,17 @@ func (h *InventoryHandler) DeleteInventory(c *gin.Context) {
 }
 
 func (h *InventoryHandler) GetInventoryById(c *gin.Context) {
-	var inventoryRequest entities.GetInventoryByIdRequest
-	if err := c.ShouldBindJSON(&inventoryRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	inventoryRequest := c.Query("id")
+	if inventoryRequest == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Id not present", "error": "Id required"})
 		return
 	}
 
 	inventory, err := h.inventoryUseCase.GetInventoryById(c.Request.Context(), inventoryRequest)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "success": false, "message": "Some Internal Server Erorr Occured"})
 		return
 	}
-	c.JSON(http.StatusOK, inventory)
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": inventory})
 }

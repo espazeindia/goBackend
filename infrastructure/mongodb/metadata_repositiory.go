@@ -326,6 +326,7 @@ func (r *MetadataRepositoryMongoDB) GetMetadataByID(ctx context.Context, id stri
 		UpdatedAt:       metadata.MetadataUpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		TotalStars:      review.TotalStars,
 		TotalReviews:    review.TotalReviews,
+		HsnCode:         metadata.MetadataHSNCode,
 	}
 	return metadataResponse, nil
 }

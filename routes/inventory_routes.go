@@ -22,7 +22,7 @@ func SetupInventoryRoutes(router *gin.RouterGroup) {
 
 	router.GET("/getAllInventory", inventoryHandler.GetAllInventory)
 	router.POST("/addInventory", inventoryHandler.AddInventory)
-	router.POST("/updateInventory", inventoryHandler.UpdateInventory)
+	router.PUT("/updateInventory", inventoryHandler.UpdateInventory)
 	router.DELETE("/deleteInventory", inventoryHandler.DeleteInventory)
 	router.GET("/getInventoryById", inventoryHandler.GetInventoryById)
 

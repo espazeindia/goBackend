@@ -59,9 +59,8 @@ type AddInventoryRequest struct {
 }
 
 type UpdateInventoryRequest struct {
-	InventoryID              string  `json:"inventory_id"`
 	InventoryProductID       string  `json:"inventory_product_id"`
-	ProductVisibility        string  `json:"product_visibility"`
+	ProductVisibility        bool    `json:"product_visibility"`
 	ProductQuantity          int     `json:"product_quantity"`
 	ProductPrice             float64 `json:"product_price"`
 	ProductExpiryDate        string  `json:"product_expiry_date"`
@@ -78,7 +77,6 @@ type GetInventoryByIdRequest struct {
 }
 
 type GetInventoryByIdResponse struct {
-	InventoryId              string    `json:"inventory_id"`
 	InventoryProductId       string    `json:"inventory_product_id"`
 	MetadataProductId        string    `json:"metadata_product_id"`
 	ProductVisibility        bool      `json:"product_visibility"`
@@ -93,4 +91,9 @@ type GetInventoryByIdResponse struct {
 	ProductExpiryDate        time.Time `json:"product_expiry_date"`
 	ProductManufacturingDate time.Time `json:"product_manufacturing_date"`
 	MetadataCreatedAt        string    `json:"metadata_created_at"`
+	MetadataCategoryName     string    `json:"metadata_category_name" bson:"metadata_category_name"`
+	MetadataSubcategoryName  string    `json:"metadata_subcategory_name" bson:"metadata_subcategory_name"`
+	MetadataHSNCode          string    `json:"metadata_hsn_code" bson:"metadata_hsn_code"`
+	TotalReviews             int       `json:"metadata_total_reviews"`
+	TotalStars               int       `json:"metadata_total_stars"`
 }
