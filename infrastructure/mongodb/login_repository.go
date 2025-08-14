@@ -380,6 +380,234 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 	}, nil
 
 }
+func (r *LoginRepositoryMongoDB) VerifyOTPForCustomer(ctx context.Context, phoneNumber *string, otp *int64) (*entities.MessageResponse, error) {
+	customerCollection := r.db.Collection("customers")
+
+	var existingUser entities.Customer
+	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	if err == mongo.ErrNoDocuments {
+		// User already exists
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "No User Found",
+			Message: "No User is associated to this phone number ",
+		}, nil
+	} else if err != mongo.ErrNoDocuments && err != nil {
+		// Database error
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Database error",
+			Message: "Failed to check user existence",
+		}, err
+	}
+	now := time.Now()
+	fiveMinutes := 5 * time.Minute
+
+	if int(*otp) != existingUser.OTP {
+
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "WRONG OTP",
+			Message: "OTP is incorrect",
+		}, err
+	}
+
+	if now.After(existingUser.OTPGeneratedAt.Add(fiveMinutes)) {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "OTP Expired",
+			Message: "OTP has expired try using the RESEND OTP",
+		}, err
+	}
+
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.PhoneNumber, existingUser.Name, "customer")
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Token generation failed",
+			Message: "Failed to generate authentication token",
+		}, err
+	}
+
+	_, err = customerCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": existingUser.CustomerID},
+		bson.M{"$set": bson.M{
+			"lastLoginAt": now,
+			"updatedAt":   now,
+		}},
+	)
+	if err != nil {
+		// Log the error but don't fail the login
+		// You might want to add proper logging here
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Login successful",
+		Token:   token,
+	}, nil
+
+}
+
+func (r *LoginRepositoryMongoDB) VerifyPinForCustomer(ctx context.Context, phoneNumber *string, pin *int64) (*entities.MessageResponse, error) {
+	customerCollection := r.db.Collection("customers")
+
+	var existingUser entities.Customer
+	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	if err == mongo.ErrNoDocuments {
+		// User already exists
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "No User Found",
+			Message: "No User is associated to this phone number ",
+		}, nil
+	} else if err != mongo.ErrNoDocuments && err != nil {
+		// Database error
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Database error",
+			Message: "Failed to check user existence",
+		}, err
+	}
+	now := time.Now()
+
+	if int(*pin) != existingUser.PIN {
+
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "WRONG Pin",
+			Message: "Pin is incorrect",
+		}, err
+	}
+
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.PhoneNumber, existingUser.Name, "customer")
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Token generation failed",
+			Message: "Failed to generate authentication token",
+		}, err
+	}
+
+	_, err = customerCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": existingUser.CustomerID},
+		bson.M{"$set": bson.M{
+			"lastLoginAt": now,
+			"updatedAt":   now,
+		}},
+	)
+	if err != nil {
+		// Log the error but don't fail the login
+		// You might want to add proper logging here
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Login successful",
+		Token:   token,
+	}, nil
+
+}
+
+func (r *LoginRepositoryMongoDB) GetOTPForCustomer(ctx context.Context, phoneNumber string) (*entities.MessageResponse, error) {
+	customerCollection := r.db.Collection("customers")
+
+	var existingUser entities.Customer
+	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	if err == mongo.ErrNoDocuments {
+		otp, err := utils.GenerateOTP()
+		if err != nil {
+			return &entities.MessageResponse{
+				Success: false,
+				Error:   "OTP generation failed",
+				Message: "Failed to generate OTP",
+			}, err
+		}
+
+		now := time.Now()
+		newUser := entities.Customer{
+			Name:               "new user",
+			PhoneNumber:        phoneNumber,
+			OTP:                otp,
+			OTPGeneratedAt:     now,
+			NumberOfRetriesOTP: 0,
+			PIN:                -1,
+			NumberOfRetriesPIN: 0,
+			LastLoginAt:        now,
+		}
+		// Insert user into database
+		response, err := customerCollection.InsertOne(ctx, newUser)
+		if err != nil {
+			return &entities.MessageResponse{
+				Success: false,
+				Error:   "Registration failed",
+				Message: "Failed to create user account",
+			}, err
+		}
+		_, ok := response.InsertedID.(primitive.ObjectID)
+		if !ok {
+			return &entities.MessageResponse{
+				Success: false,
+				Error:   "Registration failed",
+				Message: "Failed to create user account",
+			}, err
+		}
+
+		return &entities.MessageResponse{
+			Success: true,
+			Message: fmt.Sprint("Otp Sent Successfully ", otp),
+		}, nil
+	} else if err != mongo.ErrNoDocuments && err != nil {
+		// Database error
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Database error",
+			Message: "Failed to check user existence",
+		}, err
+	}
+
+	otp, err := utils.GenerateOTP()
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "OTP generation failed",
+			Message: "Failed to generate OTP",
+		}, err
+	}
+	now := time.Now()
+
+	docs := bson.M{}
+
+	docs["otp"] = otp
+	docs["otpGeneratedAt"] = now
+	filter := bson.M{"phoneNumber": existingUser.PhoneNumber}
+	update := bson.M{"$set": docs}
+
+	response, err := customerCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "OTP storage failed",
+			Message: "Failed to update OTP",
+		}, err
+	}
+
+	if response.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "OTP storage failed",
+			Message: "Failed to update OTP",
+		}, err
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: fmt.Sprint("Otp Sent Successfully ", otp),
+	}, nil
+
+}
 
 // func (r *LoginRepositoryMongoDB) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {
 // 	sellerCollection := r.db.Collection("sellers")

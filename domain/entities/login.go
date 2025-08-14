@@ -61,7 +61,7 @@ type Customer struct {
 	CustomerID         string    `json:"id" bson:"_id,omitempty"`
 	Name               string    `json:"name" bson:"name"`
 	PhoneNumber        string    `json:"phoneNumber" bson:"phoneNumber"`
-	OTP                string    `json:"otp" bson:"otp"`
+	OTP                int       `json:"otp" bson:"otp"`
 	NumberOfRetriesOTP int       `json:"numberOfRetriesOTP" bson:"numberOfRetriesOTP"`
 	OTPGeneratedAt     time.Time `json:"otpGeneratedAt" bson:"otpGeneratedAt"`
 	PIN                int       `json:"pin" bson:"pin"`

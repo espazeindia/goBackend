@@ -32,6 +32,16 @@ func (l *LoginUseCaseInterface) VerifyPin(ctx context.Context, phoneNumber *stri
 func (l *LoginUseCaseInterface) GetOTP(ctx context.Context, phoneNumber string) (*entities.MessageResponse, error) {
 	return l.loginRepo.GetOTP(ctx, phoneNumber)
 }
+func (l *LoginUseCaseInterface) VerifyOTPForCustomer(ctx context.Context, phoneNumber *string, otp *int64) (*entities.MessageResponse, error) {
+	return l.loginRepo.VerifyOTPForCustomer(ctx, phoneNumber, otp)
+}
+func (l *LoginUseCaseInterface) VerifyPinForCustomer(ctx context.Context, phoneNumber *string, pin *int64) (*entities.MessageResponse, error) {
+	return l.loginRepo.VerifyPinForCustomer(ctx, phoneNumber, pin)
+}
+
+func (l *LoginUseCaseInterface) GetOTPForCustomer(ctx context.Context, phoneNumber string) (*entities.MessageResponse, error) {
+	return l.loginRepo.GetOTPForCustomer(ctx, phoneNumber)
+}
 
 // func (l *LoginUseCaseInterface) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {
 // 	return l.loginRepo.AddBasicData(ctx, request)
