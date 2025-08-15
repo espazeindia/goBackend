@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"espazeBackend/middlewares"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +26,7 @@ func SetupRoutes(router *gin.Engine) {
 	// Protected routes (authentication required)
 	// Create a protected route group with authentication middleware
 	protected := router.Group("/")
-	// protected.Use(middlewares.AuthMiddleware())
+	protected.Use(middlewares.AuthMiddleware())
 	{
 		metadata := protected.Group("/metadata")
 		{
