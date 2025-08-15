@@ -26,7 +26,11 @@ func (r *InventoryRepositoryMongoDB) GetAllInventory(ctx context.Context, seller
 
 	// 1. Find the seller's inventory
 	var inventory entities.Inventory
-	if err := collectionInventory.FindOne(ctx, bson.M{"seller_id": sellerID}).Decode(&inventory); err != nil {
+	err := collectionInventory.FindOne(ctx, bson.M{"seller_id": sellerID}).Decode(&inventory)
+	if err == mongo.ErrNoDocuments {
+		return nil, 0, nil
+	}
+	if err != nil {
 		return nil, 0, err
 	}
 
