@@ -56,6 +56,33 @@ func (h *StoreHandler) GetAllStores(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func (h *StoreHandler) GetAllStoresForCustomer(c *gin.Context) {
+	// Parse query parameters
+	warehouseID := c.Query("warehouse_id")
+	if warehouseID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "warehouse_id is required",
+			"message": "Warehouse ID must be provided as a query parameter",
+		})
+		return
+	}
+
+	search := c.Query("search")
+
+	response, err := h.storeUseCase.GetAllStoresForCustomer(c.Request.Context(), warehouseID, search)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 // GetStoreById handles GET /stores/:id - Get store by ID
 func (h *StoreHandler) GetStoreById(c *gin.Context) {
 	storeId := c.Param("id")

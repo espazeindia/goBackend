@@ -344,6 +344,44 @@ func (h *LoginHandler) VerifyPinForCustomer(c *gin.Context) {
 	}
 }
 
+func (h *LoginHandler) CustomerBasicSetup(c *gin.Context) {
+	var request *entities.CustomerBasicSetupRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "Request Body is invalide"})
+		return
+
+	}
+
+	// Call the use case
+	response, err := h.loginUseCase.CustomerBasicSetup(c.Request.Context(), request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "An unexpected error occurred",
+		})
+		return
+	}
+
+	// Return response based on success status
+	if response.Success {
+		c.JSON(http.StatusCreated, gin.H{
+			"success": response.Success,
+			"message": response.Message,
+		})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+	}
+}
+
 // func (h *LoginHandler) AddBasicData(c *gin.Context) {
 // 	var request *entities.AddBasicData
 // 	err := c.ShouldBindJSON(&request)

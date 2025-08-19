@@ -126,3 +126,10 @@ type ResponseMessage struct {
 	Message string `json:"message"`
 	Error   string `json:"error,omitempty"`
 }
+
+type CustomerBasicSetupRequest struct {
+	UserId  string `json:"id" bson:"_id"`
+	Name    string `json:"name" bson:"name"`
+	Address string `json:"address" bson:"address"`
+	PIN     int    `json:"pin" bson:"pin,min=6"`
+}
