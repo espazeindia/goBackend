@@ -80,7 +80,7 @@ func (h *StoreHandler) GetAllStoresForCustomer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": response})
 }
 
 // GetStoreById handles GET /stores/:id - Get store by ID
