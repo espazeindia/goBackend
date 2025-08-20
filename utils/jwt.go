@@ -10,7 +10,6 @@ import (
 
 type Claims struct {
 	UserID string `json:"user_id"`
-	Email  string `json:"email"`
 	Name   string `json:"name"`
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
@@ -55,60 +54,6 @@ func GenerateJWTToken(userID, name, role string) (string, error) {
 	}
 
 	return tokenString, nil
-}
-
-// GenerateTokenPair generates both access and refresh tokens
-func GenerateTokenPair(userID, email string) (*TokenResponse, error) {
-	// Get JWT secret from environment variable
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		secret = "default-secret-key-change-in-production"
-	}
-
-	// Generate access token (short-lived)
-	accessTokenClaims := Claims{
-		UserID: userID,
-		Email:  email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // 1 hour
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "espaze-backend",
-			Subject:   userID,
-		},
-	}
-
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
-	accessTokenString, err := accessToken.SignedString([]byte(secret))
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate refresh token (long-lived)
-	refreshTokenClaims := Claims{
-		UserID: userID,
-		Email:  email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 7 days
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "espaze-backend",
-			Subject:   userID,
-		},
-	}
-
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
-	refreshTokenString, err := refreshToken.SignedString([]byte(secret))
-	if err != nil {
-		return nil, err
-	}
-
-	return &TokenResponse{
-		AccessToken:  accessTokenString,
-		RefreshToken: refreshTokenString,
-		ExpiresIn:    3600, // 1 hour in seconds
-		TokenType:    "Bearer",
-	}, nil
 }
 
 // ValidateJWTToken validates a JWT token and returns the claims
