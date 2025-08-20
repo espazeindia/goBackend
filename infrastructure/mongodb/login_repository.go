@@ -55,7 +55,7 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Email, operationalGuy.Name, "operations")
+	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Name, "operations")
 	if err != nil {
 		return &entities.OperationalGuyLoginResponse{
 			Success: false,
@@ -190,7 +190,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.PhoneNumber, existingUser.Name, "seller")
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller")
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -251,7 +251,7 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.PhoneNumber, existingUser.Name, "seller")
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller")
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -420,7 +420,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTPForCustomer(ctx context.Context, phone
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.PhoneNumber, existingUser.Name, "customer")
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer")
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -481,7 +481,7 @@ func (r *LoginRepositoryMongoDB) VerifyPinForCustomer(ctx context.Context, phone
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.PhoneNumber, existingUser.Name, "customer")
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer")
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -662,9 +662,18 @@ func (r *LoginRepositoryMongoDB) CustomerBasicSetup(ctx context.Context, request
 			Message: "Database Error",
 		}, err
 	}
+	token, err := utils.GenerateJWTToken(requestData.UserId, requestData.Name, "customer")
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Token generation failed",
+			Message: "Failed to generate authentication token",
+		}, err
+	}
 	return &entities.MessageResponse{
 		Success: true,
 		Message: "User Registed Successfully",
+		Token:   token,
 	}, nil
 
 }

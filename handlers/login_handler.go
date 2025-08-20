@@ -372,6 +372,7 @@ func (h *LoginHandler) CustomerBasicSetup(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
 			"success": response.Success,
 			"message": response.Message,
+			"token":   response.Token,
 		})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{

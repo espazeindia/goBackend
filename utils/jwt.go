@@ -25,7 +25,7 @@ type TokenResponse struct {
 }
 
 // GenerateJWTToken generates a JWT token for the user
-func GenerateJWTToken(userID, email, name, role string) (string, error) {
+func GenerateJWTToken(userID, name, role string) (string, error) {
 	// Get JWT secret from environment variable
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
@@ -35,7 +35,6 @@ func GenerateJWTToken(userID, email, name, role string) (string, error) {
 	// Create claims
 	claims := Claims{
 		UserID: userID,
-		Email:  email,
 		Name:   name,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
