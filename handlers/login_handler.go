@@ -360,27 +360,20 @@ func (h *LoginHandler) CustomerBasicSetup(c *gin.Context) {
 	response, err := h.loginUseCase.CustomerBasicSetup(c.Request.Context(), request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "An unexpected error occurred",
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
 		})
 		return
 	}
 
 	// Return response based on success status
-	if response.Success {
-		c.JSON(http.StatusCreated, gin.H{
-			"success": response.Success,
-			"message": response.Message,
-			"token":   response.Token,
-		})
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
-		})
-	}
+	c.JSON(http.StatusCreated, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+		"token":   response.Token,
+	})
+
 }
 
 // func (h *LoginHandler) AddBasicData(c *gin.Context) {
