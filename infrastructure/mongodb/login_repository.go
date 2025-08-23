@@ -652,6 +652,7 @@ func (r *LoginRepositoryMongoDB) CustomerBasicSetup(ctx context.Context, request
 		UserID:          requestData.UserId,
 		LocationAddress: requestData.Address,
 		Self:            true,
+		BuildingType:    "home",
 		Coordinates:     "0,0",
 	}
 	insertedData, err := locationCollection.InsertOne(ctx, locationData)
