@@ -7,4 +7,5 @@ type MessageResponse struct {
 	Category    *Category    `json:"category" binding:"omitempty"`
 	SubCategory *Subcategory `json:"sub_category" binding:"omitempty"`
 	Token       string       `json:"token" binding:"omitempty"`
+	Data        any          `json:"data" binding:"omitempty"`
 }

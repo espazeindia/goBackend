@@ -21,17 +21,17 @@ func NewLocationHandler(locationUseCase *usecase.LocationUseCase) *LocationHandl
 func (h *LocationHandler) GetLocationForUserID(c *gin.Context) {
 	userId := c.Param("userId")
 	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User Id parameter is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "User Id parameter is required", "error": "User Id is empty"})
 		return
 	}
 
-	location, err := h.locationUseCase.GetLocationForUserID(userId)
+	response, err := h.locationUseCase.GetLocationForUserID(c, userId)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Location not found"})
+		c.JSON(http.StatusNotFound, gin.H{"success": response.Success, "message": response.Message, "error": response.Error})
 		return
 	}
 
-	c.JSON(http.StatusOK, location)
+	c.JSON(http.StatusOK, gin.H{"success": response.Success, "data": response.Data})
 }
 
 func (h *LocationHandler) CreateLocation(c *gin.Context) {

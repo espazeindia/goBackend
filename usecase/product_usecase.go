@@ -21,21 +21,10 @@ func NewProductUseCase(productRepo repositories.ProductRepository) *ProductUseCa
 	}
 }
 
-func (u *ProductUseCase) GetProductsForSpecificStore(ctx context.Context, getProductsForSpecificStoreRequest entities.GetProductsForSpecificStoreRequest) ([]*entities.GetProductsForSpecificStoreResponse, error) {
-	storeID, err := primitive.ObjectIDFromHex(getProductsForSpecificStoreRequest.StoreID)
-	if err != nil {
-		return nil, err
-	}
-	sellerId, err := u.productRepo.FetchSellerId(ctx, storeID.Hex())
-	if err != nil {
-		return nil, err
-	}
+func (u *ProductUseCase) GetProductsForSpecificStore(ctx context.Context, store_id string) ([]*entities.GetProductsForSpecificStoreResponse, error) {
 
-	products, err := u.productRepo.GetProductsForSpecificStore(ctx, sellerId)
-	if err != nil {
-		return nil, err
-	}
-	return products, nil
+	return u.productRepo.GetProductsForSpecificStore(ctx, store_id)
+
 }
 
 func (u *ProductUseCase) GetProductsForAllStores(ctx context.Context, getProductsForAllStoresRequest entities.GetProductsForAllStoresRequest) ([]*entities.GetProductsForAllStoresResponse, error) {

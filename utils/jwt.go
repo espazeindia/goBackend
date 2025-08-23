@@ -30,18 +30,30 @@ func GenerateJWTToken(userID, name, role string) (string, error) {
 	if secret == "" {
 		secret = "default-secret-key-change-in-production"
 	}
-
-	// Create claims
 	claims := Claims{
 		UserID: userID,
 		Name:   name,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "espaze-backend",
-			Subject:   userID,
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			Issuer:   "espaze-backend",
+			Subject:  userID,
 		},
+	}
+
+	// Create claims
+	if role == "customer" {
+		claims = Claims{
+			UserID: userID,
+			Name:   name,
+			Role:   role,
+			RegisteredClaims: jwt.RegisteredClaims{
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+				Issuer:    "espaze-backend",
+				Subject:   userID,
+			},
+		}
 	}
 
 	// Create token
@@ -92,6 +104,10 @@ func GetTokenExpirationTime(tokenString string) (time.Time, error) {
 		return time.Time{}, err
 	}
 
+	if claims.ExpiresAt == nil {
+		return time.Time{}, nil
+	}
+
 	return claims.ExpiresAt.Time, nil
 }
 
@@ -100,6 +116,10 @@ func IsTokenExpired(tokenString string) (bool, error) {
 	expirationTime, err := GetTokenExpirationTime(tokenString)
 	if err != nil {
 		return true, err
+	}
+
+	if expirationTime.IsZero() {
+		return false, nil
 	}
 
 	return time.Now().After(expirationTime), nil

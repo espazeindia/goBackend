@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
 )
@@ -15,8 +16,8 @@ func NewLocationUseCase(locationRepository repositories.LocationRepository) *Loc
 	}
 }
 
-func (uc *LocationUseCase) GetLocationForUserID(userId string) ([]*entities.Location, error) {
-	return uc.locationRepository.GetLocationForUserID(userId)
+func (uc *LocationUseCase) GetLocationForUserID(ctx context.Context, userId string) (*entities.MessageResponse, error) {
+	return uc.locationRepository.GetLocationForUserID(ctx, userId)
 }
 
 func (uc *LocationUseCase) CreateLocation(location *entities.Location) error {

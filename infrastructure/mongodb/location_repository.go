@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-	"errors"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
 
@@ -20,27 +19,37 @@ func NewLocationRepositoryMongoDB(database *mongo.Database) repositories.Locatio
 	}
 }
 
-func (r *LocationRepositoryMongoDB) GetLocationForUserID(userId string) ([]*entities.Location, error) {
+func (r *LocationRepositoryMongoDB) GetLocationForUserID(context context.Context, userId string) (*entities.MessageResponse, error) {
 	var addresses []*entities.Location
 	filter := bson.M{"user_id": userId}
-	cursor, err := r.collection.Find(context.Background(), filter)
+	cursor, err := r.collection.Find(context, filter)
+	if err == mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No Address for this user",
+			Error:   "No document for this user id ",
+		}, err
+	} else if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No Address for this user",
+			Error:   err.Error(),
+		}, err
+	}
+	err = cursor.All(context, &addresses)
 	if err != nil {
-		return nil, err
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Db Error",
+			Error:   err.Error(),
+		}, err
 	}
-	defer cursor.Close(context.Background())
-	for cursor.Next(context.Background()) {
-		var location entities.Location
-		if err := cursor.Decode(&location); err != nil {
-			return nil, err
-		}
-		addresses = append(addresses, &location)
-	}
+	defer cursor.Close(context)
+	return &entities.MessageResponse{
+		Success: true,
+		Data:    addresses,
+	}, nil
 
-	if len(addresses) == 0 {
-		return nil, errors.New("no location found")
-	}
-
-	return addresses, nil
 }
 
 func (r *LocationRepositoryMongoDB) CreateLocation(location *entities.Location) error {
