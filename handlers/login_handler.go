@@ -289,9 +289,10 @@ func (h *LoginHandler) VerifyOTPForCustomer(c *gin.Context) {
 		})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
+			"success":     response.Success,
+			"error":       response.Error,
+			"message":     response.Message,
+			"isOnboarded": response.IsOnboarded,
 		})
 	}
 }
