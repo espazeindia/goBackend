@@ -6,6 +6,7 @@ import (
 	"espazeBackend/domain/repositories"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -52,9 +53,46 @@ func (r *LocationRepositoryMongoDB) GetLocationForUserID(context context.Context
 
 }
 
-func (r *LocationRepositoryMongoDB) CreateLocation(location *entities.Location) error {
-	_, err := r.collection.InsertOne(context.Background(), location)
-	return err
+func (r *LocationRepositoryMongoDB) CreateLocation(ctx context.Context, locationRequest *entities.CreateLocationRequest) (*entities.MessageResponse, error) {
+	var locationData *entities.Location
+	if locationRequest.Self {
+		locationData = &entities.Location{
+			UserID:          locationRequest.UserID,
+			LocationAddress: locationRequest.LocationAddress,
+			Coordinates:     "0,0",
+			Self:            locationData.Self,
+			Name:            locationRequest.Name,
+			PhoneNumber:     locationRequest.PhoneNumber,
+			BuildingType:    locationData.BuildingType,
+		}
+	}
+	locationData = &entities.Location{
+		UserID:          locationRequest.UserID,
+		LocationAddress: locationRequest.LocationAddress,
+		Coordinates:     "0,0",
+		Self:            locationData.Self,
+		BuildingType:    locationData.BuildingType,
+	}
+	result, err := r.collection.InsertOne(context.Background(), locationData)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Db error",
+			Error:   err.Error(),
+		}, err
+	}
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Db error",
+			Error:   "Error in getting inserted id",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Location Created SuccessFully",
+	}, nil
 }
 
 func (r *LocationRepositoryMongoDB) GetLocationByAddress(address string) (*entities.Location, error) {

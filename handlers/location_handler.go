@@ -35,20 +35,20 @@ func (h *LocationHandler) GetLocationForUserID(c *gin.Context) {
 }
 
 func (h *LocationHandler) CreateLocation(c *gin.Context) {
-	var location entities.Location
+	var location entities.CreateLocationRequest
 	err := c.ShouldBindJSON(&location)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid Request Data", "error": err.Error()})
 		return
 	}
 
-	err = h.locationUseCase.CreateLocation(&location)
+	response, err := h.locationUseCase.CreateLocation(c, &location)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": response.Success, "message": response.Message, "error": response.Error})
 		return
 	}
 
-	c.JSON(http.StatusCreated, location)
+	c.JSON(http.StatusCreated, gin.H{"success": response.Success, "message": response.Message})
 }
 
 func (h *LocationHandler) GetLocationByAddress(c *gin.Context) {

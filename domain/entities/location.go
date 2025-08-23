@@ -10,3 +10,13 @@ type Location struct {
 	PhoneNumber     string `json:"phone" bson:"phone"`
 	Name            string `json:"name" bson:"name"`
 }
+
+type CreateLocationRequest struct {
+	UserID          string `json:"user_id" binding:"required"`
+	LocationAddress string `json:"location_address" binding:"required"`
+	Coordinates     string `json:"coordinates" binding:"required"`
+	Self            bool   `json:"self"  binding:"required"`
+	BuildingType    string `json:"building_type"  binding:"required"`
+	PhoneNumber     string `json:"phone"`
+	Name            string `json:"name"`
+}

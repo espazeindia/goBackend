@@ -8,4 +8,5 @@ type MessageResponse struct {
 	SubCategory *Subcategory `json:"sub_category" binding:"omitempty"`
 	Token       string       `json:"token" binding:"omitempty"`
 	Data        any          `json:"data" binding:"omitempty"`
+	IsOnboarded bool         `json:"isOnboarded" binding:"omitempty"`
 }

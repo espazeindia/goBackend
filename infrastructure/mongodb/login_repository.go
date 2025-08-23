@@ -441,13 +441,20 @@ func (r *LoginRepositoryMongoDB) VerifyOTPForCustomer(ctx context.Context, phone
 		// Log the error but don't fail the login
 		// You might want to add proper logging here
 	}
-
+	if existingUser.Name == "new user" {
+		return &entities.MessageResponse{
+			Success:     true,
+			Message:     "Login successful",
+			Token:       token,
+			IsOnboarded: false,
+		}, nil
+	}
 	return &entities.MessageResponse{
-		Success: true,
-		Message: "Login successful",
-		Token:   token,
+		Success:     true,
+		Message:     "Login successful",
+		Token:       token,
+		IsOnboarded: true,
 	}, nil
-
 }
 
 func (r *LoginRepositoryMongoDB) VerifyPinForCustomer(ctx context.Context, phoneNumber *string, pin *int64) (*entities.MessageResponse, error) {

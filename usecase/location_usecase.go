@@ -20,8 +20,8 @@ func (uc *LocationUseCase) GetLocationForUserID(ctx context.Context, userId stri
 	return uc.locationRepository.GetLocationForUserID(ctx, userId)
 }
 
-func (uc *LocationUseCase) CreateLocation(location *entities.Location) error {
-	return uc.locationRepository.CreateLocation(location)
+func (uc *LocationUseCase) CreateLocation(ctx context.Context, location *entities.CreateLocationRequest) (*entities.MessageResponse, error) {
+	return uc.locationRepository.CreateLocation(ctx, location)
 }
 
 func (uc *LocationUseCase) GetLocationByAddress(address string) (*entities.Location, error) {
