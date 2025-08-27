@@ -54,8 +54,10 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 		}, nil
 	}
 
+	IsFirstLogin := operationalGuy.LastLoginAt == nil
+
 	// Generate JWT token
-	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Name, "operations")
+	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Name, "operations", IsFirstLogin)
 	if err != nil {
 		return &entities.OperationalGuyLoginResponse{
 			Success: false,
@@ -118,7 +120,6 @@ func (r *LoginRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context, reg
 		Email:                  registrationRequest.Email,
 		Password:               string(hashedPassword),
 		Name:                   registrationRequest.Name,
-		IsFirstLogin:           true,
 		PhoneNumber:            registrationRequest.PhoneNumber,
 		Address:                registrationRequest.Address,
 		EmergencyContactNumber: registrationRequest.EmergencyContactNumber,
@@ -190,7 +191,9 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller")
+	isFirstLogin := existingUser.LastLoginAt == nil
+
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", isFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -251,7 +254,9 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller")
+	isFirstLogin := existingUser.LastLoginAt == nil
+
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", isFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -268,10 +273,6 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 			"updatedAt":   now,
 		}},
 	)
-	if err != nil {
-		// Log the error but don't fail the login
-		// You might want to add proper logging here
-	}
 
 	return &entities.MessageResponse{
 		Success: true,
@@ -306,7 +307,7 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 			NumberOfRetriesOTP: 0,
 			PIN:                -1,
 			NumberOfRetriesPIN: 0,
-			LastLoginAt:        now,
+			LastLoginAt:        &now,
 			StoreID:            "",
 		}
 		// Insert user into database
@@ -420,7 +421,9 @@ func (r *LoginRepositoryMongoDB) VerifyOTPForCustomer(ctx context.Context, phone
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer")
+	isFirstLogin := existingUser.LastLoginAt == nil
+
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer", isFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -488,7 +491,9 @@ func (r *LoginRepositoryMongoDB) VerifyPinForCustomer(ctx context.Context, phone
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer")
+	isFirstLogin := existingUser.LastLoginAt == nil
+
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer", isFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -542,7 +547,7 @@ func (r *LoginRepositoryMongoDB) GetOTPForCustomer(ctx context.Context, phoneNum
 			NumberOfRetriesOTP: 0,
 			PIN:                -1,
 			NumberOfRetriesPIN: 0,
-			LastLoginAt:        now,
+			LastLoginAt:        &now,
 		}
 		// Insert user into database
 		response, err := customerCollection.InsertOne(ctx, newUser)
@@ -671,7 +676,7 @@ func (r *LoginRepositoryMongoDB) CustomerBasicSetup(ctx context.Context, request
 			Message: "Database Error",
 		}, err
 	}
-	token, err := utils.GenerateJWTToken(requestData.UserId, requestData.Name, "customer")
+	token, err := utils.GenerateJWTToken(requestData.UserId, requestData.Name, "customer", true)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,

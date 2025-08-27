@@ -92,6 +92,22 @@ func (r *StoreRepositoryMongoDB) GetAllStoresForCustomer(ctx context.Context, wa
 	if err := cursor.All(ctx, &stores); err != nil {
 		return nil, err
 	}
+	if len(stores) != 0 {
+		now := time.Now()
+		allStoreOption := &entities.Store{
+			StoreID:       "0",
+			SellerID:      "dummy",
+			WarehouseID:   warehouseId,
+			StoreName:     "All Stores",
+			StoreAddress:  "dummy",
+			StoreContact:  "dummy",
+			NumberOfRacks: 0,
+			OccupiedRacks: 0,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+		}
+		stores = append(stores, allStoreOption)
+	}
 
 	return stores, nil
 }
