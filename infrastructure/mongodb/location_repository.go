@@ -2,11 +2,11 @@ package mongodb
 
 import (
 	"context"
-	"errors"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -20,32 +20,79 @@ func NewLocationRepositoryMongoDB(database *mongo.Database) repositories.Locatio
 	}
 }
 
-func (r *LocationRepositoryMongoDB) GetLocationForUserID(userId string) ([]*entities.Location, error) {
+func (r *LocationRepositoryMongoDB) GetLocationForUserID(context context.Context, userId string) (*entities.MessageResponse, error) {
 	var addresses []*entities.Location
 	filter := bson.M{"user_id": userId}
-	cursor, err := r.collection.Find(context.Background(), filter)
+	cursor, err := r.collection.Find(context, filter)
+	if err == mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No Address for this user",
+			Error:   "No document for this user id ",
+		}, err
+	} else if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "No Address for this user",
+			Error:   err.Error(),
+		}, err
+	}
+	err = cursor.All(context, &addresses)
 	if err != nil {
-		return nil, err
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Db Error",
+			Error:   err.Error(),
+		}, err
 	}
-	defer cursor.Close(context.Background())
-	for cursor.Next(context.Background()) {
-		var location entities.Location
-		if err := cursor.Decode(&location); err != nil {
-			return nil, err
-		}
-		addresses = append(addresses, &location)
-	}
+	defer cursor.Close(context)
+	return &entities.MessageResponse{
+		Success: true,
+		Data:    addresses,
+	}, nil
 
-	if len(addresses) == 0 {
-		return nil, errors.New("no location found")
-	}
-
-	return addresses, nil
 }
 
-func (r *LocationRepositoryMongoDB) CreateLocation(location *entities.Location) error {
-	_, err := r.collection.InsertOne(context.Background(), location)
-	return err
+func (r *LocationRepositoryMongoDB) CreateLocation(ctx context.Context, locationRequest *entities.CreateLocationRequest) (*entities.MessageResponse, error) {
+	var locationData *entities.Location
+	if locationRequest.Self {
+		locationData = &entities.Location{
+			UserID:          locationRequest.UserID,
+			LocationAddress: locationRequest.LocationAddress,
+			Coordinates:     "0,0",
+			Self:            locationData.Self,
+			Name:            locationRequest.Name,
+			PhoneNumber:     locationRequest.PhoneNumber,
+			BuildingType:    locationData.BuildingType,
+		}
+	}
+	locationData = &entities.Location{
+		UserID:          locationRequest.UserID,
+		LocationAddress: locationRequest.LocationAddress,
+		Coordinates:     "0,0",
+		Self:            locationData.Self,
+		BuildingType:    locationData.BuildingType,
+	}
+	result, err := r.collection.InsertOne(context.Background(), locationData)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Db error",
+			Error:   err.Error(),
+		}, err
+	}
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Db error",
+			Error:   "Error in getting inserted id",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Location Created SuccessFully",
+	}, nil
 }
 
 func (r *LocationRepositoryMongoDB) GetLocationByAddress(address string) (*entities.Location, error) {

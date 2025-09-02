@@ -47,6 +47,9 @@ func (u *StoreUseCase) GetAllStores(ctx context.Context, request entities.GetAll
 		Offset:  paginatedResponse.Offset,
 	}, nil
 }
+func (u *StoreUseCase) GetAllStoresForCustomer(ctx context.Context, warehouseId, search string) ([]*entities.Store, error) {
+	return u.storeRepository.GetAllStoresForCustomer(ctx, warehouseId, search)
+}
 
 func (u *StoreUseCase) GetStoreById(ctx context.Context, storeId string) (*entities.GetStoreResponse, error) {
 	// Validate store ID

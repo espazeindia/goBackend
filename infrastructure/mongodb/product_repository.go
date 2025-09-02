@@ -33,113 +33,110 @@ func (r *ProductRepositoryMongoDB) FetchSellerId(ctx context.Context, storeID st
 	return store.SellerID, nil
 }
 
-func (r *ProductRepositoryMongoDB) GetProductsForSpecificStore(ctx context.Context, sellerId string) ([]*entities.GetProductsForSpecificStoreResponse, error) {
+func (r *ProductRepositoryMongoDB) GetProductsForSpecificStore(ctx context.Context, store_id string) ([]*entities.GetProductsForSpecificStoreResponse, error) {
 	collection := r.db.Collection("inventory")
-	collectionProduct := r.db.Collection("inventory_product")
-	collectionMetadata := r.db.Collection("metadata")
 
-	filter := bson.M{
-		"seller_id": sellerId,
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "store_id", Value: store_id}}}},
+		bson.D{{Key: "$addFields", Value: bson.D{{Key: "_id_str", Value: bson.D{{Key: "$toString", Value: "$_id"}}}}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "inventory_product"},
+			{Key: "let", Value: bson.D{{Key: "invId", Value: "$_id_str"}}},
+			{Key: "pipeline", Value: mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.D{{Key: "$expr", Value: bson.D{{Key: "$eq", Value: bson.A{"$inventory_id", "$$invId"}}}}}}},
+			}},
+			{Key: "as", Value: "ip"},
+		}}},
+		bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$ip"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "metadata"},
+			{Key: "let", Value: bson.D{{Key: "mdId", Value: "$ip.metadata_product_id"}}},
+			{Key: "pipeline", Value: mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "$expr", Value: bson.D{
+						{Key: "$eq", Value: bson.A{
+							"$_id",
+							bson.D{{Key: "$toObjectId", Value: "$$mdId"}},
+						}},
+					}},
+				}}},
+			}},
+			{Key: "as", Value: "md"},
+		}}},
+		bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$md"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}},
+		bson.D{{Key: "$project", Value: bson.D{
+			{Key: "inventory_id", Value: "$_id_str"},
+			{Key: "inventory_product_id", Value: bson.D{{Key: "$toString", Value: "$ip._id"}}},
+			{Key: "metadata_product_id", Value: bson.D{{Key: "$toString", Value: "$md._id"}}},
+			{Key: "product_visibility", Value: "$ip.product_visibility"},
+			{Key: "product_price", Value: "$ip.product_price"},
+			{Key: "metadata_name", Value: "$md.metadata_name"},
+			{Key: "metadata_description", Value: "$md.metadata_description"},
+			{Key: "metadata_image", Value: "$md.metadata_image"},
+			{Key: "metadata_category_id", Value: "$md.metadata_category_id"},
+			{Key: "metadata_subcategory_id", Value: "$md.metadata_subcategory_id"},
+			{Key: "metadata_mrp", Value: "$md.metadata_mrp"},
+			{Key: "product_quantity", Value: "$ip.product_quantity"},
+			{Key: "product_expiry_date", Value: "$ip.product_expiry_date"},
+			{Key: "product_manufacturing_date", Value: "$ip.product_manufacturing_date"},
+		}}},
 	}
 
-	cursor, err := collection.Find(ctx, filter)
+	cursor, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
 
-	var inventoryList []entities.Inventory
-	if err := cursor.All(ctx, &inventoryList); err != nil {
+	type aggResult struct {
+		InventoryId              string    `bson:"inventory_id"`
+		InventoryProductId       string    `bson:"inventory_product_id"`
+		MetadataProductId        string    `bson:"metadata_product_id"`
+		ProductVisibility        bool      `bson:"product_visibility"`
+		ProductPrice             float64   `bson:"product_price"`
+		MetadataName             string    `bson:"metadata_name"`
+		MetadataDescription      string    `bson:"metadata_description"`
+		MetadataImage            string    `bson:"metadata_image"`
+		MetadataCategoryId       string    `bson:"metadata_category_id"`
+		MetadataSubcategoryId    string    `bson:"metadata_subcategory_id"`
+		MetadataMrp              float64   `bson:"metadata_mrp"`
+		ProductQuantity          int       `bson:"product_quantity"`
+		ProductExpiryDate        time.Time `bson:"product_expiry_date"`
+		ProductManufacturingDate time.Time `bson:"product_manufacturing_date"`
+	}
+
+	var results []aggResult
+	if err := cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
 
 	var responseData []*entities.GetProductsForSpecificStoreResponse
-
-	for _, inventory := range inventoryList {
-		filterProduct := bson.M{
-			"inventory_id": inventory.InventoryID,
+	for _, rdoc := range results {
+		// build response inline so we don't create mismatched anonymous struct types
+		resp := &entities.GetProductsForSpecificStoreResponse{
+			InventoryId:              rdoc.InventoryId,
+			InventoryProductId:       rdoc.InventoryProductId,
+			MetadataProductId:        rdoc.MetadataProductId,
+			ProductVisibility:        rdoc.ProductVisibility,
+			ProductPrice:             rdoc.ProductPrice,
+			MetadataName:             rdoc.MetadataName,
+			MetadataDescription:      rdoc.MetadataDescription,
+			MetadataImage:            rdoc.MetadataImage,
+			MetadataCategoryId:       rdoc.MetadataCategoryId,
+			MetadataSubcategoryId:    rdoc.MetadataSubcategoryId,
+			MetadataMrp:              rdoc.MetadataMrp,
+			ProductQuantity:          rdoc.ProductQuantity,
+			ProductExpiryDate:        rdoc.ProductExpiryDate,
+			ProductManufacturingDate: rdoc.ProductManufacturingDate,
+			ProductCategoryName:      "",
+			ProductSubCategoryName:   "",
+			TotalStars:               "",
+			TotalReviews:             "",
 		}
-		cursorProduct, err := collectionProduct.Find(ctx, filterProduct)
-		if err != nil {
-			return nil, err
-		}
-		defer cursorProduct.Close(ctx)
 
-		var inventoryProductList []entities.InventoryProduct
-		if err := cursorProduct.All(ctx, &inventoryProductList); err != nil {
-			return nil, err
-		}
-
-		for _, inventoryProduct := range inventoryProductList {
-			filterMetadata := bson.M{
-				"metadata_product_id": inventoryProduct.MetadataProductID,
-			}
-			cursorMetadata, err := collectionMetadata.Find(ctx, filterMetadata)
-			if err != nil {
-				return nil, err
-			}
-			defer cursorMetadata.Close(ctx)
-
-			var metadataList []entities.Metadata
-			if err := cursorMetadata.All(ctx, &metadataList); err != nil {
-				return nil, err
-			}
-
-			for _, metadata := range metadataList {
-				storeProduct := struct {
-					InventoryId              string    `json:"inventory_id"`
-					InventoryProductId       string    `json:"inventory_product_id"`
-					MetadataProductId        string    `json:"metadata_product_id"`
-					ProductVisibility        bool      `json:"product_visibility"`
-					ProductPrice             float64   `json:"product_price"`
-					MetadataName             string    `json:"metadata_name"`
-					MetadataDescription      string    `json:"metadata_description"`
-					MetadataImage            string    `json:"metadata_image"`
-					MetadataCategoryId       string    `json:"metadata_category_id"`
-					MetadataSubcategoryId    string    `json:"metadata_subcategory_id"`
-					MetadataMrp              float64   `json:"metadata_mrp"`
-					ProductQuantity          int       `json:"product_quantity"`
-					ProductExpiryDate        time.Time `json:"product_expiry_date"`
-					ProductManufacturingDate time.Time `json:"product_manufacturing_date"`
-				}{
-					InventoryId:              inventory.InventoryID,
-					InventoryProductId:       inventoryProduct.InventoryProductID,
-					MetadataProductId:        metadata.MetadataProductID,
-					ProductVisibility:        inventoryProduct.ProductVisibility,
-					ProductPrice:             inventoryProduct.ProductPrice,
-					MetadataName:             metadata.MetadataName,
-					MetadataDescription:      metadata.MetadataDescription,
-					MetadataImage:            metadata.MetadataImage,
-					MetadataCategoryId:       metadata.MetadataCategoryID,
-					MetadataSubcategoryId:    metadata.MetadataSubcategoryID,
-					MetadataMrp:              metadata.MetadataMRP,
-					ProductQuantity:          inventoryProduct.ProductQuantity,
-					ProductExpiryDate:        inventoryProduct.ProductExpiryDate,
-					ProductManufacturingDate: inventoryProduct.ProductManufacturingDate,
-				}
-
-				response := &entities.GetProductsForSpecificStoreResponse{
-					StoreProducts: []struct {
-						InventoryId              string    `json:"inventory_id"`
-						InventoryProductId       string    `json:"inventory_product_id"`
-						MetadataProductId        string    `json:"metadata_product_id"`
-						ProductVisibility        bool      `json:"product_visibility"`
-						ProductPrice             float64   `json:"product_price"`
-						MetadataName             string    `json:"metadata_name"`
-						MetadataDescription      string    `json:"metadata_description"`
-						MetadataImage            string    `json:"metadata_image"`
-						MetadataCategoryId       string    `json:"metadata_category_id"`
-						MetadataSubcategoryId    string    `json:"metadata_subcategory_id"`
-						MetadataMrp              float64   `json:"metadata_mrp"`
-						ProductQuantity          int       `json:"product_quantity"`
-						ProductExpiryDate        time.Time `json:"product_expiry_date"`
-						ProductManufacturingDate time.Time `json:"product_manufacturing_date"`
-					}{storeProduct},
-				}
-				responseData = append(responseData, response)
-			}
-		}
+		responseData = append(responseData, resp)
 	}
+
 	return responseData, nil
 }
 

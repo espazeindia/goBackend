@@ -52,21 +52,21 @@ type MetadataApiResponse struct {
 type CreateMetadataRequest struct {
 	Name          string  `json:"name" binding:"required"`
 	HsnCode       string  `json:"hsn_code" binding:"required"`
-	Description   string  `json:"description"`
+	Description   string  `json:"description" binding:"required"`
 	Image         string  `json:"image"`
-	CategoryID    string  `json:"category_id"`
-	SubcategoryID string  `json:"subcategory_id"`
+	CategoryID    string  `json:"category_id"  binding:"required"`
+	SubcategoryID string  `json:"subcategory_id"  binding:"required"`
 	MRP           float64 `json:"mrp" binding:"required"`
 }
 
 // UpdateMetadataRequest represents the request structure for updating metadata
 type UpdateMetadataRequest struct {
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
+	Name          string  `json:"name" binding:"required"`
+	Description   string  `json:"description" binding:"required"`
 	Image         string  `json:"image"`
-	CategoryID    string  `json:"category_id"`
-	SubcategoryID string  `json:"subcategory_id"`
-	MRP           float64 `json:"mrp"`
+	CategoryID    string  `json:"category_id" binding:"required"`
+	SubcategoryID string  `json:"subcategory_id" binding:"required"`
+	MRP           float64 `json:"mrp" binding:"required"`
 	HsnCode       string  `json:"hsn_code"`
 }
 

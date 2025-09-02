@@ -7,22 +7,24 @@ type GetProductsForSpecificStoreRequest struct {
 }
 
 type GetProductsForSpecificStoreResponse struct {
-	StoreProducts []struct {
-		InventoryId              string    `json:"inventory_id"`
-		InventoryProductId       string    `json:"inventory_product_id"`
-		MetadataProductId        string    `json:"metadata_product_id"`
-		ProductVisibility        bool      `json:"product_visibility"`
-		ProductPrice             float64   `json:"product_price"`
-		MetadataName             string    `json:"metadata_name"`
-		MetadataDescription      string    `json:"metadata_description"`
-		MetadataImage            string    `json:"metadata_image"`
-		MetadataCategoryId       string    `json:"metadata_category_id"`
-		MetadataSubcategoryId    string    `json:"metadata_subcategory_id"`
-		MetadataMrp              float64   `json:"metadata_mrp"`
-		ProductQuantity          int       `json:"product_quantity"`
-		ProductExpiryDate        time.Time `json:"product_expiry_date"`
-		ProductManufacturingDate time.Time `json:"product_manufacturing_date"`
-	}
+	InventoryId              string    `json:"inventory_id"`
+	InventoryProductId       string    `json:"inventory_product_id"`
+	MetadataProductId        string    `json:"metadata_product_id"`
+	ProductVisibility        bool      `json:"visibility"`
+	ProductPrice             float64   `json:"price"`
+	MetadataName             string    `json:"name"`
+	MetadataDescription      string    `json:"description"`
+	MetadataImage            string    `json:"image"`
+	MetadataCategoryId       string    `json:"category_id"`
+	MetadataSubcategoryId    string    `json:"subcategory_id"`
+	MetadataMrp              float64   `json:"mrp"`
+	ProductQuantity          int       `json:"quantity"`
+	ProductExpiryDate        time.Time `json:"expiry_date"`
+	ProductManufacturingDate time.Time `json:"manufacturing_date"`
+	ProductCategoryName      string    `json:"category_name"`
+	ProductSubCategoryName   string    `json:"subcategory_name"`
+	TotalStars               string    `json:"TotalStars"`
+	TotalReviews             string    `json:"TotalReviews"`
 }
 
 type GetProductsForAllStoresRequest struct {

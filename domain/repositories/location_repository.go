@@ -1,9 +1,12 @@
 package repositories
 
-import "espazeBackend/domain/entities"
+import (
+	"context"
+	"espazeBackend/domain/entities"
+)
 
 type LocationRepository interface {
-	GetLocationForUserID(userId string) ([]*entities.Location, error)
-	CreateLocation(location *entities.Location) error
+	GetLocationForUserID(context context.Context, userId string) (*entities.MessageResponse, error)
+	CreateLocation(ctx context.Context, location *entities.CreateLocationRequest) (*entities.MessageResponse, error)
 	GetLocationByAddress(address string) (*entities.Location, error)
 }

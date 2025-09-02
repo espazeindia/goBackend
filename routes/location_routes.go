@@ -18,7 +18,7 @@ func SetupLocationRoutes(router *gin.RouterGroup) {
 
 	// Location routes
 
-	router.GET("/:userId", locationHandler.GetLocationForUserID)
+	router.GET("getLocationByUserId/:userId", locationHandler.GetLocationForUserID)
 	router.POST("/", locationHandler.CreateLocation)
 	router.GET("/", locationHandler.GetLocationByAddress)
 }

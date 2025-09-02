@@ -22,16 +22,16 @@ func NewProductHandler(productUseCase *usecase.ProductUseCase) *ProductHandler {
 }
 
 func (h *ProductHandler) GetProductsForSpecificStore(c *gin.Context) {
-	var getProductsForSpecificStoreRequest entities.GetProductsForSpecificStoreRequest
-	if err := c.ShouldBindJSON(&getProductsForSpecificStoreRequest); err != nil {
+	store_id := c.Query("store_id")
+	if store_id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Validation error",
-			"message": err.Error(),
+			"message": "store id missing in request",
 		})
 	}
 
-	response, err := h.productUseCase.GetProductsForSpecificStore(c.Request.Context(), getProductsForSpecificStoreRequest)
+	response, err := h.productUseCase.GetProductsForSpecificStore(c.Request.Context(), store_id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -40,7 +40,10 @@ func (h *ProductHandler) GetProductsForSpecificStore(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
 }
 
 func (h *ProductHandler) GetProductsForAllStores(c *gin.Context) {

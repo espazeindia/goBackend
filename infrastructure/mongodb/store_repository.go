@@ -74,6 +74,44 @@ func (r *StoreRepositoryMongoDB) GetAllStores(ctx context.Context, request entit
 	}, nil
 }
 
+func (r *StoreRepositoryMongoDB) GetAllStoresForCustomer(ctx context.Context, warehouseId, search string) ([]*entities.Store, error) {
+	collection := r.db.Collection("stores")
+
+	// Build filter
+	filter := bson.M{"warehouse_id": warehouseId}
+	if search != "" {
+		filter["store_name"] = bson.M{"$regex": search, "$options": "i"}
+	}
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var stores []*entities.Store
+	if err := cursor.All(ctx, &stores); err != nil {
+		return nil, err
+	}
+	if len(stores) != 0 {
+		now := time.Now()
+		allStoreOption := &entities.Store{
+			StoreID:       "0",
+			SellerID:      "dummy",
+			WarehouseID:   warehouseId,
+			StoreName:     "All Stores",
+			StoreAddress:  "dummy",
+			StoreContact:  "dummy",
+			NumberOfRacks: 0,
+			OccupiedRacks: 0,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+		}
+		stores = append(stores, allStoreOption)
+	}
+
+	return stores, nil
+}
+
 func (r *StoreRepositoryMongoDB) GetStoreById(ctx context.Context, storeId string) (*entities.Store, error) {
 	collection := r.db.Collection("stores")
 	filter := bson.M{"store_id": storeId}
