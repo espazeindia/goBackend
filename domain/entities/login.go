@@ -54,6 +54,9 @@ type Seller struct {
 	NumberOfRetriesPIN int        `json:"numberOfRetriesPIN" bson:"numberOfRetriesPIN"`
 	LastLoginAt        *time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
 	StoreID            string     `json:"storeId" bson:"storeId"`
+	Gstin              string     `json:"Gstin" bson:"Gstin"`
+	Pan                string     `json:"pan" bson:"pan"`
+	CompanyName        string     `json:"companyName" bson:"companyName"`
 }
 
 type Customer struct {
