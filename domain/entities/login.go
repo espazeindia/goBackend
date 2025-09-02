@@ -173,3 +173,8 @@ type AdminRegistrationResponse struct {
 	Message string `json:"message"`
 	Error   string `json:"error,omitempty"`
 }
+
+type AdminOnboaring struct {
+	AdminId  string `json:"id" bson:"_id" binding:"required"`
+	Password string `json:"-" bson:"password" binding:"required"`
+}

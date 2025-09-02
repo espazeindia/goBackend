@@ -750,6 +750,50 @@ func (r *LoginRepositoryMongoDB) RegisterAdmin(ctx context.Context, registration
 	}, nil
 }
 
+func (r *LoginRepositoryMongoDB) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("admin")
+	objectId, err := primitive.ObjectIDFromHex(requestData.AdminId)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in ObjectIdFromHex",
+			Message: "User Id is invalid",
+		}, err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Password hashing failed",
+			Message: "Failed to process registration",
+		}, err
+	}
+
+	docs := bson.M{}
+	docs["password"] = string(hashedPassword)
+
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in db",
+			Message: "Database Error",
+		}, err
+	}
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "no user ",
+			Message: "No User Found",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Password Saved Successfully",
+	}, nil
+}
+
 func (r *LoginRepositoryMongoDB) CustomerBasicSetup(ctx context.Context, requestData *entities.CustomerBasicSetupRequest) (*entities.MessageResponse, error) {
 	customerCollection := r.db.Collection("customers")
 	locationCollection := r.db.Collection("locations")

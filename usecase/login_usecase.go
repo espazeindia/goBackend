@@ -55,6 +55,10 @@ func (l *LoginUseCaseInterface) CustomerBasicSetup(ctx context.Context, requestD
 	return l.loginRepo.CustomerBasicSetup(ctx, requestData)
 }
 
+func (l *LoginUseCaseInterface) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
+	return l.loginRepo.OnboardingAdmin(ctx, requestData)
+}
+
 // func (l *LoginUseCaseInterface) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {
 // 	return l.loginRepo.AddBasicData(ctx, request)
 // }
