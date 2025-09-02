@@ -32,6 +32,8 @@ func SetupCategorySubcategoryRoutes(router *gin.RouterGroup) {
 	router.PUT("/subcategory/:id", categorySubcategoryHandler.UpdateSubcategory)
 	router.DELETE("/subcategory/:id", categorySubcategoryHandler.DeleteSubcategory)
 
+	router.GET("/getCategoriesAndSubCategory", categorySubcategoryHandler.GetCategorySubCategoryForSpecificStore)
+
 	// router.GET("/with-subcategories", categorySubcategoryHandler.GetAllCategoriesWithSubcategories)
 	// router.GET("/:id", categorySubcategoryHandler.GetCategoryById)
 	// router.GET("/:id/with-subcategories", categorySubcategoryHandler.GetCategoryWithSubcategories)
