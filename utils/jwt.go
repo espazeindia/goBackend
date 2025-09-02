@@ -37,9 +37,10 @@ func GenerateJWTToken(userID, name, role string, isOnboarded bool) (string, erro
 		Role:        role,
 		IsOnboarded: isOnboarded,
 		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt: jwt.NewNumericDate(time.Now()),
-			Issuer:   "espaze-backend",
-			Subject:  userID,
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			Issuer:    "espaze-backend",
+			Subject:   userID,
 		},
 	}
 
@@ -51,10 +52,9 @@ func GenerateJWTToken(userID, name, role string, isOnboarded bool) (string, erro
 			Role:        role,
 			IsOnboarded: isOnboarded,
 			RegisteredClaims: jwt.RegisteredClaims{
-				IssuedAt:  jwt.NewNumericDate(time.Now()),
-				ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-				Issuer:    "espaze-backend",
-				Subject:   userID,
+				IssuedAt: jwt.NewNumericDate(time.Now()),
+				Issuer:   "espaze-backend",
+				Subject:  userID,
 			},
 		}
 	}

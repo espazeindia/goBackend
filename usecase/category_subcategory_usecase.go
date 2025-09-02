@@ -141,6 +141,12 @@ func (u *CategorySubcategoryUseCase) DeleteCategory(ctx context.Context, categor
 func (u *CategorySubcategoryUseCase) DeleteSubcategory(ctx context.Context, subcategoryID string) (*entities.MessageResponse, error) {
 	return u.categorySubcategoryRepo.DeleteSubcategory(ctx, subcategoryID)
 }
+func (u *CategorySubcategoryUseCase) GetCategorySubCategoryForSpecificStore(ctx context.Context, storeID, warehouseId string) ([]*entities.CategoryWithSubcategoriesResponse, error) {
+	if storeID == "0" {
+		return u.categorySubcategoryRepo.GetCategorySubCategoryForAllStoresInWarehouse(ctx, warehouseId)
+	}
+	return u.categorySubcategoryRepo.GetCategorySubCategoryForSpecificStore(ctx, storeID)
+}
 
 // func (u *CategorySubcategoryUseCase) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
 // 	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)

@@ -451,6 +451,88 @@ func (r *CategorySubcategoryRepositoryMongoDB) DeleteSubcategory(ctx context.Con
 
 }
 
+func (r *CategorySubcategoryRepositoryMongoDB) GetCategorySubCategoryForSpecificStore(
+	ctx context.Context,
+	storeID string,
+) ([]*entities.CategoryWithSubcategoriesResponse, error) {
+
+	collection := r.db.Collection("categories")
+	subCategoryCollection := r.db.Collection("subcategories")
+
+	// Get products for this store
+	productRepo := ProductRepositoryMongoDB{db: r.db}
+	products, err := productRepo.GetProductsForSpecificStore(ctx, storeID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use map for fast lookup: categoryID -> list of subcategoryIDs
+	categoryMap := make(map[string][]string)
+
+	for _, product := range products {
+		cs := categoryMap[product.MetadataCategoryId]
+
+		// Add subcategory if not already present
+		found := false
+		for _, sub := range cs {
+			if sub == product.MetadataSubcategoryId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			cs = append(cs, product.MetadataSubcategoryId)
+		}
+		categoryMap[product.MetadataCategoryId] = cs
+	}
+
+	// Convert map back to slice
+	var categorySubcategoryList []*entities.CategoryWithSubcategoriesResponse
+
+	for categoryID, subcategoryIDs := range categoryMap {
+		catObjID, err := primitive.ObjectIDFromHex(categoryID)
+		if err != nil {
+			return nil, err
+		}
+
+		var category entities.Category
+		err = collection.FindOne(ctx, bson.M{"_id": catObjID}).Decode(&category)
+		if err != nil {
+			return nil, err
+		}
+
+		var allSubCategories []*entities.Subcategory
+		for _, subID := range subcategoryIDs {
+			subObjID, err := primitive.ObjectIDFromHex(subID)
+			if err != nil {
+				return nil, err
+			}
+			var subcategory entities.Subcategory
+			err = subCategoryCollection.FindOne(ctx, bson.M{"_id": subObjID}).Decode(&subcategory)
+			if err != nil {
+				return nil, err
+			}
+			allSubCategories = append(allSubCategories, &subcategory)
+		}
+
+		response := &entities.CategoryWithSubcategoriesResponse{
+			Category:      &category,
+			Subcategories: allSubCategories,
+		}
+		categorySubcategoryList = append(categorySubcategoryList, response)
+	}
+
+	return categorySubcategoryList, nil
+}
+
+func (r *CategorySubcategoryRepositoryMongoDB) GetCategorySubCategoryForAllStoresInWarehouse(ctx context.Context, storeID string) ([]*entities.CategoryWithSubcategoriesResponse, error) {
+	// collection := r.db.Collection("categories")
+	// SubCategoryCollection := r.db.Collection("subcategories")
+
+	return nil, nil
+
+}
+
 // func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
 // 	collection := r.db.Collection("subcategories")
 

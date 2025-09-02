@@ -460,49 +460,38 @@ func (h *CategorySubcategoryHandler) DeleteSubcategory(c *gin.Context) {
 	})
 }
 
-// // Enhanced category handlers with subcategories
-// func (h *CategorySubcategoryHandler) GetAllCategoriesWithSubcategories(c *gin.Context) {
-// 	categories, err := h.categorySubcategoryUseCase.GetAllCategoriesWithSubcategories(c.Request.Context())
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"success": false,
-// 			"error":   "Internal server error",
-// 			"message": "Some Internal Server Error Occured",
-// 		})
-// 		return
-// 	}
+func (h *CategorySubcategoryHandler) GetCategorySubCategoryForSpecificStore(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "customer" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
+	storeID := c.Query("storeId")
+	warehouseId := c.Query("warehouseId")
+	if storeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Sub-Category ID is invalid",
+			"message": "Subcategory ID is required",
+		})
+		return
+	}
 
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"data":    categories,
-// 	})
-// }
+	response, err := h.categorySubcategoryUseCase.GetCategorySubCategoryForSpecificStore(c.Request.Context(), storeID, warehouseId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": err.Error(),
+		})
+		return
+	}
 
-// func (h *CategorySubcategoryHandler) GetCategoryWithSubcategories(c *gin.Context) {
-// 	categoryID := c.Param("id")
-// 	if categoryID == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"success": false,
-// 			"error":   "Bad request",
-// 			"message": "Category ID is required",
-// 		})
-// 		return
-// 	}
-
-// 	category, err := h.categorySubcategoryUseCase.GetCategoryWithSubcategories(c.Request.Context(), categoryID)
-// 	if err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{
-// 			"success": false,
-// 			"error":   "Not found",
-// 			"message": "Category not found",
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 		"data":    category,
-// 	})
-// }
-
-//
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
+}

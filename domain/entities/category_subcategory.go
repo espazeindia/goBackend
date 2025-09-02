@@ -44,7 +44,7 @@ type UpdateSubcategoryRequest struct {
 
 // Response DTOs
 type CategoryWithSubcategoriesResponse struct {
-	*Category
+	Category      *Category      `json:"category"`
 	Subcategories []*Subcategory `json:"subcategories"`
 }
 
@@ -65,4 +65,8 @@ type PaginatedSubCategoryResponse struct {
 	Limit       int64          `json:"limit"`
 	Offset      int64          `json:"offset"`
 	TotalPages  int64          `json:"total_pages"`
+}
+type CategorySubcategoryList struct {
+	Category      string   `json:"category"`
+	SubCategories []string `json:"subcategories"`
 }

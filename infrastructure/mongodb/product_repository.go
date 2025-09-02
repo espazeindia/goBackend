@@ -43,7 +43,14 @@ func (r *ProductRepositoryMongoDB) GetProductsForSpecificStore(ctx context.Conte
 			{Key: "from", Value: "inventory_product"},
 			{Key: "let", Value: bson.D{{Key: "invId", Value: "$_id_str"}}},
 			{Key: "pipeline", Value: mongo.Pipeline{
-				bson.D{{Key: "$match", Value: bson.D{{Key: "$expr", Value: bson.D{{Key: "$eq", Value: bson.A{"$inventory_id", "$$invId"}}}}}}},
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "$expr", Value: bson.D{
+						{Key: "$and", Value: bson.A{
+							bson.D{{Key: "$eq", Value: bson.A{"$inventory_id", "$$invId"}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$product_visibility", true}}},
+						}},
+					}},
+				}}},
 			}},
 			{Key: "as", Value: "ip"},
 		}}},
