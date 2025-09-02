@@ -146,17 +146,17 @@ type AdminLoginResponse struct {
 }
 
 type Admin struct {
-	AdminID                string    `json:"id" bson:"_id,omitempty"`
-	Email                  string    `json:"email" bson:"email"`
-	Password               string    `json:"-" bson:"password"` // "-" means this field won't be included in JSON responses
-	Name                   string    `json:"name" bson:"name"`
-	IsFirstLogin           bool      `json:"isFirstLogin" bson:"isFirstLogin"`
-	PhoneNumber            string    `json:"phoneNumber" bson:"phoneNumber"`
-	Address                string    `json:"address" bson:"address"`
-	EmergencyContactNumber string    `json:"emergencyContactNumber" bson:"emergencyContactNumber"`
-	CreatedAt              time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt              time.Time `json:"updatedAt" bson:"updatedAt"`
-	LastLoginAt            time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
+	AdminID                string     `json:"id" bson:"_id,omitempty"`
+	Email                  string     `json:"email" bson:"email"`
+	Password               string     `json:"-" bson:"password"` // "-" means this field won't be included in JSON responses
+	Name                   string     `json:"name" bson:"name"`
+	IsFirstLogin           bool       `json:"isFirstLogin" bson:"isFirstLogin"`
+	PhoneNumber            string     `json:"phoneNumber" bson:"phoneNumber"`
+	Address                string     `json:"address" bson:"address"`
+	EmergencyContactNumber string     `json:"emergencyContactNumber" bson:"emergencyContactNumber"`
+	CreatedAt              time.Time  `json:"createdAt" bson:"createdAt"`
+	UpdatedAt              time.Time  `json:"updatedAt" bson:"updatedAt"`
+	LastLoginAt            *time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
 }
 
 type AdminRegistrationRequest struct {

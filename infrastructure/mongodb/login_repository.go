@@ -654,7 +654,8 @@ func (r *LoginRepositoryMongoDB) LoginAdmin(ctx context.Context, loginRequest *e
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateJWTToken(admin.AdminID, admin.Email, admin.Name, "admin")
+	isFirstLogin := admin.LastLoginAt == nil
+	token, err := utils.GenerateJWTToken(admin.AdminID, admin.Name, "admin", isFirstLogin)
 	if err != nil {
 		return &entities.AdminLoginResponse{
 			Success: false,
