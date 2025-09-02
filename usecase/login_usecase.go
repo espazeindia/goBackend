@@ -43,6 +43,14 @@ func (l *LoginUseCaseInterface) GetOTPForCustomer(ctx context.Context, phoneNumb
 	return l.loginRepo.GetOTPForCustomer(ctx, phoneNumber)
 }
 
+func (l *LoginUseCaseInterface) LoginAdmin(ctx context.Context, loginRequest *entities.AdminLoginRequest) (*entities.AdminLoginResponse, error) {
+	return l.loginRepo.LoginAdmin(ctx, loginRequest)
+}
+
+func (l *LoginUseCaseInterface) RegisterAdmin(ctx context.Context, registrationRequest *entities.AdminRegistrationRequest) (*entities.AdminRegistrationResponse, error) {
+	return l.loginRepo.RegisterAdmin(ctx, registrationRequest)
+}
+
 // func (l *LoginUseCaseInterface) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {
 // 	return l.loginRepo.AddBasicData(ctx, request)
 // }

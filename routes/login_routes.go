@@ -29,7 +29,10 @@ func SetupLoginRoutes(router *gin.RouterGroup) {
 	router.GET("/customer/getOTP", loginHandler.GetOTPForCustomer)
 	router.GET("/customer/verifyPin", loginHandler.VerifyPinForCustomer)
 
-	// router.POST("/seller/addBasicData", loginHandler.AddBasicData)
+	router.POST("/admin/login", loginHandler.LoginAdmin)
+	router.POST("/admin/register", loginHandler.RegisterAdmin)
+
+	//router.POST("/seller/addBasicData", loginHandler.AddBasicData)
 
 	// router.POST("/customer", loginHandler.LoginCustomer)
 	// router.POST("/customer/register", loginHandler.RegisterCustomer)

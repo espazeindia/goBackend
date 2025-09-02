@@ -126,3 +126,44 @@ type ResponseMessage struct {
 	Message string `json:"message"`
 	Error   string `json:"error,omitempty"`
 }
+
+type AdminLoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+type AdminLoginResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Token   string `json:"token,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
+type Admin struct {
+	AdminID                string    `json:"id" bson:"_id,omitempty"`
+	Email                  string    `json:"email" bson:"email"`
+	Password               string    `json:"-" bson:"password"` // "-" means this field won't be included in JSON responses
+	Name                   string    `json:"name" bson:"name"`
+	IsFirstLogin           bool      `json:"isFirstLogin" bson:"isFirstLogin"`
+	PhoneNumber            string    `json:"phoneNumber" bson:"phoneNumber"`
+	Address                string    `json:"address" bson:"address"`
+	EmergencyContactNumber string    `json:"emergencyContactNumber" bson:"emergencyContactNumber"`
+	CreatedAt              time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt              time.Time `json:"updatedAt" bson:"updatedAt"`
+	LastLoginAt            time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
+}
+
+type AdminRegistrationRequest struct {
+	Email                  string `json:"email" binding:"required,email"`
+	Password               string `json:"password" binding:"required,min=5"`
+	Name                   string `json:"name" binding:"required,min=2"`
+	PhoneNumber            string `json:"phoneNumber" binding:"required,min=10"`
+	Address                string `json:"address" binding:"required,min=10"`
+	EmergencyContactNumber string `json:"emergencyContactNumber" binding:"required,min=10"`
+}
+
+type AdminRegistrationResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Error   string `json:"error,omitempty"`
+}
