@@ -31,7 +31,11 @@ func SetupLoginRoutes(router *gin.RouterGroup) {
 
 	router.POST("/customer/basicSetup", loginHandler.CustomerBasicSetup)
 
-	// router.POST("/seller/addBasicData", loginHandler.AddBasicData)
+	router.POST("/admin/login", loginHandler.LoginAdmin)
+	router.POST("/admin/register", loginHandler.RegisterAdmin)
+	router.POST("/admin/onboarding", loginHandler.OnboardingAdmin)
+
+	//router.POST("/seller/addBasicData", loginHandler.AddBasicData)
 
 	// router.POST("/customer", loginHandler.LoginCustomer)
 	// router.POST("/customer/register", loginHandler.RegisterCustomer)

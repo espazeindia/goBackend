@@ -621,6 +621,179 @@ func (r *LoginRepositoryMongoDB) GetOTPForCustomer(ctx context.Context, phoneNum
 
 }
 
+func (r *LoginRepositoryMongoDB) LoginAdmin(ctx context.Context, loginRequest *entities.AdminLoginRequest) (*entities.AdminLoginResponse, error) {
+	collection := r.db.Collection("admin")
+
+	// Find user by email
+	filter := bson.M{"email": loginRequest.Email}
+	var admin entities.Admin
+	err := collection.FindOne(ctx, filter).Decode(&admin)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return &entities.AdminLoginResponse{
+				Success: false,
+				Error:   "Invalid credentials",
+				Message: "Invalid Email Credentials",
+			}, nil
+		}
+		return &entities.AdminLoginResponse{
+			Success: false,
+			Error:   "Database error",
+			Message: "Failed to authenticate user",
+		}, err
+	}
+
+	// Verify password
+	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(loginRequest.Password))
+	if err != nil {
+		return &entities.AdminLoginResponse{
+			Success: false,
+			Error:   "Invalid credentials",
+			Message: "Invalid Password Credentials",
+		}, nil
+	}
+
+	// Generate JWT token
+	isFirstLogin := admin.LastLoginAt == nil
+	token, err := utils.GenerateJWTToken(admin.AdminID, admin.Name, "admin", isFirstLogin)
+	if err != nil {
+		return &entities.AdminLoginResponse{
+			Success: false,
+			Error:   "Token generation failed",
+			Message: "Failed to generate authentication token",
+		}, err
+	}
+
+	// Update last login time and set isFirstLogin to false
+	now := time.Now()
+	_, err = collection.UpdateOne(
+		ctx,
+		bson.M{"adminID": admin.AdminID},
+		bson.M{"$set": bson.M{
+			"lastLoginAt": now,
+			"updatedAt":   now,
+		}},
+	)
+	if err != nil {
+		fmt.Println("Error updating last login time:", err)
+	}
+
+	return &entities.AdminLoginResponse{
+		Success: true,
+		Message: "Login successful",
+		Token:   token,
+	}, nil
+}
+
+func (r *LoginRepositoryMongoDB) RegisterAdmin(ctx context.Context, registrationRequest *entities.AdminRegistrationRequest) (*entities.AdminRegistrationResponse, error) {
+	collection := r.db.Collection("admin")
+
+	var existingUser entities.Admin
+	err := collection.FindOne(ctx, bson.M{"email": registrationRequest.Email}).Decode(&existingUser)
+	if err == nil {
+		return &entities.AdminRegistrationResponse{
+			Success: false,
+			Error:   "User already exists",
+			Message: "An account with this email already exists",
+		}, nil
+	} else if err != mongo.ErrNoDocuments {
+		return &entities.AdminRegistrationResponse{
+			Success: false,
+			Error:   "Database error",
+			Message: "Failed to check user existence",
+		}, err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &entities.AdminRegistrationResponse{
+			Success: false,
+			Error:   "Password hashing failed",
+			Message: "Failed to process registration",
+		}, err
+	}
+
+	now := time.Now()
+	newUser := entities.Admin{
+		Email:                  registrationRequest.Email,
+		Password:               string(hashedPassword),
+		Name:                   registrationRequest.Name,
+		IsFirstLogin:           true,
+		PhoneNumber:            registrationRequest.PhoneNumber,
+		Address:                registrationRequest.Address,
+		EmergencyContactNumber: registrationRequest.EmergencyContactNumber,
+		CreatedAt:              now,
+		UpdatedAt:              now,
+	}
+
+	result, err := collection.InsertOne(ctx, newUser)
+	if err != nil {
+		return &entities.AdminRegistrationResponse{
+			Success: false,
+			Error:   "Registration failed",
+			Message: "Failed to create user account",
+		}, err
+	}
+
+	_, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return &entities.AdminRegistrationResponse{
+			Success: false,
+			Error:   "Registration failed",
+			Message: "Failed to get user ID",
+		}, nil
+	}
+
+	return &entities.AdminRegistrationResponse{
+		Success: true,
+		Message: "User registered successfully",
+	}, nil
+}
+
+func (r *LoginRepositoryMongoDB) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("admin")
+	objectId, err := primitive.ObjectIDFromHex(requestData.AdminId)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in ObjectIdFromHex",
+			Message: "User Id is invalid",
+		}, err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Password hashing failed",
+			Message: "Failed to process registration",
+		}, err
+	}
+
+	docs := bson.M{}
+	docs["password"] = string(hashedPassword)
+
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in db",
+			Message: "Database Error",
+		}, err
+	}
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "no user ",
+			Message: "No User Found",
+		}, err
+	}
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Password Saved Successfully",
+	}, nil
+}
+
 func (r *LoginRepositoryMongoDB) CustomerBasicSetup(ctx context.Context, requestData *entities.CustomerBasicSetupRequest) (*entities.MessageResponse, error) {
 	customerCollection := r.db.Collection("customers")
 	locationCollection := r.db.Collection("locations")
