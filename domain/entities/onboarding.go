@@ -1,7 +1,6 @@
 package entities
 
 type SellerBasicDetail struct {
-	SellerID    string `json:"id" bson:"_id"`
 	Name        string `json:"name" bson:"name"`
 	ShopAddress string `json:"address" bson:"address"`
 	Gstin       string `json:"Gstin" bson:"Gstin"`

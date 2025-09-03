@@ -19,11 +19,11 @@ func NewOnboardingRepositoryMongoDB(db *mongo.Database) repositories.OnboardingR
 	return &OnboardingRepositoryMongoDB{db: db}
 }
 
-func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, request *entities.SellerBasicDetail) (*entities.MessageResponse, error) {
+func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, request *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("seller")
 	storeCollection := r.db.Collection("store")
 	var existingUser entities.Seller
-	err := collection.FindOne(ctx, bson.M{"id": request.SellerID}).Decode(&existingUser)
+	err := collection.FindOne(ctx, bson.M{"id": sellerIdString}).Decode(&existingUser)
 	if err == nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -38,7 +38,7 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 		}, err
 	}
 
-	objectId, err := primitive.ObjectIDFromHex(request.SellerID)
+	objectId, err := primitive.ObjectIDFromHex(sellerIdString)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -105,7 +105,7 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 		}, nil
 	}
 
-	token, err := utils.GenerateJWTToken(request.SellerID, request.Name, "seller", true)
+	token, err := utils.GenerateJWTToken(sellerIdString, request.Name, "seller", true)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,

@@ -28,8 +28,26 @@ func (h *OnboardingHandler) AddBasicDetail(c *gin.Context) {
 
 	}
 
+	sellerId, isPresent := c.Get("user_id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "User ID not present in token"})
+		return
+	}
+
+	sellerIdString, ok := sellerId.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "User ID not present in token"})
+		return
+	}
+
 	// Call the use case
-	response, err := h.OnboardingUseCase.AddBasicDetail(c.Request.Context(), request)
+	response, err := h.OnboardingUseCase.AddBasicDetail(c.Request.Context(), request, sellerIdString)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": response.Success,

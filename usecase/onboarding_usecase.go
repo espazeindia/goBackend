@@ -14,6 +14,6 @@ func NewOnboardingUseCase(onboardingRepo repositories.OnboardingRepository) *Onb
 	return &OnboardingUseCaseInterface{onboardingRepo: onboardingRepo}
 }
 
-func (u *OnboardingUseCaseInterface) AddBasicDetail(ctx context.Context, request *entities.SellerBasicDetail) (*entities.MessageResponse, error) {
-	return u.onboardingRepo.AddBasicDetail(ctx, request)
+func (u *OnboardingUseCaseInterface) AddBasicDetail(ctx context.Context, request *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.AddBasicDetail(ctx, request, sellerIdString)
 }

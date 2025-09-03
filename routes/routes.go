@@ -67,5 +67,10 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			SetupOrderRoutes(order)
 		}
+
+		onboarding := protected.Group("/onboarding")
+		{
+			SetupOnboardingRoutes(onboarding)
+		}
 	}
 }
