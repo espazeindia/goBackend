@@ -23,7 +23,7 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 	collection := r.db.Collection("seller")
 	storeCollection := r.db.Collection("store")
 	var existingUser entities.Seller
-	err := collection.FindOne(ctx, bson.M{"id": sellerIdString}).Decode(&existingUser)
+	err := collection.FindOne(ctx, bson.M{"_id": sellerIdString}).Decode(&existingUser)
 	if err == nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -70,6 +70,13 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 			Message: "Failed to create user account",
 		}, err
 	}
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Registration failed",
+			Message: "Failed to get seller ID",
+		}, nil
+	}
 
 	docStore := bson.M{}
 	if request.ShopName != "" {
@@ -86,25 +93,13 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 			Message: "Failed to create user account",
 		}, err
 	}
-
-	_, ok := results.UpsertedID.(primitive.ObjectID)
-	if !ok {
+	if results.MatchedCount == 0 {
 		return &entities.MessageResponse{
 			Success: false,
 			Error:   "Registration failed",
 			Message: "Failed to get seller ID",
 		}, nil
 	}
-
-	_, ok = result.UpsertedID.(primitive.ObjectID)
-	if !ok {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to get seller ID",
-		}, nil
-	}
-
 	token, err := utils.GenerateJWTToken(sellerIdString, request.Name, "seller", true)
 	if err != nil {
 		return &entities.MessageResponse{
