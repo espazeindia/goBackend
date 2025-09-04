@@ -309,6 +309,9 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 			NumberOfRetriesPIN: 0,
 			LastLoginAt:        &now,
 			StoreID:            "",
+			Gstin:              "",
+			Pan:                "",
+			CompanyName:        "",
 		}
 		// Insert user into database
 		response, err := sellerCollection.InsertOne(ctx, newUser)
