@@ -17,3 +17,7 @@ func NewOnboardingUseCase(onboardingRepo repositories.OnboardingRepository) *Onb
 func (u *OnboardingUseCaseInterface) AddBasicDetail(ctx context.Context, request *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error) {
 	return u.onboardingRepo.AddBasicDetail(ctx, request, sellerIdString)
 }
+
+func (u *OnboardingUseCaseInterface) GetBasicDetail(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.GetBasicDetail(ctx, userIdString)
+}

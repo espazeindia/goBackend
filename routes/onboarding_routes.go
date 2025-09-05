@@ -20,4 +20,5 @@ func SetupOnboardingRoutes(router *gin.RouterGroup) {
 	var onboardingHandler *handlers.OnboardingHandler = handlers.NewOnboardingHandler(onboardingUseCase)
 
 	router.POST("/seller/addBasicDetail", onboardingHandler.AddBasicDetail)
+	router.GET("/seller/getBasicDetails", onboardingHandler.GetBasicDetail)
 }

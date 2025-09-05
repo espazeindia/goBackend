@@ -65,3 +65,41 @@ func (h *OnboardingHandler) AddBasicDetail(c *gin.Context) {
 	})
 
 }
+
+func (h *OnboardingHandler) GetBasicDetail(c *gin.Context) {
+	userId, isPresent := c.Get("user_id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "User ID doesn't exist",
+			"message": "User ID doesn't exist in token",
+		})
+		return
+	}
+
+	userIdString, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "User ID is not string",
+			"message": "User ID is not a valid string in token",
+		})
+		return
+	}
+
+	response, err := h.OnboardingUseCase.GetBasicDetail(c, userIdString)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": "Some Internal Server Error Occured",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+		"token":   response.Token,
+	})
+}

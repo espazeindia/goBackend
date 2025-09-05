@@ -82,3 +82,34 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 	}, nil
 
 }
+
+func (r *OnboardingRepositoryMongoDB) GetBasicDetail(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("Seller")
+
+	var sellerData *entities.Seller
+	err := collection.FindOne(ctx, bson.M{"_id": userIdString}).Decode(&sellerData)
+	if err == mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "No user found",
+			Message: "Seller id does not exist in DB",
+		}, err
+	}
+
+	sellerDetails := &entities.SellerBasicDetail{
+
+		Name:        sellerData.Name,
+		Address:     sellerData.Address,
+		Gstin:       sellerData.Gstin,
+		Pan:         sellerData.Pan,
+		CompanyName: sellerData.CompanyName,
+		PIN:         sellerData.PIN,
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Seller details fetched successfully",
+		Data:    sellerDetails,
+	}, nil
+
+}
