@@ -18,10 +18,6 @@ func (l *LoginUseCaseInterface) LoginOperationalGuy(ctx context.Context, loginRe
 	return l.loginRepo.LoginOperationalGuy(ctx, loginRequest)
 }
 
-func (l *LoginUseCaseInterface) RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error) {
-	return l.loginRepo.RegisterOperationalGuy(ctx, registrationRequest)
-}
-
 func (l *LoginUseCaseInterface) VerifyOTP(ctx context.Context, phoneNumber *string, otp *int64) (*entities.MessageResponse, error) {
 	return l.loginRepo.VerifyOTP(ctx, phoneNumber, otp)
 }
@@ -53,10 +49,6 @@ func (l *LoginUseCaseInterface) RegisterAdmin(ctx context.Context, registrationR
 
 func (l *LoginUseCaseInterface) CustomerBasicSetup(ctx context.Context, requestData *entities.CustomerBasicSetupRequest) (*entities.MessageResponse, error) {
 	return l.loginRepo.CustomerBasicSetup(ctx, requestData)
-}
-
-func (l *LoginUseCaseInterface) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
-	return l.loginRepo.OnboardingAdmin(ctx, requestData)
 }
 
 // func (l *LoginUseCaseInterface) AddBasicData(ctx context.Context, request *entities.AddBasicData) (*entities.ResponseMessage, error) {

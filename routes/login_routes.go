@@ -21,7 +21,6 @@ func SetupLoginRoutes(router *gin.RouterGroup) {
 
 	// Public routes (no authentication required)
 	router.POST("/operational_guy/login", loginHandler.LoginOperationalGuy)
-	router.POST("/operational_guy/register", loginHandler.RegisterOperationalGuy)
 	router.GET("/seller/verifyOTP", loginHandler.VerifyOTP)
 	router.GET("/seller/getOTP", loginHandler.GetOTP)
 	router.GET("/seller/verifyPin", loginHandler.VerifyPin)
@@ -33,7 +32,6 @@ func SetupLoginRoutes(router *gin.RouterGroup) {
 
 	router.POST("/admin/login", loginHandler.LoginAdmin)
 	router.POST("/admin/register", loginHandler.RegisterAdmin)
-	router.POST("/admin/onboarding", loginHandler.OnboardingAdmin)
 
 	//router.POST("/seller/addBasicData", loginHandler.AddBasicData)
 

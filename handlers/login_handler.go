@@ -55,46 +55,6 @@ func (h *LoginHandler) LoginOperationalGuy(c *gin.Context) {
 	}
 }
 
-func (h *LoginHandler) RegisterOperationalGuy(c *gin.Context) {
-	var registrationRequest entities.OperationalGuyRegistrationRequest
-
-	if err := c.ShouldBindJSON(&registrationRequest); err != nil {
-		// Log the error for debugging
-		println("Validation error:", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request body",
-			"message": "Request body is invalid",
-		})
-		return
-	}
-
-	// Call the use case
-	response, err := h.loginUseCase.RegisterOperationalGuy(c.Request.Context(), &registrationRequest)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "An unexpected error occurred",
-		})
-		return
-	}
-
-	// Return response based on success status
-	if response.Success {
-		c.JSON(http.StatusCreated, gin.H{
-			"success": response.Success,
-			"message": response.Message,
-		})
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
-		})
-	}
-}
-
 func (h *LoginHandler) GetOTP(c *gin.Context) {
 	phoneNumber := c.Query("phonenumber")
 
@@ -421,35 +381,6 @@ func (h *LoginHandler) RegisterAdmin(c *gin.Context) {
 			"message": response.Message,
 		})
 	}
-}
-
-func (h *LoginHandler) OnboardingAdmin(c *gin.Context) {
-	var request *entities.AdminOnboaring
-	err := c.ShouldBindJSON(&request)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Validation error",
-			"message": "Request Body is invalide"})
-		return
-	}
-
-	response, err := h.loginUseCase.OnboardingAdmin(c.Request.Context(), request)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": response.Success,
-			"error":   response.Error,
-			"message": response.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"success": response.Success,
-		"message": response.Message,
-		"token":   response.Token,
-	})
-
 }
 
 func (h *LoginHandler) CustomerBasicSetup(c *gin.Context) {

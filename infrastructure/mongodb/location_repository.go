@@ -54,24 +54,23 @@ func (r *LocationRepositoryMongoDB) GetLocationForUserID(context context.Context
 }
 
 func (r *LocationRepositoryMongoDB) CreateLocation(ctx context.Context, locationRequest *entities.CreateLocationRequest) (*entities.MessageResponse, error) {
-	var locationData *entities.Location
+	locationData := &entities.Location{
+		UserID:          locationRequest.UserID,
+		LocationAddress: locationRequest.LocationAddress,
+		Coordinates:     "0,0",
+		Self:            locationRequest.Self,
+		BuildingType:    locationRequest.BuildingType,
+	}
 	if locationRequest.Self {
 		locationData = &entities.Location{
 			UserID:          locationRequest.UserID,
 			LocationAddress: locationRequest.LocationAddress,
 			Coordinates:     "0,0",
-			Self:            locationData.Self,
+			Self:            locationRequest.Self,
 			Name:            locationRequest.Name,
 			PhoneNumber:     locationRequest.PhoneNumber,
-			BuildingType:    locationData.BuildingType,
+			BuildingType:    locationRequest.BuildingType,
 		}
-	}
-	locationData = &entities.Location{
-		UserID:          locationRequest.UserID,
-		LocationAddress: locationRequest.LocationAddress,
-		Coordinates:     "0,0",
-		Self:            locationData.Self,
-		BuildingType:    locationData.BuildingType,
 	}
 	result, err := r.collection.InsertOne(context.Background(), locationData)
 	if err != nil {

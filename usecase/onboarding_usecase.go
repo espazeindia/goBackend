@@ -20,4 +20,25 @@ func (u *OnboardingUseCaseInterface) AddBasicDetail(ctx context.Context, request
 
 func (u *OnboardingUseCaseInterface) GetBasicDetail(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
 	return u.onboardingRepo.GetBasicDetail(ctx, userIdString)
+
+}
+
+func (u *OnboardingUseCaseInterface) EditBasicDetail(ctx context.Context, request *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.EditBasicDetail(ctx, request, sellerIdString)
+}
+
+func (u *OnboardingUseCaseInterface) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.OnboardingAdmin(ctx, requestData)
+}
+
+func (u *OnboardingUseCaseInterface) RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error) {
+	return u.onboardingRepo.RegisterOperationalGuy(ctx, registrationRequest)
+}
+
+func (u *OnboardingUseCaseInterface) GetOperationalGuy(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.GetOperationalGuy(ctx, userIdString)
+}
+
+func (u *OnboardingUseCaseInterface) EditOperationalGuy(ctx context.Context, request *entities.OperationalGuyGetRequest, operationsIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.EditOperationalGuy(ctx, request, operationsIdString)
 }

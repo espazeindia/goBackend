@@ -87,70 +87,6 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 	}, nil
 }
 
-func (r *LoginRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error) {
-	collection := r.db.Collection("operational_guys")
-
-	var existingUser entities.OperationalGuy
-	err := collection.FindOne(ctx, bson.M{"email": registrationRequest.Email}).Decode(&existingUser)
-	if err == nil {
-		return &entities.OperationalGuyRegistrationResponse{
-			Success: false,
-			Error:   "User already exists",
-			Message: "An account with this email already exists",
-		}, nil
-	} else if err != mongo.ErrNoDocuments {
-		return &entities.OperationalGuyRegistrationResponse{
-			Success: false,
-			Error:   "Database error",
-			Message: "Failed to check user existence",
-		}, err
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return &entities.OperationalGuyRegistrationResponse{
-			Success: false,
-			Error:   "Password hashing failed",
-			Message: "Failed to process registration",
-		}, err
-	}
-
-	now := time.Now()
-	newUser := entities.OperationalGuy{
-		Email:                  registrationRequest.Email,
-		Password:               string(hashedPassword),
-		Name:                   registrationRequest.Name,
-		PhoneNumber:            registrationRequest.PhoneNumber,
-		Address:                registrationRequest.Address,
-		EmergencyContactNumber: registrationRequest.EmergencyContactNumber,
-		CreatedAt:              now,
-		UpdatedAt:              now,
-	}
-
-	result, err := collection.InsertOne(ctx, newUser)
-	if err != nil {
-		return &entities.OperationalGuyRegistrationResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to create user account",
-		}, err
-	}
-
-	_, ok := result.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return &entities.OperationalGuyRegistrationResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to get user ID",
-		}, nil
-	}
-
-	return &entities.OperationalGuyRegistrationResponse{
-		Success: true,
-		Message: "User registered successfully",
-	}, nil
-}
-
 func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *string, otp *int64) (*entities.MessageResponse, error) {
 	sellerCollection := r.db.Collection("sellers")
 
@@ -191,9 +127,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	isFirstLogin := existingUser.LastLoginAt == nil
-
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", isFirstLogin)
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", existingUser.IsFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -254,9 +188,7 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	isFirstLogin := existingUser.LastLoginAt == nil
-
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", isFirstLogin)
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", existingUser.IsFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -273,6 +205,9 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 			"updatedAt":   now,
 		}},
 	)
+	if err != nil {
+
+	}
 
 	return &entities.MessageResponse{
 		Success: true,
@@ -312,6 +247,7 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 			Gstin:              "",
 			Pan:                "",
 			CompanyName:        "",
+			IsFirstLogin:       true,
 		}
 		// Insert user into database
 		response, err := sellerCollection.InsertOne(ctx, newUser)
@@ -750,50 +686,6 @@ func (r *LoginRepositoryMongoDB) RegisterAdmin(ctx context.Context, registration
 	return &entities.AdminRegistrationResponse{
 		Success: true,
 		Message: "User registered successfully",
-	}, nil
-}
-
-func (r *LoginRepositoryMongoDB) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
-	collection := r.db.Collection("admin")
-	objectId, err := primitive.ObjectIDFromHex(requestData.AdminId)
-	if err != nil {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Error in ObjectIdFromHex",
-			Message: "User Id is invalid",
-		}, err
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestData.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Password hashing failed",
-			Message: "Failed to process registration",
-		}, err
-	}
-
-	docs := bson.M{}
-	docs["password"] = string(hashedPassword)
-
-	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})
-	if err != nil {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Error in db",
-			Message: "Database Error",
-		}, err
-	}
-	if result.MatchedCount == 0 {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "no user ",
-			Message: "No User Found",
-		}, err
-	}
-	return &entities.MessageResponse{
-		Success: true,
-		Message: "Password Saved Successfully",
 	}, nil
 }
 
