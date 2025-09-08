@@ -91,16 +91,15 @@ func (h *OnboardingHandler) GetBasicDetail(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Internal server error",
-			"message": "Some Internal Server Error Occured",
+			"error":   response.Error,
+			"message": response.Message,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": response.Success,
-		"message": response.Message,
-		"token":   response.Token,
+		"data":    response.Data,
 	})
 }
 

@@ -84,10 +84,19 @@ func (r *OnboardingRepositoryMongoDB) AddBasicDetail(ctx context.Context, reques
 }
 
 func (r *OnboardingRepositoryMongoDB) GetBasicDetail(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
-	collection := r.db.Collection("Seller")
+	collection := r.db.Collection("sellers")
+
+	objectId, err := primitive.ObjectIDFromHex(userIdString)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "objectId from Hex error",
+			Message: "Error converting sellerId to ObjectId",
+		}, err
+	}
 
 	var sellerData *entities.Seller
-	err := collection.FindOne(ctx, bson.M{"_id": userIdString}).Decode(&sellerData)
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&sellerData)
 	if err == mongo.ErrNoDocuments {
 		return &entities.MessageResponse{
 			Success: false,
@@ -108,7 +117,6 @@ func (r *OnboardingRepositoryMongoDB) GetBasicDetail(ctx context.Context, userId
 
 	return &entities.MessageResponse{
 		Success: true,
-		Message: "Seller details fetched successfully",
 		Data:    sellerDetails,
 	}, nil
 

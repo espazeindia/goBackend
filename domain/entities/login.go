@@ -47,7 +47,7 @@ type Seller struct {
 	NumberOfRetriesPIN int       `json:"numberOfRetriesPIN" bson:"numberOfRetriesPIN"`
 	LastLoginAt        time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
 	StoreID            string    `json:"storeId" bson:"storeId"`
-	Gstin              string    `json:"Gstin" bson:"Gstin"`
+	Gstin              string    `json:"gstin" bson:"gstin"`
 	Pan                string    `json:"pan" bson:"pan"`
 	CompanyName        string    `json:"companyName" bson:"companyName"`
 	IsFirstLogin       bool      `json:"isFirstLogin" bson:"isFirstLogin"`
