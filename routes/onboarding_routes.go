@@ -21,7 +21,6 @@ func SetupOnboardingRoutes(router *gin.RouterGroup) {
 
 	router.POST("/seller/addBasicDetail", onboardingHandler.AddBasicDetail)
 	router.GET("/seller/getBasicDetails", onboardingHandler.GetBasicDetail)
-	router.PUT("/seller/editBasicDetails", onboardingHandler.EditBasicDetail)
 
 	router.POST("/admin/onboarding", onboardingHandler.OnboardingAdmin)
 

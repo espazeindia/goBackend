@@ -3,18 +3,18 @@ package entities
 import "time"
 
 type OperationalGuy struct {
-	OperationalGuyID string     `json:"id" bson:"_id,omitempty"`
-	Email            string     `json:"email" bson:"email"`
-	Password         string     `json:"-" bson:"password"` // "-" means this field won't be included in JSON responses
-	Name             string     `json:"name" bson:"name"`
-	PhoneNumber      string     `json:"phoneNumber" bson:"phoneNumber"`
-	Address          string     `json:"address" bson:"address"`
-	Pan              string     `json:"pan" bson:"pan"`
-	CreatedAt        time.Time  `json:"createdAt" bson:"createdAt"`
-	UpdatedAt        time.Time  `json:"updatedAt" bson:"updatedAt"`
-	LastLoginAt      *time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
-	WarehouseId      string     `json:"warehouseId" bson:"warehouseId"`
-	IsFirstLogin     bool       `json:"isFirstLogin" bson:"isFirstLogin"`
+	OperationalGuyID string    `json:"id" bson:"_id,omitempty"`
+	Email            string    `json:"email" bson:"email"`
+	Password         string    `json:"-" bson:"password"` // "-" means this field won't be included in JSON responses
+	Name             string    `json:"name" bson:"name"`
+	PhoneNumber      string    `json:"phoneNumber" bson:"phoneNumber"`
+	Address          string    `json:"address" bson:"address"`
+	Pan              string    `json:"pan" bson:"pan"`
+	CreatedAt        time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt" bson:"updatedAt"`
+	LastLoginAt      time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
+	WarehouseId      string    `json:"warehouseId" bson:"warehouseId"`
+	IsFirstLogin     bool      `json:"isFirstLogin" bson:"isFirstLogin"`
 }
 
 type OperationalGuyLoginRequest struct {
@@ -36,33 +36,34 @@ type OperationalGuyRegistrationResponse struct {
 }
 
 type Seller struct {
-	SellerID           string     `json:"id" bson:"_id,omitempty"`
-	Name               string     `json:"name" bson:"name"`
-	PhoneNumber        string     `json:"phoneNumber" bson:"phoneNumber,min=10"`
-	Address            string     `json:"address" bson:"address"`
-	OTP                int        `json:"otp" bson:"otp,min=6"`
-	NumberOfRetriesOTP int        `json:"numberOfRetriesOTP" bson:"numberOfRetriesOTP"`
-	OTPGeneratedAt     time.Time  `json:"otpGeneratedAt" bson:"otpGeneratedAt"`
-	PIN                int        `json:"pin" bson:"pin,min=6"`
-	NumberOfRetriesPIN int        `json:"numberOfRetriesPIN" bson:"numberOfRetriesPIN"`
-	LastLoginAt        *time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
-	StoreID            string     `json:"storeId" bson:"storeId"`
-	Gstin              string     `json:"Gstin" bson:"Gstin"`
-	Pan                string     `json:"pan" bson:"pan"`
-	CompanyName        string     `json:"companyName" bson:"companyName"`
-	IsFirstLogin       bool       `json:"isFirstLogin" bson:"isFirstLogin"`
+	SellerID           string    `json:"id" bson:"_id,omitempty"`
+	Name               string    `json:"name" bson:"name"`
+	PhoneNumber        string    `json:"phoneNumber" bson:"phoneNumber,min=10"`
+	Address            string    `json:"address" bson:"address"`
+	OTP                int       `json:"otp" bson:"otp,min=6"`
+	NumberOfRetriesOTP int       `json:"numberOfRetriesOTP" bson:"numberOfRetriesOTP"`
+	OTPGeneratedAt     time.Time `json:"otpGeneratedAt" bson:"otpGeneratedAt"`
+	PIN                int       `json:"pin" bson:"pin,min=6"`
+	NumberOfRetriesPIN int       `json:"numberOfRetriesPIN" bson:"numberOfRetriesPIN"`
+	LastLoginAt        time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
+	StoreID            string    `json:"storeId" bson:"storeId"`
+	Gstin              string    `json:"Gstin" bson:"Gstin"`
+	Pan                string    `json:"pan" bson:"pan"`
+	CompanyName        string    `json:"companyName" bson:"companyName"`
+	IsFirstLogin       bool      `json:"isFirstLogin" bson:"isFirstLogin"`
 }
 
 type Customer struct {
-	CustomerID         string     `json:"id" bson:"_id,omitempty"`
-	Name               string     `json:"name" bson:"name"`
-	PhoneNumber        string     `json:"phoneNumber" bson:"phoneNumber"`
-	OTP                int        `json:"otp" bson:"otp"`
-	NumberOfRetriesOTP int        `json:"numberOfRetriesOTP" bson:"numberOfRetriesOTP"`
-	OTPGeneratedAt     time.Time  `json:"otpGeneratedAt" bson:"otpGeneratedAt"`
-	PIN                int        `json:"pin" bson:"pin"`
-	NumberOfRetriesPIN int        `json:"numberOfRetriesPIN" bson:"numberOfRetriesPIN"`
-	LastLoginAt        *time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
+	CustomerID         string    `json:"id" bson:"_id,omitempty"`
+	Name               string    `json:"name" bson:"name"`
+	PhoneNumber        string    `json:"phoneNumber" bson:"phoneNumber"`
+	OTP                int       `json:"otp" bson:"otp"`
+	NumberOfRetriesOTP int       `json:"numberOfRetriesOTP" bson:"numberOfRetriesOTP"`
+	OTPGeneratedAt     time.Time `json:"otpGeneratedAt" bson:"otpGeneratedAt"`
+	PIN                int       `json:"pin" bson:"pin"`
+	NumberOfRetriesPIN int       `json:"numberOfRetriesPIN" bson:"numberOfRetriesPIN"`
+	LastLoginAt        time.Time `json:"lastLoginAt,omitempty" bson:"lastLoginAt,omitempty"`
+	IsFirstLogin       bool      `json:"isFirstLogin" bson:"isFirstLogin"`
 }
 
 type SellerRegistrationRequest struct {

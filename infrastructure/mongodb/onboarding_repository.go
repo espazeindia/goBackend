@@ -114,68 +114,6 @@ func (r *OnboardingRepositoryMongoDB) GetBasicDetail(ctx context.Context, userId
 
 }
 
-func (r *OnboardingRepositoryMongoDB) EditBasicDetail(ctx context.Context, request *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error) {
-	collection := r.db.Collection("sellers")
-
-	objectId, err := primitive.ObjectIDFromHex(sellerIdString)
-	if err != nil {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Error in ObjectIdFromHex",
-			Message: "Seller Id is invalid",
-		}, err
-	}
-
-	docs := bson.M{}
-	if request.Name != "" {
-		docs["name"] = request.Name
-	}
-	if request.Gstin != "" {
-		docs["gstin"] = request.Gstin
-	}
-	if request.CompanyName != "" {
-		docs["companyName"] = request.CompanyName
-	}
-	if request.Address != "" {
-		docs["address"] = request.Address
-	}
-	if request.Pan != "" {
-		docs["pan"] = request.Pan
-	}
-	docs["isFirstLogin"] = false
-	docs["pin"] = request.PIN
-
-	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})
-	if err != nil {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "Failed to update changes",
-		}, err
-	}
-	if result.MatchedCount == 0 {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Registration failed",
-			Message: "No seller found",
-		}, nil
-	}
-	token, err := utils.GenerateJWTToken(sellerIdString, request.Name, "seller", true)
-	if err != nil {
-		return &entities.MessageResponse{
-			Success: false,
-			Error:   "Token generation failed",
-			Message: "Failed to generate authentication token",
-		}, err
-	}
-	return &entities.MessageResponse{
-		Success: true,
-		Message: "Basic Details Saved Successfully",
-		Token:   token,
-	}, nil
-
-}
-
 func (r *OnboardingRepositoryMongoDB) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("admin")
 	objectId, err := primitive.ObjectIDFromHex(requestData.AdminId)
@@ -197,6 +135,7 @@ func (r *OnboardingRepositoryMongoDB) OnboardingAdmin(ctx context.Context, reque
 	}
 
 	docs := bson.M{}
+	docs["isFirstLogin"] = false
 	docs["password"] = string(hashedPassword)
 
 	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})

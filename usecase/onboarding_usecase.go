@@ -23,10 +23,6 @@ func (u *OnboardingUseCaseInterface) GetBasicDetail(ctx context.Context, userIdS
 
 }
 
-func (u *OnboardingUseCaseInterface) EditBasicDetail(ctx context.Context, request *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error) {
-	return u.onboardingRepo.EditBasicDetail(ctx, request, sellerIdString)
-}
-
 func (u *OnboardingUseCaseInterface) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
 	return u.onboardingRepo.OnboardingAdmin(ctx, requestData)
 }

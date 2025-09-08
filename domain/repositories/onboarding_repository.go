@@ -8,7 +8,6 @@ import (
 type OnboardingRepository interface {
 	AddBasicDetail(ctx context.Context, requestData *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error)
 	GetBasicDetail(ctx context.Context, userIdString string) (*entities.MessageResponse, error)
-	EditBasicDetail(ctx context.Context, requestData *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error)
 
 	OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error)
 

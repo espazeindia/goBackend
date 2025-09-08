@@ -54,10 +54,8 @@ func (r *LoginRepositoryMongoDB) LoginOperationalGuy(ctx context.Context, loginR
 		}, nil
 	}
 
-	IsFirstLogin := operationalGuy.LastLoginAt == nil
-
 	// Generate JWT token
-	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Name, "operations", IsFirstLogin)
+	token, err := utils.GenerateJWTToken(operationalGuy.OperationalGuyID, operationalGuy.Name, "operations", !operationalGuy.IsFirstLogin)
 	if err != nil {
 		return &entities.OperationalGuyLoginResponse{
 			Success: false,
@@ -127,7 +125,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", existingUser.IsFirstLogin)
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", !existingUser.IsFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -188,7 +186,7 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 		}, err
 	}
 
-	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", existingUser.IsFirstLogin)
+	token, err := utils.GenerateJWTToken(existingUser.SellerID, existingUser.Name, "seller", !existingUser.IsFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -242,7 +240,7 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 			NumberOfRetriesOTP: 0,
 			PIN:                -1,
 			NumberOfRetriesPIN: 0,
-			LastLoginAt:        &now,
+			LastLoginAt:        now,
 			StoreID:            "",
 			Gstin:              "",
 			Pan:                "",
@@ -360,9 +358,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTPForCustomer(ctx context.Context, phone
 		}, err
 	}
 
-	isFirstLogin := existingUser.LastLoginAt == nil
-
-	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer", isFirstLogin)
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer", !existingUser.IsFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -430,9 +426,7 @@ func (r *LoginRepositoryMongoDB) VerifyPinForCustomer(ctx context.Context, phone
 		}, err
 	}
 
-	isFirstLogin := existingUser.LastLoginAt == nil
-
-	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer", isFirstLogin)
+	token, err := utils.GenerateJWTToken(existingUser.CustomerID, existingUser.Name, "customer", !existingUser.IsFirstLogin)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
@@ -486,7 +480,8 @@ func (r *LoginRepositoryMongoDB) GetOTPForCustomer(ctx context.Context, phoneNum
 			NumberOfRetriesOTP: 0,
 			PIN:                -1,
 			NumberOfRetriesPIN: 0,
-			LastLoginAt:        &now,
+			LastLoginAt:        now,
+			IsFirstLogin:       true,
 		}
 		// Insert user into database
 		response, err := customerCollection.InsertOne(ctx, newUser)
@@ -592,9 +587,7 @@ func (r *LoginRepositoryMongoDB) LoginAdmin(ctx context.Context, loginRequest *e
 		}, nil
 	}
 
-	// Generate JWT token
-	isFirstLogin := admin.LastLoginAt == nil
-	token, err := utils.GenerateJWTToken(admin.AdminID, admin.Name, "admin", isFirstLogin)
+	token, err := utils.GenerateJWTToken(admin.AdminID, admin.Name, "admin", !admin.IsFirstLogin)
 	if err != nil {
 		return &entities.AdminLoginResponse{
 			Success: false,
@@ -704,6 +697,7 @@ func (r *LoginRepositoryMongoDB) CustomerBasicSetup(ctx context.Context, request
 	if requestData.Name != "" {
 		docs["name"] = requestData.Name
 	}
+	docs["isFirstLogin"] = false
 	docs["pin"] = requestData.PIN
 
 	result, err := customerCollection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})
