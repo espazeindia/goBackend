@@ -236,8 +236,16 @@ func (r *OnboardingRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context
 func (r *OnboardingRepositoryMongoDB) GetOperationalGuy(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("operational_guys")
 
+	objectId, err := primitive.ObjectIDFromHex(userIdString)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in ObjectIdFromHex",
+			Message: "Operational Guy Id is invalid",
+		}, err
+	}
 	var operationData *entities.OperationalGuy
-	err := collection.FindOne(ctx, bson.M{"_id": userIdString}).Decode(&operationData)
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&operationData)
 	if err == mongo.ErrNoDocuments {
 		return &entities.MessageResponse{
 			Success: false,
