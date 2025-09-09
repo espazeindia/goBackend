@@ -27,5 +27,6 @@ func SetupOnboardingRoutes(router *gin.RouterGroup) {
 	router.POST("/operational_guy/register", onboardingHandler.RegisterOperationalGuy)
 	router.GET("/operational_guy/getOperations", onboardingHandler.GetOperationalGuy)
 	router.PUT("/operational_guy/editOperations", onboardingHandler.EditOperationalGuy)
+	router.PUT("/operational_guy/onboarding", onboardingHandler.OnboardingOperationalGuy)
 
 }

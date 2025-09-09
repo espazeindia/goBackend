@@ -24,3 +24,7 @@ type OperationalGuyGetRequest struct {
 	Password    string `json:"-" binding:"required,min=5"`
 	PhoneNumber string `json:"phoneNumber" binding:"required,min=10"`
 }
+
+type OperationalOnboarding struct {
+	Password string `json:"-" binding:"required,min=5"`
+}

@@ -293,6 +293,16 @@ func (r *OnboardingRepositoryMongoDB) EditOperationalGuy(ctx context.Context, re
 			Message: "operational guy is not present in db",
 		}, err
 	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Password hashing failed",
+			Message: "Failed to process registration",
+		}, err
+	}
+
 	docs := bson.M{}
 	if request.PhoneNumber != "" {
 		docs["phoneNumber"] = request.PhoneNumber
@@ -301,7 +311,7 @@ func (r *OnboardingRepositoryMongoDB) EditOperationalGuy(ctx context.Context, re
 		docs["address"] = request.Address
 	}
 	if request.Password != "" {
-		docs["password"] = request.Password
+		docs["password"] = string(hashedPassword)
 	}
 	docs["isFirstLogin"] = false
 
@@ -333,6 +343,65 @@ func (r *OnboardingRepositoryMongoDB) EditOperationalGuy(ctx context.Context, re
 		Success: true,
 		Message: "Basic Details Saved Successfully",
 		Token:   token,
+	}, nil
+
+}
+
+func (r *OnboardingRepositoryMongoDB) OnboardingOperationalGuy(ctx context.Context, request *entities.OperationalOnboarding, operationsIdString string) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("operational_guys")
+
+	objectId, err := primitive.ObjectIDFromHex(operationsIdString)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in ObjectIdFromHex",
+			Message: "Operational Guy Id is invalid",
+		}, err
+	}
+	var operationalGuy *entities.OperationalGuy
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&operationalGuy)
+	if err == mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "operational guy is not present in db",
+			Message: "operational guy is not present in db",
+		}, err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Password hashing failed",
+			Message: "Failed to process registration",
+		}, err
+	}
+
+	docs := bson.M{}
+	if request.Password != "" {
+		docs["password"] = string(hashedPassword)
+	}
+	docs["isFirstLogin"] = false
+
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$set": docs})
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Registration failed",
+			Message: "Failed to update changes",
+		}, err
+	}
+	if result.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Registration failed",
+			Message: "No Operational Guy found",
+		}, nil
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Password Saved Successfully",
 	}, nil
 
 }

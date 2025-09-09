@@ -259,3 +259,53 @@ func (h *OnboardingHandler) EditOperationalGuy(c *gin.Context) {
 	})
 
 }
+
+func (h *OnboardingHandler) OnboardingOperationalGuy(c *gin.Context) {
+	var request *entities.OperationalOnboarding
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "Request Body is invalide"})
+		return
+
+	}
+
+	operationsId, isPresent := c.Get("user_id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "User ID not present in token"})
+		return
+	}
+
+	operationsIdString, ok := operationsId.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "User ID not present in token"})
+		return
+	}
+
+	// Call the use case
+	response, err := h.OnboardingUseCase.OnboardingOperationalGuy(c.Request.Context(), request, operationsIdString)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
+		})
+		return
+	}
+
+	// Return response based on success status
+	c.JSON(http.StatusCreated, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+		"token":   response.Token,
+	})
+
+}

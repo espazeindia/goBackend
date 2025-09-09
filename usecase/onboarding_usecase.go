@@ -38,3 +38,7 @@ func (u *OnboardingUseCaseInterface) GetOperationalGuy(ctx context.Context, user
 func (u *OnboardingUseCaseInterface) EditOperationalGuy(ctx context.Context, request *entities.OperationalGuyGetRequest, operationsIdString string) (*entities.MessageResponse, error) {
 	return u.onboardingRepo.EditOperationalGuy(ctx, request, operationsIdString)
 }
+
+func (u *OnboardingUseCaseInterface) OnboardingOperationalGuy(ctx context.Context, request *entities.OperationalOnboarding, operationsIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.OnboardingOperationalGuy(ctx, request, operationsIdString)
+}
