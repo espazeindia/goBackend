@@ -28,3 +28,14 @@ type OperationalGuyGetRequest struct {
 type OperationalOnboarding struct {
 	Password string `json:"-" binding:"required,min=5"`
 }
+
+type OperationalGuyGetRespone struct {
+	Name          string `json:"name"`
+	Address       string `json:"address"`
+	Email         string `json:"email"`
+	Pan           string `json:"pan" `
+	Password      string `json:"password"`
+	PhoneNumber   string `json:"phoneNumber"`
+	WarehouseId   string `json:"warehouseId"`
+	WarehouseName string `json:"warehouse_name" bson:"warehouse_name"`
+}

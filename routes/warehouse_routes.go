@@ -16,7 +16,7 @@ func SetupWarehouseRoutes(router *gin.RouterGroup) {
 	var warehouseUseCase *usecase.WarehouseUseCase = usecase.NewWarehouseUseCase(warehouseRepository)
 	var warehouseHandler *handlers.WarehouseHandler = handlers.NewWarehouseHandler(warehouseUseCase)
 
-	router.GET("/", warehouseHandler.GetAllWarehouses)
+	router.GET("/getAllWarehouse", warehouseHandler.GetAllWarehouses)
 	router.GET("/:id", warehouseHandler.GetWarehouseById)
 	router.POST("/createWarehouse", warehouseHandler.CreateWarehouse)
 	router.PUT("/updateWarehouse/:id", warehouseHandler.UpdateWarehouse)

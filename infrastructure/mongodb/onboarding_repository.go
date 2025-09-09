@@ -235,6 +235,7 @@ func (r *OnboardingRepositoryMongoDB) RegisterOperationalGuy(ctx context.Context
 
 func (r *OnboardingRepositoryMongoDB) GetOperationalGuy(ctx context.Context, userIdString string) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("operational_guys")
+	collectionWarehouse := r.db.Collection("warehouses")
 
 	objectId, err := primitive.ObjectIDFromHex(userIdString)
 	if err != nil {
@@ -254,15 +255,34 @@ func (r *OnboardingRepositoryMongoDB) GetOperationalGuy(ctx context.Context, use
 		}, err
 	}
 
-	operationDetails := &entities.OperationalGuyRegistrationRequest{
+	warehouseId, err := primitive.ObjectIDFromHex(operationData.WarehouseId)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Error in ObjectIdFromHex",
+			Message: "Warehouse Id is invalid",
+		}, err
+	}
+	var warehouseData *entities.Warehouse
+	err = collectionWarehouse.FindOne(ctx, bson.M{"_id": warehouseId}).Decode(&warehouseData)
+	if err == mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "No user found",
+			Message: "Warehouse Id does not exist in DB",
+		}, err
+	}
 
-		Name:        operationData.Name,
-		Address:     operationData.Address,
-		Email:       operationData.Email,
-		Pan:         operationData.Pan,
-		Password:    operationData.Password,
-		PhoneNumber: operationData.PhoneNumber,
-		WarehouseId: operationData.WarehouseId,
+	operationDetails := &entities.OperationalGuyGetRespone{
+
+		Name:          operationData.Name,
+		Address:       operationData.Address,
+		Email:         operationData.Email,
+		Pan:           operationData.Pan,
+		Password:      operationData.Password,
+		PhoneNumber:   operationData.PhoneNumber,
+		WarehouseId:   operationData.WarehouseId,
+		WarehouseName: warehouseData.WarehouseName,
 	}
 
 	return &entities.MessageResponse{

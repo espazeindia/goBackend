@@ -21,19 +21,33 @@ func NewWarehouseRepositoryMongoDB(db *mongo.Database) repositories.WarehouseRep
 	return &WarehouseRepositoryMongoDB{db: db}
 }
 
-func (r *WarehouseRepositoryMongoDB) GetAllWarehouses(ctx context.Context) ([]*entities.Warehouse, error) {
+func (r *WarehouseRepositoryMongoDB) GetAllWarehouses(ctx context.Context) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("warehouses")
+
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
-		return nil, err
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "No warehouse found",
+			Message: "Not able to fetch warehousees",
+		}, err
 	}
 	defer cursor.Close(ctx)
 
 	var warehouses []*entities.Warehouse
+
 	if err := cursor.All(ctx, &warehouses); err != nil {
-		return nil, err
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "DB error",
+			Message: "database error",
+		}, err
 	}
-	return warehouses, nil
+
+	return &entities.MessageResponse{
+		Success: true,
+		Data:    warehouses,
+	}, nil
 }
 
 func (r *WarehouseRepositoryMongoDB) GetWarehouseById(ctx context.Context, id string) (*entities.Warehouse, error) {
@@ -62,9 +76,12 @@ func (r *WarehouseRepositoryMongoDB) CreateWarehouse(ctx context.Context, wareho
 	warehouseData := &entities.Warehouse{
 		WarehouseName:             warehouse.WarehouseName,
 		WarehouseAddress:          warehouse.WarehouseAddress,
-		WarehouseCoordinates:      warehouse.WarehouseCoordinates,
+		WarehouseLeaseDetails:     warehouse.WarehouseLeaseDetails,
 		WarehouseStorageCapacity:  warehouse.WarehouseStorageCapacity,
 		WarehouseOperationalGuyID: "",
+		OwnerName:                 warehouse.OwnerName,
+		OwnerAddress:              warehouse.OwnerAddress,
+		OwnerPhoneNumber:          warehouse.OwnerPhoneNumber,
 		WarehouseCreatedAt:        now,
 		WarehouseUpdatedAt:        now,
 	}
@@ -109,7 +126,6 @@ func (r *WarehouseRepositoryMongoDB) UpdateWarehouse(ctx context.Context, id str
 		"$set": bson.M{
 			"warehouse_name":               warehouse.WarehouseName,
 			"warehouse_address":            warehouse.WarehouseAddress,
-			"warehouse_coordinates":        warehouse.WarehouseCoordinates,
 			"warehouse_storage_capacity":   warehouse.WarehouseStorageCapacity,
 			"warehouse_operational_guy_id": warehouse.WarehouseOperationalGuyID,
 			"warehouse_updated_at":         now,

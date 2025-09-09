@@ -21,7 +21,7 @@ func NewWarehouseUseCase(warehouseRepo repositories.WarehouseRepository) *Wareho
 	}
 }
 
-func (u *WarehouseUseCase) GetAllWarehouses(ctx context.Context) ([]*entities.Warehouse, error) {
+func (u *WarehouseUseCase) GetAllWarehouses(ctx context.Context) (*entities.MessageResponse, error) {
 	return u.warehouseRepo.GetAllWarehouses(ctx)
 }
 
@@ -35,7 +35,6 @@ func (u *WarehouseUseCase) GetWarehouseById(ctx context.Context, id string) (*en
 }
 
 func (u *WarehouseUseCase) CreateWarehouse(ctx context.Context, warehouse *entities.CreateWarehouseRequest) (*entities.MessageResponse, error) {
-
 	return u.warehouseRepo.CreateWarehouse(ctx, warehouse)
 }
 
