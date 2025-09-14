@@ -471,11 +471,11 @@ func (h *CategorySubcategoryHandler) GetCategorySubCategoryForSpecificStore(c *g
 	}
 	storeID := c.Query("storeId")
 	warehouseId := c.Query("warehouseId")
-	if storeID == "" {
+	if warehouseId == "" || storeID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Sub-Category ID is invalid",
-			"message": "Subcategory ID is required",
+			"error":   "Store or Warehouse ID is invalid",
+			"message": "StoreID or Warehouse ID is required",
 		})
 		return
 	}

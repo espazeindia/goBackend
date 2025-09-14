@@ -48,14 +48,16 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// Check if token is expired
-		expired, err := utils.IsTokenExpired(tokenString)
-		if err != nil || expired {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error":   "Token expired",
-				"message": "The provided token has expired",
-			})
-			c.Abort()
-			return
+		if claims.UserID != "customer" {
+			expired, err := utils.IsTokenExpired(tokenString)
+			if err != nil || expired {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error":   "Token expired",
+					"message": "The provided token has expired",
+				})
+				c.Abort()
+				return
+			}
 		}
 
 		// Set user information in context
