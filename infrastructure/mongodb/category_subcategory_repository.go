@@ -525,12 +525,62 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetCategorySubCategoryForSpecific
 	return categorySubcategoryList, nil
 }
 
-func (r *CategorySubcategoryRepositoryMongoDB) GetCategorySubCategoryForAllStoresInWarehouse(ctx context.Context, storeID string) ([]*entities.CategoryWithSubcategoriesResponse, error) {
-	// collection := r.db.Collection("categories")
-	// SubCategoryCollection := r.db.Collection("subcategories")
+func (r *CategorySubcategoryRepositoryMongoDB) GetCategorySubCategoryForAllStoresInWarehouse(ctx context.Context, warehouseId string) ([]*entities.CategoryWithSubcategoriesResponse, error) {
+	collection := r.db.Collection("stores")
 
-	return nil, nil
+	// Fix: Query stores by warehouse_id field, not _id
+	cursor, err := collection.Find(ctx, bson.M{"warehouse_id": warehouseId})
+	if err != nil {
+		return nil, err
+	}
+	var stores []*entities.Store
+	err = cursor.All(ctx, &stores)
+	if err != nil {
+		return nil, err
+	}
 
+	// Use map to merge categories and subcategories from all stores
+	categoryMap := make(map[string]*entities.CategoryWithSubcategoriesResponse)
+
+	for _, store := range stores {
+		storeResults, err := r.GetCategorySubCategoryForSpecificStore(ctx, store.StoreID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Merge results from this store into the main map
+		for _, categoryResult := range storeResults {
+			categoryID := categoryResult.Category.CategoryID
+
+			if existingCategory, exists := categoryMap[categoryID]; exists {
+				// Category already exists, merge subcategories
+				existingSubcategoryMap := make(map[string]bool)
+
+				// Add existing subcategories to map
+				for _, sub := range existingCategory.Subcategories {
+					existingSubcategoryMap[sub.SubcategoryID] = true
+				}
+
+				// Add new subcategories that don't already exist
+				for _, newSub := range categoryResult.Subcategories {
+					if !existingSubcategoryMap[newSub.SubcategoryID] {
+						existingCategory.Subcategories = append(existingCategory.Subcategories, newSub)
+					}
+				}
+			} else {
+				// New category, add it to the map
+				categoryMap[categoryID] = categoryResult
+			}
+		}
+	}
+
+	// Convert map back to slice
+	var result []*entities.CategoryWithSubcategoriesResponse
+	for _, categoryResult := range categoryMap {
+		result = append(result, categoryResult)
+	}
+
+	return result, nil
 }
 
 // func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
