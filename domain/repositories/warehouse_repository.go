@@ -8,7 +8,7 @@ import (
 
 // WarehouseRepository defines the interface for warehouse data access operations
 type WarehouseRepository interface {
-	GetAllWarehouses(ctx context.Context) ([]*entities.Warehouse, error)
+	GetAllWarehouses(ctx context.Context) (*entities.MessageResponse, error)
 	GetWarehouseById(ctx context.Context, id string) (*entities.Warehouse, error)
 	CreateWarehouse(ctx context.Context, warehouse *entities.CreateWarehouseRequest) (*entities.MessageResponse, error)
 	UpdateWarehouse(ctx context.Context, id string, warehouse *entities.UpdateWarehouseRequest) (*entities.MessageResponse, error)

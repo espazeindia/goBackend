@@ -14,4 +14,5 @@ type OnboardingRepository interface {
 	RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error)
 	GetOperationalGuy(ctx context.Context, userIdString string) (*entities.MessageResponse, error)
 	EditOperationalGuy(ctx context.Context, request *entities.OperationalGuyGetRequest, operationsIdString string) (*entities.MessageResponse, error)
+	OnboardingOperationalGuy(ctx context.Context, request *entities.OperationalOnboarding, operationsIdString string) (*entities.MessageResponse, error)
 }

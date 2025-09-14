@@ -22,19 +22,19 @@ func NewWarehouseHandler(warehouseUseCase *usecase.WarehouseUseCase) *WarehouseH
 }
 
 func (h *WarehouseHandler) GetAllWarehouses(c *gin.Context) {
-	warehouses, err := h.warehouseUseCase.GetAllWarehouses(c.Request.Context())
+	response, err := h.warehouseUseCase.GetAllWarehouses(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Internal server error",
-			"message": "Failed to fetch warehouses",
+			"success": response.Success,
+			"error":   response.Error,
+			"message": response.Message,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    warehouses,
+		"data":    response.Data,
 	})
 }
 
