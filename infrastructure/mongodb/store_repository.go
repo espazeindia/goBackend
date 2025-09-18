@@ -89,6 +89,7 @@ func (r *StoreRepositoryMongoDB) GetAllStoresForCustomer(ctx context.Context, wa
 	defer cursor.Close(ctx)
 
 	var stores []*entities.Store
+	var ans []*entities.Store
 	if err := cursor.All(ctx, &stores); err != nil {
 		return nil, err
 	}
@@ -106,10 +107,11 @@ func (r *StoreRepositoryMongoDB) GetAllStoresForCustomer(ctx context.Context, wa
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		stores = append(stores, allStoreOption)
-	}
+		ans = append(ans, allStoreOption)
 
-	return stores, nil
+	}
+	ans = append(ans, stores...)
+	return ans, nil
 }
 
 func (r *StoreRepositoryMongoDB) GetStoreById(ctx context.Context, storeId string) (*entities.Store, error) {
