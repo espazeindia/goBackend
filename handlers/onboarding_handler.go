@@ -113,8 +113,25 @@ func (h *OnboardingHandler) OnboardingAdmin(c *gin.Context) {
 			"message": "Request Body is invalide"})
 		return
 	}
+	adminID, isPresent := c.Get("user_id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "User ID not present in token"})
+		return
+	}
 
-	response, err := h.OnboardingUseCase.OnboardingAdmin(c.Request.Context(), request)
+	adminIdString, ok := adminID.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "User ID not present in token"})
+		return
+	}
+
+	response, err := h.OnboardingUseCase.OnboardingAdmin(c.Request.Context(), request, adminIdString)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": response.Success,

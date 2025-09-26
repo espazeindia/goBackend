@@ -26,7 +26,8 @@ type OperationalGuyGetRequest struct {
 }
 
 type OperationalOnboarding struct {
-	Password string `json:"-" binding:"required,min=5"`
+	OldPassword string `json:"old_password" binding:"required,min=5"`
+	Password    string `json:"new_password" binding:"required,min=5"`
 }
 
 type OperationalGuyGetRespone struct {
@@ -38,4 +39,9 @@ type OperationalGuyGetRespone struct {
 	PhoneNumber   string `json:"phoneNumber"`
 	WarehouseId   string `json:"warehouseId"`
 	WarehouseName string `json:"warehouse_name" bson:"warehouse_name"`
+}
+
+type AdminOnboaring struct {
+	OldPassword string `json:"old_password" binding:"required,min=5"`
+	Password    string `json:"new_password" bson:"password" binding:"required"`
 }

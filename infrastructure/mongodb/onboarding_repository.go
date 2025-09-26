@@ -122,14 +122,38 @@ func (r *OnboardingRepositoryMongoDB) GetBasicDetail(ctx context.Context, userId
 
 }
 
-func (r *OnboardingRepositoryMongoDB) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
+func (r *OnboardingRepositoryMongoDB) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring, adminIdString string) (*entities.MessageResponse, error) {
 	collection := r.db.Collection("admin")
-	objectId, err := primitive.ObjectIDFromHex(requestData.AdminId)
+	objectId, err := primitive.ObjectIDFromHex(adminIdString)
 	if err != nil {
 		return &entities.MessageResponse{
 			Success: false,
 			Error:   "Error in ObjectIdFromHex",
 			Message: "User Id is invalid",
+		}, err
+	}
+	var existingAdmin *entities.Admin
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&existingAdmin)
+	if err == mongo.ErrNoDocuments {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "No Admin Found",
+			Message: "No Admin with this Admin Id",
+		}, err
+	}
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   err.Error(),
+			Message: "Db error",
+		}, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(existingAdmin.Password), []byte(requestData.OldPassword))
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Invalid credentials",
+			Message: "Invalid Old Password Credentials",
 		}, err
 	}
 
@@ -161,9 +185,18 @@ func (r *OnboardingRepositoryMongoDB) OnboardingAdmin(ctx context.Context, reque
 			Message: "No User Found",
 		}, err
 	}
+	token, err := utils.GenerateJWTToken(adminIdString, existingAdmin.Name, "admin", true)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating token",
+			Error:   err.Error(),
+		}, err
+	}
 	return &entities.MessageResponse{
 		Success: true,
 		Message: "Password Saved Successfully",
+		Token:   token,
 	}, nil
 }
 
@@ -387,6 +420,22 @@ func (r *OnboardingRepositoryMongoDB) OnboardingOperationalGuy(ctx context.Conte
 			Message: "operational guy is not present in db",
 		}, err
 	}
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   err.Error(),
+			Message: "Db error",
+		}, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(operationalGuy.Password), []byte(request.OldPassword))
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Error:   "Invalid credentials",
+			Message: "Invalid Old Password Credentials",
+		}, err
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -418,10 +467,18 @@ func (r *OnboardingRepositoryMongoDB) OnboardingOperationalGuy(ctx context.Conte
 			Message: "No Operational Guy found",
 		}, nil
 	}
-
+	token, err := utils.GenerateJWTToken(operationsIdString, operationalGuy.Name, "operations", true)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating token",
+			Error:   err.Error(),
+		}, err
+	}
 	return &entities.MessageResponse{
 		Success: true,
 		Message: "Password Saved Successfully",
+		Token:   token,
 	}, nil
 
 }

@@ -9,7 +9,7 @@ type OnboardingRepository interface {
 	AddBasicDetail(ctx context.Context, requestData *entities.SellerBasicDetail, sellerIdString string) (*entities.MessageResponse, error)
 	GetBasicDetail(ctx context.Context, userIdString string) (*entities.MessageResponse, error)
 
-	OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error)
+	OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring, adminIdString string) (*entities.MessageResponse, error)
 
 	RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error)
 	GetOperationalGuy(ctx context.Context, userIdString string) (*entities.MessageResponse, error)
