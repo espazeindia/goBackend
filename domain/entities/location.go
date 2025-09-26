@@ -17,6 +17,6 @@ type CreateLocationRequest struct {
 	Coordinates     string `json:"coordinates" binding:"required"`
 	Self            bool   `json:"self"  binding:"required"`
 	BuildingType    string `json:"building_type"  binding:"required"`
-	PhoneNumber     string `json:"phone"`
-	Name            string `json:"name"`
+	PhoneNumber     string `json:"phone" binding:"omitempty"`
+	Name            string `json:"name" binding:"omitempty"`
 }
