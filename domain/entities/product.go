@@ -37,3 +37,28 @@ type GetProductsForAllStoresResponse struct {
 		StoreProducts []GetProductsForSpecificStoreResponse `json:"store_products"`
 	}
 }
+
+type ProductData struct {
+	InventoryId              string    `json:"inventory_id"`
+	InventoryProductId       string    `json:"inventory_product_id"`
+	ProductPrice             float64   `json:"price"`
+	ProductQuantity          int       `json:"quantity"`
+	ProductExpiryDate        time.Time `json:"expiry_date"`
+	ProductManufacturingDate time.Time `json:"manufacturing_date"`
+	StoreName                string    `json:"store_name"`
+}
+
+type GetProductsForStoreSubcategory struct {
+	MetadataProductId      string         `json:"metadata_product_id"`
+	MetadataName           string         `json:"name"`
+	MetadataDescription    string         `json:"description"`
+	MetadataImage          string         `json:"image"`
+	MetadataCategoryId     string         `json:"category_id"`
+	MetadataSubcategoryId  string         `json:"subcategory_id"`
+	MetadataMrp            float64        `json:"mrp"`
+	ProductCategoryName    string         `json:"category_name"`
+	ProductSubCategoryName string         `json:"subcategory_name"`
+	TotalStars             int            `json:"TotalStars"`
+	TotalReviews           int            `json:"TotalReviews"`
+	ProductData            []*ProductData `json:"ProductData"`
+}

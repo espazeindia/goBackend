@@ -42,3 +42,11 @@ func (u *ProductUseCase) GetProductsForAllStores(ctx context.Context, getProduct
 	}
 	return products, nil
 }
+
+func (u *ProductUseCase) GetAllProductsForSubcategory(ctx context.Context, storeId, warehouseId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error) {
+	if storeId == "0" {
+		return u.productRepo.GetProductsForAllStoresSubcategory(ctx, warehouseId, subcategoryId)
+	}
+	return u.productRepo.GetProductsForStoreSubcategory(ctx, storeId, subcategoryId)
+
+}

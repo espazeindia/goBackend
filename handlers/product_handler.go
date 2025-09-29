@@ -67,3 +67,37 @@ func (h *ProductHandler) GetProductsForAllStores(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (h *ProductHandler) GetAllProductsForSubcategory(c *gin.Context) {
+	store_id := c.Query("storeId")
+	warehouse_id := c.Query("warehouseId")
+	subcategory_id := c.Query("subcategoryId")
+	if store_id == "" || warehouse_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "store id missing in request",
+		})
+	}
+	if subcategory_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "Subcategory id missing in request",
+		})
+	}
+
+	response, err := h.productUseCase.GetAllProductsForSubcategory(c.Request.Context(), store_id, warehouse_id, subcategory_id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Internal server error",
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
+}

@@ -12,4 +12,6 @@ type ProductRepository interface {
 	GetProductsForAllStores(ctx context.Context, allStores *[]entities.Store) ([]*entities.GetProductsForAllStoresResponse, error)
 	FetchSellerId(ctx context.Context, storeID string) (string, error)
 	GetAllStores(ctx context.Context, warehouseID string) (*[]entities.Store, error)
+	GetProductsForStoreSubcategory(ctx context.Context, storeId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error)
+	GetProductsForAllStoresSubcategory(ctx context.Context, warehouseId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error)
 }
