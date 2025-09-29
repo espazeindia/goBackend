@@ -33,4 +33,6 @@ func SetupMetadataRoutes(router *gin.RouterGroup) {
 
 	router.GET("/getMetadataForSeller", metadataHandler.GetMetadataForSeller)
 
+	router.GET("/getMetadataForSubcategories", metadataHandler.GetMetadataForSubcategories)
+
 }

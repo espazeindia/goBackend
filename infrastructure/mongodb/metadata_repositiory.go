@@ -498,3 +498,84 @@ func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string)
 	}
 	return &entities.MetadataApiResponse{Success: true, Message: "Metadata Created Successfully"}, nil
 }
+
+func (r *MetadataRepositoryMongoDB) GetMetadataForSubcategories(ctx context.Context, subCategoryIds []string) ([]*entities.GetMetadataForSubcategoryResponse, error) {
+
+	metadataCol := r.db.Collection("metadata")
+	fmt.Print(subCategoryIds)
+
+	// Build aggregation pipeline
+	pipeline := mongo.Pipeline{
+		// Stage 1: Match multiple subcategory IDs
+		{{
+			Key:   "$match",
+			Value: bson.M{"metadata_subcategory_id": bson.M{"$in": subCategoryIds}},
+		}},
+
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "category_object_id", Value: bson.D{
+				{Key: "$toObjectId", Value: "$metadata_category_id"},
+			}},
+		}}},
+
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "subcategory_object_id", Value: bson.D{
+				{Key: "$toObjectId", Value: "$metadata_subcategory_id"},
+			}},
+		}}},
+
+		// Stage 2: Lookup category details
+		{{
+			Key: "$lookup",
+			Value: bson.M{
+				"from":         "categories",
+				"localField":   "category_object_id",
+				"foreignField": "_id",
+				"as":           "category",
+			},
+		}},
+		// Stage 3: Lookup subcategory details
+		{{
+			Key: "$lookup",
+			Value: bson.M{
+				"from":         "subcategories",
+				"localField":   "subcategory_object_id",
+				"foreignField": "_id",
+				"as":           "subcategory",
+			},
+		}},
+		// Stage 4: Unwind the arrays
+		{{Key: "$unwind", Value: "$category"}},
+		{{Key: "$unwind", Value: "$subcategory"}},
+		// Stage 5: Project only required fields
+		{{
+			Key: "$project",
+			Value: bson.M{
+				"id":               "$metadata_product_id",
+				"name":             "$metadata_name",
+				"description":      "$metadata_description",
+				"category_name":    "$category.category_name",
+				"subcategory_name": "$subcategory.subcategory_name",
+				"mrp":              "$metadata_mrp",
+			},
+		}},
+	}
+
+	cursor, err := metadataCol.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("failed to aggregate metadata: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var allMetadata []*entities.GetMetadataForSubcategoryResponse
+	err = cursor.All(ctx, &allMetadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode pipeline result: %w", err)
+	}
+
+	if len(allMetadata) == 0 {
+		return nil, fmt.Errorf("no metadata found for the given subcategories")
+	}
+
+	return allMetadata, nil
+}

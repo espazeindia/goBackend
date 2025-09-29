@@ -15,4 +15,5 @@ type MetadataRepository interface {
 	DeleteMetadata(ctx context.Context, id string) (*entities.MetadataApiResponse, error)
 	AddReview(ctx context.Context, req *entities.AddReviewRequest) error
 	CreateReview(ctx context.Context, id string) (*entities.MetadataApiResponse, error)
+	GetMetadataForSubcategories(ctx context.Context, subCategoryIds []string) ([]*entities.GetMetadataForSubcategoryResponse, error)
 }

@@ -98,3 +98,16 @@ type GetAllMetadata struct {
 	CategoryName    string    `json:"category_name" bson:"category_name"`
 	SubCategoryName string    `json:"subcategory_name" bson:"subcategory_name"`
 }
+
+type GetMetadataForSubcategoriesRequest struct {
+	SubcategoryIDs []string `json:"subcategory_ids" bson:"subcategory_ids"`
+}
+
+type GetMetadataForSubcategoryResponse struct {
+	ID              string  `json:"id" bson:"_id,omitempty"`
+	Name            string  `json:"name" bson:"name"`
+	Description     string  `json:"description" bson:"description"`
+	CategoryName    string  `json:"category_name" bson:"category_name"`
+	SubCategoryName string  `json:"subcategory_name" bson:"subcategory_name"`
+	MRP             float64 `json:"mrp" bson:"mrp"`
+}

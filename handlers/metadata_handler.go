@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"net/http"
-	"strconv"
-
 	"espazeBackend/domain/entities"
 	"espazeBackend/usecase"
+	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -328,5 +327,35 @@ func (h *MetadataHandler) AddReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Review added successfully",
+	})
+}
+
+func (h *MetadataHandler) GetMetadataForSubcategories(c *gin.Context) {
+	// Accept multiple subcategory IDs
+	subCategoryIds := c.QueryArray("ids")
+
+	if len(subCategoryIds) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Bad Request",
+			"message": "Missing required query parameter: subcategory ids",
+		})
+		return
+	}
+
+	// Call usecase with []string
+	result, err := h.metadataUseCase.GetMetadataForSubcategories(c.Request.Context(), subCategoryIds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Internal server error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    result,
 	})
 }

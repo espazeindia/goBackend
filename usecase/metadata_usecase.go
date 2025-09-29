@@ -141,3 +141,7 @@ func (uc *MetadataUseCase) AddReview(ctx context.Context, req *entities.AddRevie
 	}
 	return nil
 }
+
+func (uc *MetadataUseCase) GetMetadataForSubcategories(ctx context.Context, subCategoryIds []string) ([]*entities.GetMetadataForSubcategoryResponse, error) {
+	return uc.metadataRepo.GetMetadataForSubcategories(ctx, subCategoryIds)
+}
