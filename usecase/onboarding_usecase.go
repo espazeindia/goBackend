@@ -23,8 +23,8 @@ func (u *OnboardingUseCaseInterface) GetBasicDetail(ctx context.Context, userIdS
 
 }
 
-func (u *OnboardingUseCaseInterface) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring) (*entities.MessageResponse, error) {
-	return u.onboardingRepo.OnboardingAdmin(ctx, requestData)
+func (u *OnboardingUseCaseInterface) OnboardingAdmin(ctx context.Context, requestData *entities.AdminOnboaring, adminIdString string) (*entities.MessageResponse, error) {
+	return u.onboardingRepo.OnboardingAdmin(ctx, requestData, adminIdString)
 }
 
 func (u *OnboardingUseCaseInterface) RegisterOperationalGuy(ctx context.Context, registrationRequest *entities.OperationalGuyRegistrationRequest) (*entities.OperationalGuyRegistrationResponse, error) {

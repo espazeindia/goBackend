@@ -61,7 +61,7 @@ func (r *LocationRepositoryMongoDB) CreateLocation(ctx context.Context, location
 		Self:            locationRequest.Self,
 		BuildingType:    locationRequest.BuildingType,
 	}
-	if locationRequest.Self {
+	if !locationRequest.Self {
 		locationData = &entities.Location{
 			UserID:          locationRequest.UserID,
 			LocationAddress: locationRequest.LocationAddress,
