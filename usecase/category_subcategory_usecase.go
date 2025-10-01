@@ -46,8 +46,8 @@ func (u *CategorySubcategoryUseCase) GetAllCategories(ctx context.Context) ([]*e
 	return u.categorySubcategoryRepo.GetAllCategories(ctx)
 }
 
-func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context, categoryId string) ([]*entities.Subcategory, error) {
-	return u.categorySubcategoryRepo.GetAllSubcategories(ctx, categoryId)
+func (u *CategorySubcategoryUseCase) GetAllSubcategories(ctx context.Context, categoryId, search string) ([]*entities.Subcategory, error) {
+	return u.categorySubcategoryRepo.GetAllSubcategories(ctx, categoryId, search)
 }
 
 func (u *CategorySubcategoryUseCase) GetSubcategories(ctx context.Context, limit, offset int64, search *string) (*entities.PaginatedSubCategoryResponse, error) {

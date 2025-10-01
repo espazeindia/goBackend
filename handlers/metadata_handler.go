@@ -332,7 +332,7 @@ func (h *MetadataHandler) AddReview(c *gin.Context) {
 
 func (h *MetadataHandler) GetMetadataForSubcategories(c *gin.Context) {
 	// Accept multiple subcategory IDs
-	subCategoryIds := c.QueryArray("subcategoryIds")
+	subCategoryIds := c.QueryArray("subcategoryIds[]")
 
 	if len(subCategoryIds) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{

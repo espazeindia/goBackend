@@ -12,7 +12,7 @@ type CategorySubcategoryRepository interface {
 	GetCategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Category, int64, error)
 	GetAllCategories(ctx context.Context) ([]*entities.Category, error)
 	GetSubcategories(ctx context.Context, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)
-	GetAllSubcategories(ctx context.Context, categoryId string) ([]*entities.Subcategory, error)
+	GetAllSubcategories(ctx context.Context, categoryId, search string) ([]*entities.Subcategory, error)
 	CreateCategory(ctx context.Context, category *entities.Category) (*entities.MessageResponse, error)
 	CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (*entities.MessageResponse, error)
 	GetSubcategoryByCategoryId(ctx context.Context, categoryId *string, limit, offset int64, search *string) ([]*entities.Subcategory, int64, error)

@@ -83,6 +83,7 @@ func (h *CategorySubcategoryHandler) GetAllCategories(c *gin.Context) {
 
 func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
 	categoryID := c.Param("id")
+	search := c.Query("search")
 	if categoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -92,7 +93,7 @@ func (h *CategorySubcategoryHandler) GetAllSubcategories(c *gin.Context) {
 		return
 	}
 
-	sub_categories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context(), categoryID)
+	sub_categories, err := h.categorySubcategoryUseCase.GetAllSubcategories(c.Request.Context(), categoryID, search)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
