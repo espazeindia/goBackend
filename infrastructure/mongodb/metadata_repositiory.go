@@ -502,11 +502,8 @@ func (r *MetadataRepositoryMongoDB) CreateReview(ctx context.Context, id string)
 func (r *MetadataRepositoryMongoDB) GetMetadataForSubcategories(ctx context.Context, subCategoryIds []string) ([]*entities.GetMetadataForSubcategoryResponse, error) {
 
 	metadataCol := r.db.Collection("metadata")
-	fmt.Print(subCategoryIds)
 
-	// Build aggregation pipeline
 	pipeline := mongo.Pipeline{
-		// Stage 1: Match multiple subcategory IDs
 		{{
 			Key:   "$match",
 			Value: bson.M{"metadata_subcategory_id": bson.M{"$in": subCategoryIds}},
@@ -523,8 +520,6 @@ func (r *MetadataRepositoryMongoDB) GetMetadataForSubcategories(ctx context.Cont
 				{Key: "$toObjectId", Value: "$metadata_subcategory_id"},
 			}},
 		}}},
-
-		// Stage 2: Lookup category details
 		{{
 			Key: "$lookup",
 			Value: bson.M{
@@ -534,7 +529,6 @@ func (r *MetadataRepositoryMongoDB) GetMetadataForSubcategories(ctx context.Cont
 				"as":           "category",
 			},
 		}},
-		// Stage 3: Lookup subcategory details
 		{{
 			Key: "$lookup",
 			Value: bson.M{
@@ -544,10 +538,8 @@ func (r *MetadataRepositoryMongoDB) GetMetadataForSubcategories(ctx context.Cont
 				"as":           "subcategory",
 			},
 		}},
-		// Stage 4: Unwind the arrays
 		{{Key: "$unwind", Value: "$category"}},
 		{{Key: "$unwind", Value: "$subcategory"}},
-		// Stage 5: Project only required fields
 		{{
 			Key: "$project",
 			Value: bson.M{
