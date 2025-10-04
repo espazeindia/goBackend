@@ -4,7 +4,7 @@ import (
 	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
-	"fmt"
+	"espazeBackend/utils"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -330,29 +330,32 @@ func (r *ProductRepositoryMongoDB) GetProductsForStoreSubcategory(
 	var results []*entities.GetProductsForStoreSubcategory
 	for _, metadataData := range cursorResults {
 		results = append(results, &entities.GetProductsForStoreSubcategory{
-			MetadataProductId:      metadataData.MetadataProductId,
-			MetadataName:           metadataData.MetadataName,
-			MetadataDescription:    metadataData.MetadataDescription,
-			MetadataImage:          metadataData.MetadataImage,
-			MetadataCategoryId:     metadataData.MetadataCategoryId,
-			MetadataMrp:            metadataData.MetadataMrp,
-			MetadataSubcategoryId:  metadataData.MetadataSubcategoryId,
-			ProductCategoryName:    metadataData.ProductCategoryName,
-			ProductSubCategoryName: metadataData.ProductSubCategoryName,
-			TotalStars:             metadataData.TotalStars,
-			TotalReviews:           metadataData.TotalReviews,
-			ProductData: []*entities.ProductData{
-				{
-					InventoryId:              metadataData.InventoryId,
-					InventoryProductId:       metadataData.InventoryProductId,
-					ProductPrice:             metadataData.ProductPrice,
-					ProductQuantity:          metadataData.ProductQuantity,
-					ProductExpiryDate:        metadataData.ProductExpiryDate,
-					ProductManufacturingDate: metadataData.ProductManufacturingDate,
-					StoreName:                storeData.StoreName,
-				},
-			},
-		})
+			MetadataProductId:        metadataData.MetadataProductId,
+			MetadataName:             metadataData.MetadataName,
+			MetadataDescription:      metadataData.MetadataDescription,
+			MetadataImage:            metadataData.MetadataImage,
+			MetadataCategoryId:       metadataData.MetadataCategoryId,
+			MetadataMrp:              metadataData.MetadataMrp,
+			MetadataSubcategoryId:    metadataData.MetadataSubcategoryId,
+			ProductCategoryName:      metadataData.ProductCategoryName,
+			ProductSubCategoryName:   metadataData.ProductSubCategoryName,
+			TotalStars:               metadataData.TotalStars,
+			TotalReviews:             metadataData.TotalReviews,
+			InventoryId:              metadataData.InventoryId,
+			InventoryProductId:       metadataData.InventoryProductId,
+			ProductPrice:             metadataData.ProductPrice,
+			ProductQuantity:          metadataData.ProductQuantity,
+			ProductExpiryDate:        metadataData.ProductExpiryDate,
+			ProductManufacturingDate: metadataData.ProductManufacturingDate,
+			MetadataRating: func() float64 {
+				if metadataData.TotalReviews == 0 {
+					return 0
+				}
+				return float64(metadataData.TotalStars) / float64(metadataData.TotalReviews)
+			}(),
+			StoreName: storeData.StoreName,
+		},
+		)
 
 	}
 
@@ -377,44 +380,48 @@ func (r *ProductRepositoryMongoDB) GetProductsForAllStoresSubcategory(
 		return nil, err
 	}
 
-	// Use a map keyed by metadata id to club data across stores
-	groupedByMetadata := make(map[string]*entities.GetProductsForStoreSubcategory)
+	groupedByMetadata := make(map[string][]*entities.GetProductsForStoreSubcategory)
 
 	for _, store := range storesData {
 		apiResult, err := r.GetProductsForStoreSubcategory(ctx, store.StoreID, subcategoryId)
 		if err != nil {
-			return nil, fmt.Errorf("hello")
+			return nil, err
 		}
-		// Merge by metadata id; only ProductData differs per store
 		for _, item := range apiResult {
 			key := item.MetadataProductId
 			if existing, ok := groupedByMetadata[key]; ok {
-				// Append product rows for this metadata id
-				existing.ProductData = append(existing.ProductData, item.ProductData...)
-			} else {
-				// Initialize entry with current metadata and product list
-				groupedByMetadata[key] = &entities.GetProductsForStoreSubcategory{
-					MetadataProductId:      item.MetadataProductId,
-					MetadataName:           item.MetadataName,
-					MetadataDescription:    item.MetadataDescription,
-					MetadataImage:          item.MetadataImage,
-					MetadataCategoryId:     item.MetadataCategoryId,
-					MetadataSubcategoryId:  item.MetadataSubcategoryId,
-					MetadataMrp:            item.MetadataMrp,
-					ProductCategoryName:    item.ProductCategoryName,
-					ProductSubCategoryName: item.ProductSubCategoryName,
-					TotalStars:             item.TotalStars,
-					TotalReviews:           item.TotalReviews,
-					ProductData:            append([]*entities.ProductData{}, item.ProductData...),
+				// If new item has lower price, replace existing entries
+				if existing[0].ProductPrice > item.ProductPrice {
+					groupedByMetadata[key] = []*entities.GetProductsForStoreSubcategory{item}
+				} else if existing[0].ProductPrice == item.ProductPrice {
+					// Same price - check expiry date
+					if existing[0].ProductExpiryDate.Compare(item.ProductExpiryDate) == -1 {
+						// New item has longer expiry date, replace existing
+						groupedByMetadata[key] = []*entities.GetProductsForStoreSubcategory{item}
+					} else if existing[0].ProductExpiryDate.Equal(item.ProductExpiryDate) {
+						// Same price and same expiry date, add to list for random selection
+						groupedByMetadata[key] = append(groupedByMetadata[key], item)
+					}
+					// If existing has longer expiry date, ignore new item
 				}
+				// If existing has lower price, ignore new item
+			} else {
+				// Initialize entry with current item
+				groupedByMetadata[key] = []*entities.GetProductsForStoreSubcategory{item}
 			}
 		}
 	}
-
-	// Convert map to slice for response
 	var result []*entities.GetProductsForStoreSubcategory
 	for _, v := range groupedByMetadata {
-		result = append(result, v)
+		if len(v) > 1 {
+			data, err := utils.GenerateRandomIndex(v)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, data)
+		} else {
+			result = append(result, v[0])
+		}
 	}
 	return result, nil
 }

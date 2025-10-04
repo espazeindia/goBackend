@@ -94,6 +94,7 @@ func (h *ProductHandler) GetAllProductsForSubcategory(c *gin.Context) {
 			"error":   err.Error(),
 			"message": "Internal server error",
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
