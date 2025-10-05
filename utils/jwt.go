@@ -29,7 +29,7 @@ func GenerateJWTToken(userID, name, role string, isOnboarded bool) (string, erro
 	// Get JWT secret from environment variable
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "default-secret-key-change-in-production"
+		return "", errors.New("JWT_SECRET is not set")
 	}
 	claims := Claims{
 		UserID:      userID,
@@ -42,21 +42,6 @@ func GenerateJWTToken(userID, name, role string, isOnboarded bool) (string, erro
 			Issuer:    "espaze-backend",
 			Subject:   userID,
 		},
-	}
-
-	// Create claims
-	if role == "customer" {
-		claims = Claims{
-			UserID:      userID,
-			Name:        name,
-			Role:        role,
-			IsOnboarded: isOnboarded,
-			RegisteredClaims: jwt.RegisteredClaims{
-				IssuedAt: jwt.NewNumericDate(time.Now()),
-				Issuer:   "espaze-backend",
-				Subject:  userID,
-			},
-		}
 	}
 
 	// Create token
@@ -76,7 +61,7 @@ func ValidateJWTToken(tokenString string) (*Claims, error) {
 	// Get JWT secret from environment variable
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "default-secret-key-change-in-production"
+		return nil, errors.New("JWT_SECRET is not set")
 	}
 
 	// Parse token

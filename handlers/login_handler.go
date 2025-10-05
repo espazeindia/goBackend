@@ -4,7 +4,6 @@ import (
 	"espazeBackend/domain/entities"
 	"espazeBackend/usecase"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -56,8 +55,17 @@ func (h *LoginHandler) LoginOperationalGuy(c *gin.Context) {
 }
 
 func (h *LoginHandler) GetOTP(c *gin.Context) {
-	phoneNumber := c.Query("phonenumber")
+	var req entities.GetOTP
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
+		return
+	}
 
+	phoneNumber := req.PhoneNumber
 	if len(phoneNumber) < 10 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -85,17 +93,21 @@ func (h *LoginHandler) GetOTP(c *gin.Context) {
 }
 
 func (h *LoginHandler) VerifyOTP(c *gin.Context) {
-	phoneNumber := c.Query("phonenumber")
-	otpStr := c.Query("otp")
-	otp, err := strconv.ParseInt(otpStr, 10, 64)
-	if err != nil {
+	var req struct {
+		PhoneNumber string `json:"phoneNumber"`
+		OTP         int64  `json:"otp"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalide Otp",
-			"message": "Invalide OTP Format"})
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
 		return
 	}
 
+	phoneNumber := req.PhoneNumber
+	otp := req.OTP
 	if len(phoneNumber) < 10 || otp < 100000 || otp > 999999 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -133,17 +145,21 @@ func (h *LoginHandler) VerifyOTP(c *gin.Context) {
 }
 
 func (h *LoginHandler) VerifyPin(c *gin.Context) {
-	phoneNumber := c.Query("phonenumber")
-	pinStr := c.Query("pin")
-	pin, err := strconv.ParseInt(pinStr, 10, 64)
-	if err != nil {
+	var req struct {
+		PhoneNumber string `json:"phoneNumber"`
+		PIN         int64  `json:"pin"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalide Pin",
-			"message": "Invalide Pin Format"})
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
 		return
 	}
 
+	phoneNumber := req.PhoneNumber
+	pin := req.PIN
 	if len(phoneNumber) < 10 || pin < 100000 || pin > 999999 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -180,8 +196,17 @@ func (h *LoginHandler) VerifyPin(c *gin.Context) {
 	}
 }
 func (h *LoginHandler) GetOTPForCustomer(c *gin.Context) {
-	phoneNumber := c.Query("phonenumber")
+	var req entities.GetOTP
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
+		return
+	}
 
+	phoneNumber := req.PhoneNumber
 	if len(phoneNumber) < 10 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -209,17 +234,21 @@ func (h *LoginHandler) GetOTPForCustomer(c *gin.Context) {
 }
 
 func (h *LoginHandler) VerifyOTPForCustomer(c *gin.Context) {
-	phoneNumber := c.Query("phonenumber")
-	otpStr := c.Query("otp")
-	otp, err := strconv.ParseInt(otpStr, 10, 64)
-	if err != nil {
+	var req struct {
+		PhoneNumber string `json:"phoneNumber"`
+		OTP         int64  `json:"otp"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalide Otp",
-			"message": "Invalide OTP Format"})
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
 		return
 	}
 
+	phoneNumber := req.PhoneNumber
+	otp := req.OTP
 	if len(phoneNumber) < 10 || otp < 100000 || otp > 999999 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -258,17 +287,21 @@ func (h *LoginHandler) VerifyOTPForCustomer(c *gin.Context) {
 }
 
 func (h *LoginHandler) VerifyPinForCustomer(c *gin.Context) {
-	phoneNumber := c.Query("phonenumber")
-	pinStr := c.Query("pin")
-	pin, err := strconv.ParseInt(pinStr, 10, 64)
-	if err != nil {
+	var req struct {
+		PhoneNumber string `json:"phoneNumber"`
+		PIN         int64  `json:"pin"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalide Pin",
-			"message": "Invalide Pin Format"})
+			"error":   "Invalid request body",
+			"message": "Request body is invalid",
+		})
 		return
 	}
 
+	phoneNumber := req.PhoneNumber
+	pin := req.PIN
 	if len(phoneNumber) < 10 || pin < 100000 || pin > 999999 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -384,7 +417,7 @@ func (h *LoginHandler) RegisterAdmin(c *gin.Context) {
 }
 
 func (h *LoginHandler) CustomerBasicSetup(c *gin.Context) {
-	var request *entities.CustomerBasicSetupRequest
+	var request entities.CustomerBasicSetupRequest
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -396,7 +429,7 @@ func (h *LoginHandler) CustomerBasicSetup(c *gin.Context) {
 	}
 
 	// Call the use case
-	response, err := h.loginUseCase.CustomerBasicSetup(c.Request.Context(), request)
+	response, err := h.loginUseCase.CustomerBasicSetup(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": response.Success,

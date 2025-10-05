@@ -89,7 +89,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTP(ctx context.Context, phoneNumber *str
 	sellerCollection := r.db.Collection("sellers")
 
 	var existingUser entities.Seller
-	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": *phoneNumber}).Decode(&existingUser)
 	if err == mongo.ErrNoDocuments {
 		// User already exists
 		return &entities.MessageResponse{
@@ -159,7 +159,7 @@ func (r *LoginRepositoryMongoDB) VerifyPin(ctx context.Context, phoneNumber *str
 	sellerCollection := r.db.Collection("sellers")
 
 	var existingUser entities.Seller
-	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	err := sellerCollection.FindOne(ctx, bson.M{"phoneNumber": *phoneNumber}).Decode(&existingUser)
 	if err == mongo.ErrNoDocuments {
 		// User already exists
 		return &entities.MessageResponse{
@@ -267,7 +267,7 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 
 		return &entities.MessageResponse{
 			Success: true,
-			Message: fmt.Sprint("Otp Sent Successfully ", otp),
+			Message: "OTP sent successfully",
 		}, nil
 	} else if err != mongo.ErrNoDocuments && err != nil {
 		// Database error
@@ -314,7 +314,7 @@ func (r *LoginRepositoryMongoDB) GetOTP(ctx context.Context, phoneNumber string)
 
 	return &entities.MessageResponse{
 		Success: true,
-		Message: fmt.Sprint("Otp Sent Successfully ", otp),
+		Message: "OTP sent successfully",
 	}, nil
 
 }
@@ -322,7 +322,7 @@ func (r *LoginRepositoryMongoDB) VerifyOTPForCustomer(ctx context.Context, phone
 	customerCollection := r.db.Collection("customers")
 
 	var existingUser entities.Customer
-	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": *phoneNumber}).Decode(&existingUser)
 	if err == mongo.ErrNoDocuments {
 		// User already exists
 		return &entities.MessageResponse{
@@ -399,7 +399,7 @@ func (r *LoginRepositoryMongoDB) VerifyPinForCustomer(ctx context.Context, phone
 	customerCollection := r.db.Collection("customers")
 
 	var existingUser entities.Customer
-	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": phoneNumber}).Decode(&existingUser)
+	err := customerCollection.FindOne(ctx, bson.M{"phoneNumber": *phoneNumber}).Decode(&existingUser)
 	if err == mongo.ErrNoDocuments {
 		// User already exists
 		return &entities.MessageResponse{
@@ -503,7 +503,7 @@ func (r *LoginRepositoryMongoDB) GetOTPForCustomer(ctx context.Context, phoneNum
 
 		return &entities.MessageResponse{
 			Success: true,
-			Message: fmt.Sprint("Otp Sent Successfully ", otp),
+			Message: "OTP sent successfully",
 		}, nil
 	} else if err != mongo.ErrNoDocuments && err != nil {
 		// Database error
@@ -550,7 +550,7 @@ func (r *LoginRepositoryMongoDB) GetOTPForCustomer(ctx context.Context, phoneNum
 
 	return &entities.MessageResponse{
 		Success: true,
-		Message: fmt.Sprint("Otp Sent Successfully ", otp),
+		Message: "OTP sent successfully",
 	}, nil
 
 }
