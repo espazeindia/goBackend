@@ -496,3 +496,48 @@ func (h *CategorySubcategoryHandler) GetCategorySubCategoryForSpecificStore(c *g
 		"data":    response,
 	})
 }
+
+func (h *CategorySubcategoryHandler) GetSubCategoryForStoreCategory(c *gin.Context) {
+	role, isPresent := c.Get("role")
+	if role != "customer" || !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Unautherised User",
+		})
+		return
+	}
+	storeID := c.Query("storeId")
+	warehouseId := c.Query("warehouseId")
+	categoryId := c.Query("categoryId")
+	if warehouseId == "" || storeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Store or Warehouse ID is invalid",
+			"message": "StoreID or Warehouse ID is required",
+		})
+		return
+	}
+	if categoryId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Category ID is invalid",
+			"message": "Category ID is required",
+		})
+		return
+	}
+
+	response, err := h.categorySubcategoryUseCase.GetSubCategoryForStoreCategory(c.Request.Context(), storeID, warehouseId, categoryId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
+}

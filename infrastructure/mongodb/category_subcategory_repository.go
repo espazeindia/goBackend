@@ -585,6 +585,75 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetCategorySubCategoryForAllStore
 	return result, nil
 }
 
+func (r *CategorySubcategoryRepositoryMongoDB) GetSubCategoryForSpecificStoreCategory(ctx context.Context, storeId, categoryId string) ([]*entities.Subcategory, error) {
+	inventoryCollection := r.db.Collection("inventory")
+	inventoryProductCollection := r.db.Collection("inventory_product")
+
+	var inventoryData *entities.Inventory
+	err := inventoryCollection.FindOne(ctx, bson.M{"store_id": storeId}).Decode(&inventoryData)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"inventory_id": inventoryData.InventoryID}}},
+		{{Key: "$addFields", Value: bson.M{"metadata_oid": bson.M{"$toObjectId": "$metadata_product_id"}}}},
+		{{Key: "$lookup", Value: bson.M{"from": "metadata", "localField": "metadata_oid", "foreignField": "_id", "as": "metadata"}}},
+		{{Key: "$unwind", Value: "$metadata"}},
+		{{Key: "$match", Value: bson.M{"metadata.metadata_category_id": categoryId}}},
+		{{Key: "$addFields", Value: bson.M{"subcategory_oid": bson.M{"$toObjectId": "$metadata.metadata_subcategory_id"}}}},
+		{{Key: "$lookup", Value: bson.M{"from": "subcategories", "localField": "subcategory_oid", "foreignField": "_id", "as": "subcategory"}}},
+		{{Key: "$unwind", Value: "$subcategory"}},
+		{{Key: "$group", Value: bson.M{"_id": "$subcategory._id", "subcategory": bson.M{"$first": "$subcategory"}}}},
+		{{Key: "$replaceRoot", Value: bson.M{"newRoot": "$subcategory"}}},
+	}
+
+	cursor, err := inventoryProductCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	var result []*entities.Subcategory
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (r *CategorySubcategoryRepositoryMongoDB) GetSubCategoryForAllStoresCategoryInWarehouse(ctx context.Context, warehouseId, categoryId string) ([]*entities.Subcategory, error) {
+	storeCollection := r.db.Collection("stores")
+
+	cursor, err := storeCollection.Find(ctx, bson.M{"warehouse_id": warehouseId})
+	if err != nil {
+		return nil, err
+	}
+	var stores []*entities.Store
+	err = cursor.All(ctx, &stores)
+	if err != nil {
+		return nil, err
+	}
+	subcategoryMap := make(map[string]*entities.Subcategory)
+
+	for _, store := range stores {
+		result, err := r.GetSubCategoryForSpecificStoreCategory(ctx, store.StoreID, categoryId)
+		if err != nil {
+			return nil, err
+		}
+		for _, data := range result {
+			key := data.SubcategoryID
+			_, ok := subcategoryMap[key]
+			if !ok {
+				subcategoryMap[key] = data
+			}
+		}
+	}
+	var result []*entities.Subcategory
+	for _, value := range subcategoryMap {
+		result = append(result, value)
+	}
+	return result, nil
+}
+
 // func (r *CategorySubcategoryRepositoryMongoDB) GetSubcategoryById(ctx context.Context, subcategoryID string) (*entities.Subcategory, error) {
 // 	collection := r.db.Collection("subcategories")
 

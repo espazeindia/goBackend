@@ -148,6 +148,13 @@ func (u *CategorySubcategoryUseCase) GetCategorySubCategoryForSpecificStore(ctx 
 	return u.categorySubcategoryRepo.GetCategorySubCategoryForSpecificStore(ctx, storeID)
 }
 
+func (u *CategorySubcategoryUseCase) GetSubCategoryForStoreCategory(ctx context.Context, storeID, warehouseId, categoryId string) ([]*entities.Subcategory, error) {
+	if storeID == "0" {
+		return u.categorySubcategoryRepo.GetSubCategoryForAllStoresCategoryInWarehouse(ctx, warehouseId, categoryId)
+	}
+	return u.categorySubcategoryRepo.GetSubCategoryForSpecificStoreCategory(ctx, storeID, categoryId)
+}
+
 // func (u *CategorySubcategoryUseCase) GetSubcategoriesByCategoryId(ctx context.Context, categoryID string) ([]*entities.Subcategory, error) {
 // 	return u.categorySubcategoryRepo.GetSubcategoriesByCategoryId(ctx, categoryID)
 // }

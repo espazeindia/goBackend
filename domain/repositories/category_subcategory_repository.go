@@ -22,6 +22,8 @@ type CategorySubcategoryRepository interface {
 	DeleteSubcategory(ctx context.Context, subcategoryID string) (*entities.MessageResponse, error)
 	GetCategorySubCategoryForAllStoresInWarehouse(ctx context.Context, warehouseId string) ([]*entities.CategoryWithSubcategoriesResponse, error)
 	GetCategorySubCategoryForSpecificStore(ctx context.Context, storeID string) ([]*entities.CategoryWithSubcategoriesResponse, error)
+	GetSubCategoryForAllStoresCategoryInWarehouse(ctx context.Context, warehouseId, categoryId string) ([]*entities.Subcategory, error)
+	GetSubCategoryForSpecificStoreCategory(ctx context.Context, storeID, categoryId string) ([]*entities.Subcategory, error)
 
 	// GetCategoryById(ctx context.Context, categoryID string) (*entities.Category, error)
 	// // Subcategory operations
