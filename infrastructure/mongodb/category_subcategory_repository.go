@@ -596,7 +596,7 @@ func (r *CategorySubcategoryRepositoryMongoDB) GetSubCategoryForSpecificStoreCat
 	}
 
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{"inventory_id": inventoryData.InventoryID}}},
+		{{Key: "$match", Value: bson.M{"inventory_id": inventoryData.InventoryID, "product_visibility": true}}},
 		{{Key: "$addFields", Value: bson.M{"metadata_oid": bson.M{"$toObjectId": "$metadata_product_id"}}}},
 		{{Key: "$lookup", Value: bson.M{"from": "metadata", "localField": "metadata_oid", "foreignField": "_id", "as": "metadata"}}},
 		{{Key: "$unwind", Value: "$metadata"}},
