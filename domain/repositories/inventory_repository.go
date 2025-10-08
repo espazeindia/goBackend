@@ -11,4 +11,5 @@ type InventoryRepository interface {
 	UpdateInventory(ctx context.Context, inventoryRequest entities.UpdateInventoryRequest) (*entities.MessageResponse, error)
 	DeleteInventory(ctx context.Context, inventoryRequest entities.DeleteInventoryRequest) error
 	GetInventoryById(ctx context.Context, inventoryRequest string) (*entities.GetInventoryByIdResponse, error)
+	AddInventoryByExcel(ctx context.Context, inventoryRequest *entities.AddInventoryByExcelRequest) (*entities.MessageResponse, error)
 }

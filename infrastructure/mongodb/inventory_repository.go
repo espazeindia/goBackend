@@ -4,6 +4,8 @@ import (
 	"context"
 	"espazeBackend/domain/entities"
 	"espazeBackend/domain/repositories"
+	"fmt"
+	"log"
 
 	"time"
 
@@ -425,4 +427,173 @@ func (r *InventoryRepositoryMongoDB) GetInventoryById(ctx context.Context, Inven
 	}
 
 	return result, nil
+}
+
+func (r *InventoryRepositoryMongoDB) AddInventoryByExcel(ctx context.Context, inventoryRequest *entities.AddInventoryByExcelRequest) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("inventory")
+	inventoryCollection := r.db.Collection("inventory_product")
+
+	session, err := r.db.Client().StartSession()
+	if err != nil {
+		return &entities.MessageResponse{
+			Message: "Database Error",
+			Error:   "Db Error",
+			Success: false,
+		}, err
+	}
+	defer session.EndSession(ctx)
+
+	var resp *entities.MessageResponse
+	_, err = session.WithTransaction(ctx, func(sc mongo.SessionContext) (interface{}, error) {
+		filter := bson.M{
+			"seller_id": inventoryRequest.SellerID,
+		}
+
+		var inventory *entities.Inventory
+		errFind := collection.FindOne(sc, filter).Decode(&inventory)
+		if errFind != nil && errFind != mongo.ErrNoDocuments {
+			return nil, errFind
+		}
+
+		layout := "02-01-2006"
+
+		if errFind == mongo.ErrNoDocuments {
+			sellerCollection := r.db.Collection("sellers")
+			objectId, errConv := primitive.ObjectIDFromHex(inventoryRequest.SellerID)
+			if errConv != nil {
+				return nil, errConv
+			}
+			sellerFilter := bson.M{"_id": objectId}
+			var sellerData *entities.Seller
+			if err := sellerCollection.FindOne(sc, sellerFilter).Decode(&sellerData); err != nil {
+				return nil, err
+			}
+			inventoryData := &entities.Inventory{
+				SellerID: inventoryRequest.SellerID,
+				StoreId:  sellerData.StoreID,
+			}
+			response, err := collection.InsertOne(sc, inventoryData)
+			if err != nil {
+				return nil, err
+			}
+			inventoryId, ok := response.InsertedID.(primitive.ObjectID)
+			if !ok {
+				return nil, fmt.Errorf("failed to get inserted inventory id")
+			}
+			var allInventoryProducts []*entities.InventoryProduct
+			for _, mp := range inventoryRequest.MetadataProducts {
+				expiryDate, perr := time.Parse(layout, mp.ProductExpiryDate)
+				if perr != nil {
+					log.Printf("error parsing expiry date: %v", perr)
+					expiryDate = time.Time{}
+				}
+				manufacturingDate, merr := time.Parse(layout, mp.ProductManufacturingDate)
+				if merr != nil {
+					log.Printf("error parsing manufacturing date: %v", merr)
+					manufacturingDate = time.Time{}
+				}
+				p := &entities.InventoryProduct{
+					InventoryID:              inventoryId.Hex(),
+					MetadataProductID:        mp.ProductMetadataId,
+					ProductVisibility:        false,
+					ProductQuantity:          mp.ProductQuantity,
+					ProductExpiryDate:        expiryDate,
+					ProductManufacturingDate: manufacturingDate,
+				}
+				allInventoryProducts = append(allInventoryProducts, p)
+			}
+			docs := make([]interface{}, len(allInventoryProducts))
+			for i, v := range allInventoryProducts {
+				docs[i] = v
+			}
+			if len(docs) > 0 {
+				if _, err := inventoryCollection.InsertMany(sc, docs); err != nil {
+					return nil, err
+				}
+			}
+			resp = &entities.MessageResponse{Message: "Inventory Added Successfully", Success: true}
+			return resp, nil
+		}
+
+		// Existing inventory path
+		for _, mp := range inventoryRequest.MetadataProducts {
+			expiryDate, perr := time.Parse(layout, mp.ProductExpiryDate)
+			if perr != nil {
+				expiryDate = time.Time{}
+			}
+			manufacturingDate, merr := time.Parse(layout, mp.ProductManufacturingDate)
+			if merr != nil {
+				manufacturingDate = time.Time{}
+			}
+
+			var inventoryProductData []*entities.InventoryProduct
+			cursor, err := inventoryCollection.Find(sc, bson.M{"metadata_product_id": mp.ProductMetadataId, "inventory_id": inventory.InventoryID})
+			if err != nil {
+				return nil, err
+			}
+			if err := cursor.All(sc, &inventoryProductData); err != nil {
+				return nil, err
+			}
+			fmt.Print(inventoryProductData, mp)
+			updatedOrInserted := false
+			for _, inventoryProduct := range inventoryProductData {
+				if inventoryProduct.ProductQuantity == 0 {
+					objectId, err := primitive.ObjectIDFromHex(inventoryProduct.InventoryProductID)
+					if err != nil {
+						return nil, err
+					}
+					result, err := inventoryCollection.UpdateByID(sc, objectId, bson.M{"$set": bson.M{"product_quantity": mp.ProductQuantity, "product_price": mp.ProductPrice, "product_expiry_date": expiryDate, "product_manufacturing_date": manufacturingDate}})
+					if err != nil {
+						return nil, err
+					}
+					if result.MatchedCount == 0 {
+						return nil, fmt.Errorf("no data updated")
+					}
+					updatedOrInserted = true
+					break
+				} else if mp.ProductPrice == inventoryProduct.ProductPrice && inventoryProduct.ProductExpiryDate.Compare(expiryDate) == 0 {
+					objectId, err := primitive.ObjectIDFromHex(inventoryProduct.InventoryProductID)
+					if err != nil {
+						return nil, err
+					}
+					result, err := inventoryCollection.UpdateByID(sc, objectId, bson.M{"$set": bson.M{"product_quantity": inventoryProduct.ProductQuantity + mp.ProductQuantity}})
+					if err != nil {
+						return nil, err
+					}
+					if result.MatchedCount == 0 {
+						return nil, fmt.Errorf("no data updated")
+					}
+					updatedOrInserted = true
+					break
+				}
+			}
+			if !updatedOrInserted {
+				newProduct := &entities.InventoryProduct{
+					InventoryID:              inventory.InventoryID,
+					MetadataProductID:        mp.ProductMetadataId,
+					ProductVisibility:        false,
+					ProductQuantity:          mp.ProductQuantity,
+					ProductExpiryDate:        expiryDate,
+					ProductManufacturingDate: manufacturingDate,
+					ProductPrice:             mp.ProductPrice,
+				}
+				if _, err := inventoryCollection.InsertOne(sc, newProduct); err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		resp = &entities.MessageResponse{Message: "Inventory Added Successfully", Success: true}
+		return nil, nil
+	})
+
+	if err != nil {
+		return &entities.MessageResponse{
+			Message: "Database Error",
+			Error:   err.Error(),
+			Success: false,
+		}, err
+	}
+
+	return resp, nil
 }
