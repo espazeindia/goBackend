@@ -58,3 +58,8 @@ func (u *InventoryUseCaseInterface) GetInventoryById(ctx context.Context, invent
 	return u.inventoryRepo.GetInventoryById(ctx, inventoryRequest)
 
 }
+
+func (u *InventoryUseCaseInterface) AddInventoryByExcel(ctx context.Context, inventoryRequest *entities.AddInventoryByExcelRequest) (*entities.MessageResponse, error) {
+	return u.inventoryRepo.AddInventoryByExcel(ctx, inventoryRequest)
+
+}

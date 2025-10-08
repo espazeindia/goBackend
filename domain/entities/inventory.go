@@ -97,3 +97,14 @@ type GetInventoryByIdResponse struct {
 	TotalReviews             int       `json:"metadata_total_reviews"`
 	TotalStars               int       `json:"metadata_total_stars"`
 }
+
+type AddInventoryByExcelRequest struct {
+	SellerID         string `json:"seller_id" bson:"omitempty"`
+	MetadataProducts []struct {
+		ProductMetadataId        string  `json:"metadata_product_id" bson:"metadata_product_id"`
+		ProductQuantity          int     `json:"product_quantity" bson:"product_quantity"`
+		ProductPrice             float64 `json:"product_price" bson:"product_price" `
+		ProductExpiryDate        string  `json:"product_expiry_date" bson:"product_expiry_date"`
+		ProductManufacturingDate string  `json:"product_manufacturing_date" bson:"product_manufacturing_date"`
+	} `json:"metadataProducts" bson:"metadataProducts"`
+}

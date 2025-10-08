@@ -174,3 +174,51 @@ func (h *InventoryHandler) GetInventoryById(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": inventory})
 }
+
+func (h *InventoryHandler) AddInventoryByExcel(c *gin.Context) {
+	seller_id, isPresent := c.Get("user_id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	seller, ok := seller_id.(string)
+	if !ok || seller == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	var inventoryRequest *entities.AddInventoryByExcelRequest
+	if err := c.ShouldBindJSON(&inventoryRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Request Body is Invalid",
+			"message": "Invalide Request Body",
+		})
+		return
+	}
+	inventoryRequest.SellerID = seller
+
+	response, err := h.inventoryUseCase.AddInventoryByExcel(c.Request.Context(), inventoryRequest)
+
+	if err != nil {
+		fmt.Print(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": response.Success,
+			"message": response.Message,
+			"error":   response.Error})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": response.Success,
+		"message": response.Message,
+	})
+}
