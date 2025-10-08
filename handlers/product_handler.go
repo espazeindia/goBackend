@@ -102,3 +102,66 @@ func (h *ProductHandler) GetAllProductsForSubcategory(c *gin.Context) {
 		"data":    response,
 	})
 }
+
+func (h *ProductHandler) GetBasicDetailsForProduct(c *gin.Context) {
+	inventory_product_id := c.Query("inventory_product_id")
+	if inventory_product_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "inventory product id missing in request",
+		})
+		return
+	}
+
+	response, err := h.productUseCase.GetBasicDetailsForProduct(c.Request.Context(), inventory_product_id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
+}
+
+func (h *ProductHandler) GetProductComparisonByStore(c *gin.Context) {
+	inventory_product_id := c.Query("inventory_product_id")
+	if inventory_product_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "inventory product id missing in request",
+		})
+		return
+	}
+
+	warehouse_id := c.Query("warehouse_id")
+	if warehouse_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Validation error",
+			"message": "warehouse id missing in request",
+		})
+	}
+
+	response, err := h.productUseCase.GetProductComparisonByStore(c.Request.Context(), warehouse_id, inventory_product_id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
+}

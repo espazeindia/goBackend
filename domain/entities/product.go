@@ -59,3 +59,14 @@ type GetProductsForStoreSubcategory struct {
 	MetadataRating           float64   `json:"metadata_rating"`
 	StoreName                string    `json:"store_name"`
 }
+
+type GetBasicDetailsForProductRequest struct {
+	InventoryProductId string `json:"inventory_product_id"`
+}
+
+type GetBasicDetailsForProductResponse = GetProductsForStoreSubcategory
+
+type GetProductComparisonByStoreResult struct {
+	StoreName        string           `bson:"storeName"`
+	InventoryProduct InventoryProduct `bson:"inventoryProduct"`
+}

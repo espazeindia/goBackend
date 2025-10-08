@@ -50,3 +50,11 @@ func (u *ProductUseCase) GetAllProductsForSubcategory(ctx context.Context, store
 	return u.productRepo.GetProductsForStoreSubcategory(ctx, storeId, subcategoryId)
 
 }
+
+func (u *ProductUseCase) GetBasicDetailsForProduct(ctx context.Context, inventoryProductID string) (*entities.GetBasicDetailsForProductResponse, error) {
+	return u.productRepo.GetBasicDetailsForProduct(ctx, inventoryProductID)
+}
+
+func (u *ProductUseCase) GetProductComparisonByStore(ctx context.Context, warehouse_id string, inventoryProductID string) ([]*entities.GetProductComparisonByStoreResult, error) {
+	return u.productRepo.GetProductComparisonByStore(ctx, warehouse_id, inventoryProductID)
+}
