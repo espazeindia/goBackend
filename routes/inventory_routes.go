@@ -26,5 +26,7 @@ func SetupInventoryRoutes(router *gin.RouterGroup) {
 	router.DELETE("/deleteInventory", inventoryHandler.DeleteInventory)
 	router.GET("/getInventoryById", inventoryHandler.GetInventoryById)
 	router.POST("/addInventoryByExcel", inventoryHandler.AddInventoryByExcel)
+	router.GET("/getAllInventoryRequests", inventoryHandler.GetAllInventoryRequests)
+	router.GET("/acceptProduct", inventoryHandler.AcceptVisibility)
 
 }

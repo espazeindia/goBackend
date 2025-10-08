@@ -222,3 +222,93 @@ func (h *InventoryHandler) AddInventoryByExcel(c *gin.Context) {
 		"message": response.Message,
 	})
 }
+
+func (h *InventoryHandler) GetAllInventoryRequests(c *gin.Context) {
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+	search := c.DefaultQuery("search", "")
+	operationalGuyId, isPresent := c.Get("user_id")
+
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	operational_id, ok := operationalGuyId.(string)
+	if !ok || operational_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token",
+			"message": "Token is invalid",
+		})
+		return
+	}
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid limit parameter",
+			"message": "Limit parameter is invalid",
+		})
+		return
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid offset parameter",
+			"message": "Offset parameter is invalid",
+		})
+		return
+	}
+
+	inventory, err := h.inventoryUseCase.GetAllInventoryRequests(c.Request.Context(), operational_id, offset, limit, search)
+
+	if err != nil {
+		fmt.Print(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": inventory, "success": true})
+}
+
+func (h *InventoryHandler) AcceptVisibility(c *gin.Context) {
+	productId := c.Query("productId")
+	if productId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "ProductId is Invalid",
+			"message": "Invalid ProductId",
+		})
+		return
+	}
+
+	role, isPresent := c.Get("role")
+
+	if !isPresent || role != "operations" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid token or user role",
+			"message": "Token or User Role is invalid ",
+		})
+		return
+	}
+
+	response, err := h.inventoryUseCase.AcceptVisibility(c.Request.Context(), productId)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Internal server error",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": response.Message, "success": response.Success})
+}

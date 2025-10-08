@@ -46,6 +46,11 @@ func (u *InventoryUseCaseInterface) UpdateInventory(ctx context.Context, invento
 
 }
 
+func (u *InventoryUseCaseInterface) AcceptVisibility(ctx context.Context, productId string) (*entities.MessageResponse, error) {
+	return u.inventoryRepo.AcceptVisibility(ctx, productId)
+
+}
+
 func (u *InventoryUseCaseInterface) DeleteInventory(ctx context.Context, inventoryRequest entities.DeleteInventoryRequest) error {
 	err := u.inventoryRepo.DeleteInventory(ctx, inventoryRequest)
 	if err != nil {
@@ -62,4 +67,26 @@ func (u *InventoryUseCaseInterface) GetInventoryById(ctx context.Context, invent
 func (u *InventoryUseCaseInterface) AddInventoryByExcel(ctx context.Context, inventoryRequest *entities.AddInventoryByExcelRequest) (*entities.MessageResponse, error) {
 	return u.inventoryRepo.AddInventoryByExcel(ctx, inventoryRequest)
 
+}
+
+func (u *InventoryUseCaseInterface) GetAllInventoryRequests(ctx context.Context, operational_id string, offset, limit int64, search string) (*entities.PaginatedInventoryRequestResponse, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	inventory, total, err := u.inventoryRepo.GetAllInventoryRequests(ctx, operational_id, offset, limit, search)
+	if err != nil {
+		return nil, err
+	}
+	var totalPages int64 = (total + limit - 1) / limit
+
+	return &entities.PaginatedInventoryRequestResponse{
+		InventoryProduct: inventory,
+		Total:            total,
+		TotalPages:       totalPages,
+		Limit:            limit,
+		Offset:           offset,
+	}, nil
 }

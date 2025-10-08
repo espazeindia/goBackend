@@ -584,7 +584,7 @@ func (r *InventoryRepositoryMongoDB) AddInventoryByExcel(ctx context.Context, in
 		}
 
 		resp = &entities.MessageResponse{Message: "Inventory Added Successfully", Success: true}
-		return nil, nil
+		return resp, nil
 	})
 
 	if err != nil {
@@ -596,4 +596,177 @@ func (r *InventoryRepositoryMongoDB) AddInventoryByExcel(ctx context.Context, in
 	}
 
 	return resp, nil
+}
+
+func (r *InventoryRepositoryMongoDB) GetAllInventoryRequests(ctx context.Context, operational_id string, offset, limit int64, search string) ([]*entities.GetAllInventoryRequestResponse, int64, error) {
+	warehouseCollection := r.db.Collection("warehouses")
+
+	session, err := r.db.Client().StartSession()
+	if err != nil {
+		return nil, 0, err
+	}
+	defer session.EndSession(ctx)
+	var result []*entities.GetAllInventoryRequestResponse
+	var total int64
+	_, err = session.WithTransaction(ctx, func(ctx mongo.SessionContext) (interface{}, error) {
+		pipeline := mongo.Pipeline{
+			{{Key: "$match", Value: bson.M{"warehouse_operational_guy_id": operational_id}}},
+
+			{{Key: "$addFields", Value: bson.M{"warehouseIdString": bson.M{"$toString": "$_id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "stores", "localField": "warehouseIdString", "foreignField": "warehouse_id", "as": "storeInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$storeInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$addFields", Value: bson.M{"sellerObjectId": bson.M{"$toObjectId": "$storeInfo.seller_id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "sellers", "localField": "sellerObjectId", "foreignField": "_id", "as": "sellerInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$sellerInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$addFields", Value: bson.M{"storeIdString": bson.M{"$toString": "$storeInfo._id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "inventory", "localField": "storeIdString", "foreignField": "store_id", "as": "inventoryInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$inventoryInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$addFields", Value: bson.M{"inventoryIdString": bson.M{"$toString": "$inventoryInfo._id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "inventory_product", "localField": "inventoryIdString", "foreignField": "inventory_id", "as": "productInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$productInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$match", Value: bson.M{"productInfo.product_visibility": false}}},
+
+			{{Key: "$addFields", Value: bson.M{"metadataObjectId": bson.M{"$toObjectId": "$productInfo.metadata_product_id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "metadata", "localField": "metadataObjectId", "foreignField": "_id", "as": "metadataInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$metadataInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$addFields", Value: bson.M{"categoryObjectId": bson.M{"$toObjectId": "$metadataInfo.metadata_category_id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "categories", "localField": "categoryObjectId", "foreignField": "_id", "as": "categoryInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$categoryInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$addFields", Value: bson.M{"subcategoryObjectId": bson.M{"$toObjectId": "$metadataInfo.metadata_subcategory_id"}}}},
+
+			{{Key: "$lookup", Value: bson.M{"from": "subcategories", "localField": "subcategoryObjectId", "foreignField": "_id", "as": "subcategoryInfo"}}},
+
+			{{Key: "$unwind", Value: bson.M{"path": "$subcategoryInfo", "preserveNullAndEmptyArrays": true}}},
+
+			{{Key: "$project", Value: bson.M{
+				"store_name":           "$storeInfo.store_name",
+				"seller_name":          "$sellerInfo.name",
+				"metadata_name":        "$metadataInfo.metadata_name",
+				"metadata_image":       "$metadataInfo.metadata_image",
+				"metadata_description": "$metadataInfo.metadata_description",
+				"metadata_mrp":         "$metadataInfo.metadata_mrp",
+				"hsn_code":             "$metadataInfo.hsn_code",
+				"category_name":        "$categoryInfo.category_name",
+				"subcategory_name":     "$subcategoryInfo.subcategory_name",
+				"_id":                  "$productInfo._id",
+				"inventory_id":         "$productInfo.inventory_id",
+				"visibility":           "$productInfo.product_visibility",
+				"quantity":             "$productInfo.product_quantity",
+				"price":                "$productInfo.product_price",
+				"expiry_date":          "$productInfo.product_expiry_date",
+				"manufacturing_date":   "$productInfo.product_manufacturing_date",
+			}}},
+		}
+
+		// Add search filter only if search is not empty
+		if search != "" {
+			searchStage := bson.D{{Key: "$match", Value: bson.M{
+				"$or": bson.A{
+					bson.M{"metadata_name": bson.M{"$regex": search, "$options": "i"}},
+					bson.M{"subcategory_name": bson.M{"$regex": search, "$options": "i"}},
+					bson.M{"store_name": bson.M{"$regex": search, "$options": "i"}},
+					bson.M{"seller_name": bson.M{"$regex": search, "$options": "i"}},
+				},
+			}}}
+			pipeline = append(pipeline, searchStage)
+		}
+		countPipeline := append(append(mongo.Pipeline{}, pipeline...), bson.D{{Key: "$count", Value: "total"}})
+
+		totalCursor, err := warehouseCollection.Aggregate(ctx, countPipeline)
+		if err != nil {
+			return nil, err
+		}
+		var totalData []*struct {
+			Total int64 `json:"total" bson:"total"`
+		}
+		err = totalCursor.All(ctx, &totalData)
+		if err != nil {
+			return nil, err
+		}
+		if len(totalData) > 0 {
+			total = totalData[0].Total
+		} else {
+			total = 0
+		}
+
+		dataPipeline := append(pipeline, bson.D{{Key: "$skip", Value: limit * offset}}, bson.D{{Key: "$limit", Value: limit}})
+
+		cursor, err := warehouseCollection.Aggregate(ctx, dataPipeline)
+		if err != nil {
+			return nil, err
+		}
+		err = cursor.All(ctx, &result)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	return result, total, err
+}
+
+func (r *InventoryRepositoryMongoDB) AcceptVisibility(ctx context.Context, productId string) (*entities.MessageResponse, error) {
+	collection := r.db.Collection("inventory_product")
+
+	objectId, err := primitive.ObjectIDFromHex(productId)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Error creating object from productId",
+			Error:   "ObjectIdFromHex Error",
+		}, err
+	}
+
+	filter := bson.M{
+		"_id": objectId,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"product_visibility": true,
+		},
+	}
+
+	response, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "Db Error",
+		}, err
+	}
+
+	if response.MatchedCount == 0 {
+		return &entities.MessageResponse{
+			Success: false,
+			Message: "Database Error",
+			Error:   "No Matching Document ",
+		}, err
+	}
+
+	return &entities.MessageResponse{
+		Success: true,
+		Message: "Product Accepted Successfully",
+	}, nil
 }

@@ -108,3 +108,30 @@ type AddInventoryByExcelRequest struct {
 		ProductManufacturingDate string  `json:"product_manufacturing_date" bson:"product_manufacturing_date"`
 	} `json:"metadataProducts" bson:"metadataProducts"`
 }
+
+type GetAllInventoryRequestResponse struct {
+	StoreName           string    `bson:"store_name" json:"store_name"`
+	SellerName          string    `bson:"seller_name" json:"seller_name"`
+	MetadataName        string    `bson:"metadata_name" json:"metadata_name"`
+	MetadataImage       string    `bson:"metadata_image" json:"metadata_image"`
+	MetadataDescription string    `bson:"metadata_description" json:"metadata_description"`
+	MetadataMRP         float64   `bson:"metadata_mrp" json:"metadata_mrp"`
+	HSNCode             string    `bson:"hsn_code" json:"hsn_code"`
+	CategoryName        string    `bson:"category_name" json:"category_name"`
+	SubcategoryName     string    `bson:"subcategory_name" json:"subcategory_name"`
+	ID                  string    `bson:"_id" json:"_id"`
+	InventoryID         string    `bson:"inventory_id" json:"inventory_id"`
+	Visibility          bool      `bson:"visibility" json:"visibility"`
+	Quantity            int64     `bson:"quantity" json:"quantity"`
+	Price               float64   `bson:"price" json:"price"`
+	ExpiryDate          time.Time `bson:"expiry_date" json:"expiry_date"`
+	ManufacturingDate   time.Time `bson:"manufacturing_date" json:"manufacturing_date"`
+}
+
+type PaginatedInventoryRequestResponse struct {
+	InventoryProduct []*GetAllInventoryRequestResponse `json:"inventory_products"`
+	Total            int64                             `json:"total"`
+	Limit            int64                             `json:"limit"`
+	Offset           int64                             `json:"offset"`
+	TotalPages       int64                             `json:"total_pages"`
+}
