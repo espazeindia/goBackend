@@ -537,7 +537,7 @@ func (r *InventoryRepositoryMongoDB) AddInventoryByExcel(ctx context.Context, in
 			fmt.Print(inventoryProductData, mp)
 			updatedOrInserted := false
 			for _, inventoryProduct := range inventoryProductData {
-				if inventoryProduct.ProductQuantity == 0 {
+				if inventoryProduct.ProductQuantity == 0 && !inventoryProduct.ProductVisibility {
 					objectId, err := primitive.ObjectIDFromHex(inventoryProduct.InventoryProductID)
 					if err != nil {
 						return nil, err
@@ -551,7 +551,7 @@ func (r *InventoryRepositoryMongoDB) AddInventoryByExcel(ctx context.Context, in
 					}
 					updatedOrInserted = true
 					break
-				} else if mp.ProductPrice == inventoryProduct.ProductPrice && inventoryProduct.ProductExpiryDate.Compare(expiryDate) == 0 {
+				} else if mp.ProductPrice == inventoryProduct.ProductPrice && inventoryProduct.ProductExpiryDate.Compare(expiryDate) == 0 && !inventoryProduct.ProductVisibility {
 					objectId, err := primitive.ObjectIDFromHex(inventoryProduct.InventoryProductID)
 					if err != nil {
 						return nil, err
