@@ -30,4 +30,5 @@ func SetupProductRoutes(router *gin.RouterGroup) {
 	router.GET("/getProductsForAllStores", productHandler.GetProductsForAllStores)
 	router.GET("/getAllProductsForSubcategory", productHandler.GetAllProductsForSubcategory)
 	router.GET("/getBasicDetailsForProduct", productHandler.GetBasicDetailsForProduct)
+	router.GET("/getProductComparisonByStores", productHandler.GetProductComparisonByStore)
 }

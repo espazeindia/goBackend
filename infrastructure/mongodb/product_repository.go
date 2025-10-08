@@ -197,10 +197,7 @@ func (r *ProductRepositoryMongoDB) GetProductsForAllStores(ctx context.Context, 
 	return response, nil
 }
 
-func (r *ProductRepositoryMongoDB) GetProductsForStoreSubcategory(
-	ctx context.Context,
-	storeId, subcategoryId string,
-) ([]*entities.GetProductsForStoreSubcategory, error) {
+func (r *ProductRepositoryMongoDB) GetProductsForStoreSubcategory(ctx context.Context, storeId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error) {
 	inventoryCollection := r.db.Collection("inventory")
 	inventoryProductsCollection := r.db.Collection("inventory_product")
 	storeCollection := r.db.Collection("stores")
@@ -362,10 +359,7 @@ func (r *ProductRepositoryMongoDB) GetProductsForStoreSubcategory(
 	return results, nil
 }
 
-func (r *ProductRepositoryMongoDB) GetProductsForAllStoresSubcategory(
-	ctx context.Context,
-	warehouseId, subcategoryId string,
-) ([]*entities.GetProductsForStoreSubcategory, error) {
+func (r *ProductRepositoryMongoDB) GetProductsForAllStoresSubcategory(ctx context.Context, warehouseId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error) {
 
 	storesCollection := r.db.Collection("stores")
 
@@ -424,4 +418,189 @@ func (r *ProductRepositoryMongoDB) GetProductsForAllStoresSubcategory(
 		}
 	}
 	return result, nil
+}
+
+func (r *ProductRepositoryMongoDB) GetBasicDetailsForProduct(ctx context.Context, inventoryProductID string) (*entities.GetBasicDetailsForProductResponse, error) {
+	inventoryProductsCollection := r.db.Collection("inventory_product")
+
+	objectId, err := primitive.ObjectIDFromHex(inventoryProductID)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := mongo.Pipeline{
+
+		{{Key: "$match", Value: bson.M{"_id": objectId}}},
+
+		{{Key: "$addFields", Value: bson.M{"metadata_object_id": bson.M{"$toObjectId": "$metadata_product_id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "metadata", "localField": "metadata_object_id", "foreignField": "_id", "as": "metadata"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$metadata", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$addFields", Value: bson.M{"subcategory_objectid": bson.M{"$toObjectId": "$metadata.metadata_subcategory_id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "subcategories", "localField": "subcategory_objectid", "foreignField": "_id", "as": "subcategory"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$subcategory", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$addFields", Value: bson.M{"category_objectid": bson.M{"$toObjectId": "$metadata.metadata_category_id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "categories", "localField": "category_objectid", "foreignField": "_id", "as": "category"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$category", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "reviews", "localField": "metadata_product_id", "foreignField": "_id", "as": "review"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$review", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$addFields", Value: bson.M{"inventory_Object_id": bson.M{"$toObjectId": "$inventory_id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "inventory", "localField": "inventory_Object_id", "foreignField": "_id", "as": "inventory"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$inventory", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$addFields", Value: bson.M{"store_Object_id": bson.M{"$toObjectId": "$inventory.store_id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "stores", "localField": "store_Object_id", "foreignField": "_id", "as": "store"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$store", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$project", Value: bson.M{
+			"metadata_id":                "$metadata._id",
+			"metadata_name":              "$metadata.metadata_name",
+			"metadata_description":       "$metadata.metadata_description",
+			"metadata_image":             "$metadata.metadata_image",
+			"metadata_category_id":       "$metadata.metadata_category_id",
+			"metadata_subcategory_id":    "$metadata.metadata_subcategory_id",
+			"metadata_mrp":               "$metadata.metadata_mrp",
+			"category_name":              "$category.category_name",
+			"subcategory_name":           "$subcategory.subcategory_name",
+			"total_stars":                "$review.total_stars",
+			"total_reviews":              "$review.total_reviews",
+			"_id":                        1,
+			"inventory_id":               1,
+			"product_quantity":           1,
+			"product_price":              1,
+			"product_expiry_date":        1,
+			"product_manufacturing_date": 1,
+			"store_name":                 "$store.store_name",
+		}}},
+	}
+
+	cursor, err := inventoryProductsCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	type aggResult struct {
+		MetadataProductId        string    `bson:"metadata_id"`
+		MetadataName             string    `bson:"metadata_name"`
+		MetadataDescription      string    `bson:"metadata_description"`
+		MetadataImage            string    `bson:"metadata_image"`
+		MetadataCategoryId       string    `bson:"metadata_category_id"`
+		MetadataSubcategoryId    string    `bson:"metadata_subcategory_id"`
+		MetadataMrp              float64   `bson:"metadata_mrp"`
+		ProductCategoryName      string    `bson:"category_name"`
+		ProductSubCategoryName   string    `bson:"subcategory_name"`
+		TotalStars               int       `bson:"total_stars"`
+		TotalReviews             int       `bson:"total_reviews"`
+		InventoryProductId       string    `bson:"_id"`
+		InventoryId              string    `bson:"inventory_id"`
+		ProductPrice             float64   `bson:"product_price"`
+		ProductQuantity          int       `bson:"product_quantity"`
+		ProductExpiryDate        time.Time `bson:"product_expiry_date"`
+		ProductManufacturingDate time.Time `bson:"product_manufacturing_date"`
+		StoreName                string    `bson:"store_name"`
+	}
+
+	var products []*aggResult
+	if err := cursor.All(ctx, &products); err != nil {
+		return nil, err
+	}
+	metadataData := products[0]
+	result := &entities.GetBasicDetailsForProductResponse{
+		MetadataProductId:        metadataData.MetadataProductId,
+		MetadataName:             metadataData.MetadataName,
+		MetadataDescription:      metadataData.MetadataDescription,
+		MetadataImage:            metadataData.MetadataImage,
+		MetadataCategoryId:       metadataData.MetadataCategoryId,
+		MetadataMrp:              metadataData.MetadataMrp,
+		MetadataSubcategoryId:    metadataData.MetadataSubcategoryId,
+		ProductCategoryName:      metadataData.ProductCategoryName,
+		ProductSubCategoryName:   metadataData.ProductSubCategoryName,
+		TotalStars:               metadataData.TotalStars,
+		TotalReviews:             metadataData.TotalReviews,
+		InventoryId:              metadataData.InventoryId,
+		InventoryProductId:       metadataData.InventoryProductId,
+		ProductPrice:             metadataData.ProductPrice,
+		ProductQuantity:          metadataData.ProductQuantity,
+		ProductExpiryDate:        metadataData.ProductExpiryDate,
+		ProductManufacturingDate: metadataData.ProductManufacturingDate,
+		MetadataRating: func() float64 {
+			if metadataData.TotalReviews == 0 {
+				return 0
+			}
+			return float64(metadataData.TotalStars) / float64(metadataData.TotalReviews)
+		}(),
+		StoreName: metadataData.StoreName,
+	}
+
+	return result, nil
+}
+
+func (r *ProductRepositoryMongoDB) GetProductComparisonByStore(ctx context.Context, warehouse_id string, inventoryProductID string) ([]*entities.GetProductComparisonByStoreResult, error) {
+	inventoryProductsCollection := r.db.Collection("inventory_product")
+	storeCollection := r.db.Collection("stores")
+
+	productObjectID, err := primitive.ObjectIDFromHex(inventoryProductID)
+	if err != nil {
+		return nil, err
+	}
+
+	var productDetails *entities.InventoryProduct
+
+	err = inventoryProductsCollection.FindOne(ctx, bson.M{"_id": productObjectID}).Decode(&productDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := mongo.Pipeline{
+
+		{{Key: "$match", Value: bson.M{"warehouse_id": warehouse_id}}},
+
+		{{Key: "$addFields", Value: bson.M{"storeId": bson.M{"$toString": "$_id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "inventory", "localField": "storeId", "foreignField": "store_id", "as": "inventory"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$inventory", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$addFields", Value: bson.M{"inventoryId": bson.M{"$toString": "$inventory._id"}}}},
+
+		{{Key: "$lookup", Value: bson.M{"from": "inventory_product", "localField": "inventoryId", "foreignField": "inventory_id", "as": "inventoryProduct"}}},
+
+		{{Key: "$unwind", Value: bson.M{"path": "$inventoryProduct", "preserveNullAndEmptyArrays": true}}},
+
+		{{Key: "$match", Value: bson.M{"inventoryProduct.metadata_product_id": productDetails.MetadataProductID, "inventoryProduct.product_visibility": true}}},
+
+		{{Key: "$project", Value: bson.M{
+			"storeName":        "$store_name",
+			"inventoryProduct": "$inventoryProduct",
+		}}},
+	}
+
+	cursor, err := storeCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*entities.GetProductComparisonByStoreResult
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+
 }

@@ -14,4 +14,6 @@ type ProductRepository interface {
 	GetAllStores(ctx context.Context, warehouseID string) (*[]entities.Store, error)
 	GetProductsForStoreSubcategory(ctx context.Context, storeId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error)
 	GetProductsForAllStoresSubcategory(ctx context.Context, warehouseId, subcategoryId string) ([]*entities.GetProductsForStoreSubcategory, error)
+	GetBasicDetailsForProduct(ctx context.Context, inventoryProductID string) (*entities.GetBasicDetailsForProductResponse, error)
+	GetProductComparisonByStore(ctx context.Context, warehouse_id string, inventoryProductID string) ([]*entities.GetProductComparisonByStoreResult, error)
 }
