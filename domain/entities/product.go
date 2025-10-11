@@ -67,7 +67,7 @@ type GetBasicDetailsForProductRequest struct {
 type GetBasicDetailsForProductResponse = GetProductsForStoreSubcategory
 
 type GetProductComparisonByStoreResult struct {
-	StoreName                string    `bson:"storeName"`
+	StoreName                string    `json:"store_name" bson:"storeName"`
 	InventoryProductID       string    `json:"id" bson:"_id,omitempty"`
 	InventoryID              string    `json:"inventory_id" bson:"inventory_id"`
 	MetadataProductID        string    `json:"metadata_product_id" bson:"metadata_product_id"`
