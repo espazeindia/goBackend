@@ -67,6 +67,12 @@ type GetBasicDetailsForProductRequest struct {
 type GetBasicDetailsForProductResponse = GetProductsForStoreSubcategory
 
 type GetProductComparisonByStoreResult struct {
-	StoreName        string           `bson:"storeName"`
-	InventoryProduct InventoryProduct `bson:"inventoryProduct"`
+	StoreName                string    `bson:"storeName"`
+	InventoryProductID       string    `json:"id" bson:"_id,omitempty"`
+	InventoryID              string    `json:"inventory_id" bson:"inventory_id"`
+	MetadataProductID        string    `json:"metadata_product_id" bson:"metadata_product_id"`
+	ProductManufacturingDate time.Time `json:"product_manufacturing_date" bson:"product_manufacturing_date"`
+	ProductQuantity          int       `json:"product_quantity" bson:"product_quantity"`
+	ProductPrice             float64   `json:"product_price" bson:"product_price"`
+	ProductExpiryDate        time.Time `json:"product_expiry_date" bson:"product_expiry_date"`
 }

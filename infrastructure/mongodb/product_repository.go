@@ -585,8 +585,14 @@ func (r *ProductRepositoryMongoDB) GetProductComparisonByStore(ctx context.Conte
 		{{Key: "$match", Value: bson.M{"inventoryProduct.metadata_product_id": productDetails.MetadataProductID, "inventoryProduct.product_visibility": true}}},
 
 		{{Key: "$project", Value: bson.M{
-			"storeName":        "$store_name",
-			"inventoryProduct": "$inventoryProduct",
+			"storeName":                  "$store_name",
+			"_id":                        "$inventoryProduct._id",
+			"inventory_id":               "$inventoryProduct.inventory_id",
+			"metadata_product_id":        "$inventoryProduct.metadata_product_id",
+			"product_manufacturing_date": "$inventoryProduct.product_manufacturing_date",
+			"product_quantity":           "$inventoryProduct.product_quantity",
+			"product_price":              "$inventoryProduct.product_price",
+			"product_expiry_date":        "$inventoryProduct.product_expiry_date",
 		}}},
 	}
 
